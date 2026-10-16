@@ -24,7 +24,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'ID',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
 }));
 app.use(bodyParser.json());
 
@@ -42,48 +48,79 @@ app.get('/', (req, res) => {
 
 //signup logic 
 app.post('/signup', async (req, res) => {
-  console.log(req.body);
-  const userdata = new user(req.body);
+  try {
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+    const confirmPassword = req.body['confirm-password'];
+    const userType = Number(req.body.userType);
 
-  const userexist = await user.findOne({email : userdata.email});
-  if (userexist) {
-    res.render('signup/emailExist')
-  }
-  else{
-    const saltRounds = 10; 
-    const hashPassword = await bcrypt.hash(userdata.password, saltRounds);
-    userdata.password = hashPassword;
-    userdata.save()
-    .then((result) => {
-      console.log('Saved to database:', result);
-      res.status(200).redirect('/');
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).sendFile({ message: 'Error saving to database' });
-    });
+    if (!name || !email || !password || ![1, 2].includes(userType)) {
+      return res.status(400).render('signup', { exist: 'Please fill all fields correctly.' });
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      return res.status(400).render('signup', { exist: 'Password must be at least 6 characters.' });
+    }
+    if (confirmPassword !== undefined && confirmPassword !== password) {
+      return res.status(400).render('signup', { exist: 'Passwords do not match.' });
+    }
+
+    const userexist = await user.findOne({ email });
+    if (userexist) {
+      return res.status(409).render('signup/emailExist');
+    }
+
+    const saltRounds = 10;
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+    const userdata = new user({ name, email, password: hashPassword, userType });
+    const result = await userdata.save();
+    console.log('Saved to database:', result._id);
+    req.session.userId = result._id;
+    return res.redirect('/');
+  } catch (err) {
+    console.log(err);
+    if (err && err.code === 11000) {
+      return res.status(409).render('signup/emailExist');
+    }
+    if (err && err.name === 'ValidationError') {
+      return res.status(400).render('signup', { exist: 'Invalid signup data.' });
+    }
+    return res.status(500).send({ message: 'Error saving to database' });
   }
 });
 
 
 app.post('/login', async (req,res) =>{
   try{
-    const check = await user.findOne({email : req.body.email});
-    if(!check){
-      res.render('login/nouser');
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+    if (!email || !password) {
+      return res.status(400).send('wrong details');
     }
-    const passwordMatch = await bcrypt.compare(req.body.password, check.password);
+    const check = await user.findOne({ email });
+    if(!check){
+      return res.status(404).render('login/nouser');
+    }
+    const passwordMatch = await bcrypt.compare(password, check.password);
     if(passwordMatch){
-      res.redirect('/')
+      req.session.userId = check._id;
+      return res.redirect('/');
     }
     else{
-      res.render('login/wrongpass');
+      return res.status(401).render('login/wrongpass');
     }
   }
-  catch {
-    res.send('wrong details');
+  catch (err) {
+    console.log(err);
+    return res.status(500).send('wrong details');
   }
 })
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/');
+  });
+});
 app.get('/home', (req, res) => {
     res.redirect('/');
   });
