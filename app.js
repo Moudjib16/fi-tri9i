@@ -7,6 +7,8 @@ const trip = require('./models/publier');
 const bcrypt = require('bcrypt');
 const connectDB = require('./db/db');
 const session = require ('express-session');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const app = express();
 const bodyParser = require('body-parser');
 
@@ -18,7 +20,8 @@ app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware
-app.use(morgan('dev'));
+app.use(helmet());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.urlencoded({ extended: true }));
 //session middleware to store user data
 app.use(session({
@@ -33,6 +36,17 @@ app.use(session({
   },
 }));
 app.use(bodyParser.json());
+
+// Basic brute-force protection for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again later.' },
+});
+app.use('/login', authLimiter);
+app.use('/signup', authLimiter);
 
 // Connect to MongoDB
 connectDB();
@@ -117,6 +131,12 @@ app.post('/login', async (req,res) =>{
 })
 
 app.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/');
+  });
+});
+
+app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/');
   });
@@ -418,6 +438,15 @@ app.get('/publier/description', (req, res) => {
 // Handle invalid routes
 app.use((req, res) => {
   res.status(404).render('404', {stylesheet: '404/', title : '404'});
+});
+
+// Centralized error handler (must be last)
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).send({ message: 'Internal server error' });
 });
 
 
