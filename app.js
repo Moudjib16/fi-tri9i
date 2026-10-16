@@ -137,12 +137,35 @@ app.get('/login', (req, res) => {
 
 
 
-//publier logic 
+//publier logic
+// Helper: load the trip stored in the session
+async function getSessionTrip(req) {
+  const tripId = req.session.tripId;
+  if (!tripId) {
+    return { error: 'Trip ID not found in session' };
+  }
+  const existingTrip = await trip.findById(tripId);
+  if (!existingTrip) {
+    return { error: 'Trip not found' };
+  }
+  return { existingTrip };
+}
+
+function pickString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
 // POST request to save a new trip and store its ID in the session
 app.post('/depart', async (req, res) => {
   try {
-    console.log(req.body);
-    const newtrip = new trip(req.body);
+    const depart = pickString(req.body.depart || req.body.content);
+    if (!depart) {
+      return res.status(400).send({ message: 'Missing depart' });
+    }
+    const newtrip = new trip({
+      depart,
+      driver: req.session.userId || null,
+    });
 
     // Save the new trip to the database
     const savedTrip = await newtrip.save();
@@ -150,36 +173,27 @@ app.post('/depart', async (req, res) => {
     // Store the ID of the saved trip in the session
     req.session.tripId = savedTrip._id;
 
-    console.log('Saved to database:', savedTrip);
+    console.log('Saved to database:', savedTrip._id);
     // Redirect to the specified page after successful save
-    res.status(200).redirect('publier/page2');
+    return res.status(200).redirect('/publier/page2');
   } catch (err) {
     console.log(err);
     // Send an error response if saving fails
-    res.status(500).send({ message: 'Error saving to database' });
+    return res.status(500).send({ message: 'Error saving to database' });
   }
 });
 
 // POST request to update the 'depart0' property of the trip using the stored ID
 app.post('/depart0', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const { depart0 } = req.body;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const depart0 = pickString(req.body.depart0 ?? req.body.content);
+    if (!depart0) {
+      return res.status(400).send({ message: 'Missing depart0' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
 
     // Update the 'depart0' property of the existing document
@@ -189,232 +203,175 @@ app.post('/depart0', async (req, res) => {
     await existingTrip.save();
 
     // Send a success response
-    res.status(200).redirect('publier/page3');
+    return res.status(200).redirect('/publier/page3');
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating depart0' });
   }
 });
 
 app.post('/arrivee', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const { arrivee } = req.body;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const arrivee = pickString(req.body.arrivee ?? req.body.content);
+    if (!arrivee) {
+      return res.status(400).send({ message: 'Missing arrivee' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
 
-    // Update the 'depart0' property of the existing document
+    // Update the 'arrivee' property of the existing document
     existingTrip.arrivee = arrivee;
 
     // Save the updated document
     await existingTrip.save();
 
     // Send a success response
-    res.status(200).redirect('publier/page4');
+    return res.status(200).redirect('/publier/page4');
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating arrivee' });
   }
 });
 
 app.post('/arrivee0', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const { arrivee0 } = req.body;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const arrivee0 = pickString(req.body.arrivee0 ?? req.body.content);
+    if (!arrivee0) {
+      return res.status(400).send({ message: 'Missing arrivee0' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
 
-    // Update the 'depart0' property of the existing document
+    // Update the 'arrivee0' property of the existing document
     existingTrip.arrivee0 = arrivee0;
 
     // Save the updated document
     await existingTrip.save();
 
     // Send a success response
-    res.status(200).redirect('publier/calendaire');
+    return res.status(200).redirect('/publier/calendaire');
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating arrivee0' });
   }
 });
 
 app.post('/date', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const dateData = req.body.content;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const dateData = pickString(req.body.content ?? req.body.dateData ?? req.body.date);
+    if (!dateData) {
+      return res.status(400).send({ message: 'Missing date' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
 
-    // Update the 'depart0' property of the existing document
+    // Update the 'dateData' property of the existing document
     existingTrip.dateData = dateData;
 
     // Save the updated document
     await existingTrip.save();
+    return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating date' });
   }
 });
 
 app.post('/time', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const time = req.body.content;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const time = pickString(req.body.content ?? req.body.time);
+    if (!time) {
+      return res.status(400).send({ message: 'Missing time' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
     existingTrip.time = time;
     await existingTrip.save();
+    return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating time' });
   }
 });
 
 app.post('/places', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const places = req.body.content;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const rawPlaces = req.body.content ?? req.body.places;
+    const places = Number(rawPlaces);
+    if (!Number.isInteger(places) || places < 1 || places > 8) {
+      return res.status(400).send({ message: 'Places must be an integer between 1 and 8' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
     existingTrip.places = places;
     await existingTrip.save();
+    return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating places' });
   }
 });
 
 app.post('/price', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const price = req.body.content;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const price = pickString(req.body.content ?? req.body.price);
+    if (!price) {
+      return res.status(400).send({ message: 'Missing price' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
     existingTrip.price = price;
     await existingTrip.save();
+    return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating price' });
   }
 });
 
 app.post('/description', async (req, res) => {
   try {
-    // Assuming req.body contains the new value for 'depart0'
-    const description = req.body.content;
-
-    // Retrieve the stored trip ID from the session
-    const tripId = req.session.tripId;
-
-    if (!tripId) {
-      // If the ID is not found in the session, send an error response
-      return res.status(404).send({ message: 'Trip ID not found in session' });
+    const description = pickString(req.body.content ?? req.body.description);
+    if (description.length > 1000) {
+      return res.status(400).send({ message: 'Description too long' });
     }
 
-    // Find the trip document by ID
-    const existingTrip = await trip.findById(tripId);
-
-    if (!existingTrip) {
-      // If the document doesn't exist, send an error response
-      return res.status(404).send({ message: 'Trip not found' });
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.status(404).send({ message: error });
     }
     existingTrip.description = description;
     await existingTrip.save();
+    return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
     // Send an error response if updating fails
-    res.status(500).send({ message: 'Error updating depart0' });
+    return res.status(500).send({ message: 'Error updating description' });
   }
 });
 

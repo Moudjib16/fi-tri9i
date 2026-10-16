@@ -3,47 +3,60 @@ const mongoose = require('mongoose');
 const Schema = new mongoose.Schema({
     depart: {
         type : String,
-        default: 'Setif'
+        required: true,
+        trim: true
     },
     depart0: {
         type : String,
-        default: 'Ain Arnet'
+        trim: true,
+        default: ''
     },
     arrivee: {
         type : String,
-        default: 'Bejaia'
+        trim: true,
+        default: ''
     },
     arrivee0: {
         type : String,
-        default: 'Amizour'
+        trim: true,
+        default: ''
     },
     dateData: {
         type : String,
-        default: Date.now
+        trim: true,
+        default: ''
     },
     time: {
         type : String,
-        default: '12:00'
+        trim: true,
+        default: ''
     },
     price: {
         type : String,
-        default: '200DA'
+        trim: true,
+        default: ''
     },
     places: {
         type : Number,
-        default: 0
+        default: 1,
+        min: 1,
+        max: 8
     },
     places_taken: {
         type : Number,
-        default: 0
+        default: 0,
+        min: 0
     },
     description:{
         type: String,
-        default: "Bonjour ! je vais voir ma famille . J'ai beaucouop de place dans le coffre ." 
+        trim: true,
+        maxlength: 1000,
+        default: ''
     },
     driver: {
-        type : String,
-        default: 'none'
+        type : mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
     },
 }, { timestamps: true });
 
