@@ -11,22 +11,22 @@
 
   <nav class="navbar">
     <ul>
-      <a class="logo" href="../../homepage/pass.html">
+      <a class="logo" href="/">
         <p>Fi Tri9i</p>  
-        <img src="pics/car.svg" class="logo_img">
+        <img src="/publier/people/pics/car.svg" class="logo_img">
         </a>
   
         
-        <a href="../../recherche/pass.html" class="pub">
-        <img src="pics/rech.svg" class="plus">
+        <a href="/" class="pub">
+        <img src="/publier/people/pics/rech.svg" class="plus">
         <li class="Publiertrajet">Recherche</li>
       </a>
 
        <!-- this place is important it change depending on the user-->
       <div class="auth">
         <p class="user-name" id="user-name">Kadache ahmed rami</p>
-        <img src="pics/pfp.svg" class="pfp">
-        <img src="pics/arrow.svg" class="arrow" id="arrow">
+        <img src="/publier/people/pics/pfp.svg" class="pfp">
+        <img src="/publier/people/pics/arrow.svg" class="arrow" id="arrow">
       </div>
     </ul>
      
@@ -57,11 +57,11 @@
       </div>
 
       <div class="pips">
-        <img class="p1" id="p1" src="pics/p1.svg">
-        <img class="p2" id="p2" src="pics/p1.svg">
-        <img class="p3" id="p3" src="pics/p1.svg">
-        <img class="p4" id="p4" src="pics/p1.svg">
-        <img class="p5" id="p5" src="pics/p1.svg">
+        <img class="p1" id="p1" src="/publier/people/pics/p1.svg">
+        <img class="p2" id="p2" src="/publier/people/pics/p1.svg">
+        <img class="p3" id="p3" src="/publier/people/pics/p1.svg">
+        <img class="p4" id="p4" src="/publier/people/pics/p1.svg">
+        <img class="p5" id="p5" src="/publier/people/pics/p1.svg">
     
 
       </div>
@@ -75,29 +75,27 @@
 
 
   <script>
-    document.getElementById('prochaine').addEventListener('click', () => {
-         const Content = document.getElementById('prix').value;
-         sendDataToBackend(Content);
-     });
-
-     function sendDataToBackend(content) {
-         fetch('/places', {
-             method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({ content }),
-         })
-         .then(response => {
+    document.getElementById('prochaine').addEventListener('click', async () => {
+         const content = document.getElementById('prix').value;
+         try {
+             const response = await fetch('/places', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({ content }),
+             });
              if (response.ok) {
-                 console.log('Content sent successfully!');
+                 window.location.href = '/publier/prix';
              } else {
-                 console.error('Failed to send content.');
+                 alert('Nombre de places invalide (1 à 8).');
              }
-         })
-         .catch(error => console.error('Error:', error));
-     }
- </script>
+         } catch (error) {
+             console.error('Error:', error);
+             alert('Erreur réseau, réessayez.');
+         }
+     });
+  </script>
 <script src="/publier/people/script.js"></script>
 </body>
 </html>

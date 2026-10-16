@@ -11,22 +11,22 @@
 
   <nav class="navbar">
     <ul>
-      <a class="logo" href="../../homepage/pass.html">
+      <a class="logo" href="/">
         <p>Fi Tri9i</p>  
-        <img src="pics/car.svg" class="logo_img">
+        <img src="/publier/heure/pics/car.svg" class="logo_img">
         </a>
   
         
-        <a href="../../recherche/pass.html" class="pub">
-        <img src="pics/rech.svg" class="plus">
+        <a href="/" class="pub">
+        <img src="/publier/heure/pics/rech.svg" class="plus">
         <li class="Publiertrajet">Recherche</li>
       </a>
 
        <!-- this place is important it change depending on the user-->
       <div class="auth">
         <p class="user-name" id="user-name">Kadache ahmed rami</p>
-        <img src="pics/pfp.svg" class="pfp">
-        <img src="pics/arrow.svg" class="arrow" id="arrow">
+        <img src="/publier/heure/pics/pfp.svg" class="pfp">
+        <img src="/publier/heure/pics/arrow.svg" class="arrow" id="arrow">
       </div>
     </ul>
      
@@ -49,9 +49,9 @@
       </div>
     <h1 class="title">Fixez votre prix par place</h1>
     <div class="row">
-      <img src="pics/img.svg" class="img">
+      <img src="/publier/heure/pics/img.svg" class="img">
       <div class="row1">
-        <img src="pics/arr.svg" id="arr" class="arr">
+        <img src="/publier/heure/pics/arr.svg" id="arr" class="arr">
         <input class="prix" maxlength="6" type="text" value="08 : 00" id="clock" name="timeData">
         <div class="time-menu" id="prix" >
           <div class="time-option" id="time-option">06 : 10</div>
@@ -178,29 +178,27 @@
 
 
   <script>
-    document.getElementById('prochaine').addEventListener('click', () => {
-         const Content = document.getElementById('clock').value;
-         sendDataToBackend(Content);
-     });
-
-     function sendDataToBackend(content) {
-         fetch('/time', {
-             method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({ content }),
-         })
-         .then(response => {
+    document.getElementById('prochaine').addEventListener('click', async () => {
+         const content = document.getElementById('clock').value;
+         try {
+             const response = await fetch('/time', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({ content }),
+             });
              if (response.ok) {
-                 console.log('Content sent successfully!');
+                 window.location.href = '/publier/people';
              } else {
-                 console.error('Failed to send content.');
+                 alert('Heure invalide, réessayez.');
              }
-         })
-         .catch(error => console.error('Error:', error));
-     }
- </script>
-<script src="script.js"></script>
+         } catch (error) {
+             console.error('Error:', error);
+             alert('Erreur réseau, réessayez.');
+         }
+     });
+  </script>
+<script src="/publier/heure/script.js"></script>
 </body>
 </html>

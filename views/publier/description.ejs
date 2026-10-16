@@ -11,22 +11,22 @@
 
   <nav class="navbar">
     <ul>
-      <a class="logo" href="../../homepage/pass.html">
+      <a class="logo" href="/">
         <p>Fi Tri9i</p>  
-        <img src="pics/car.svg" class="logo_img">
+        <img src="/publier/description/pics/car.svg" class="logo_img">
         </a>
   
         
-        <a href="../../recherche/pass.html" class="pub">
-        <img src="pics/rech.svg" class="plus">
+        <a href="/" class="pub">
+        <img src="/publier/description/pics/rech.svg" class="plus">
         <li class="Publiertrajet">Recherche</li>
       </a>
 
        <!-- this place is important it change depending on the user-->
       <div class="auth">
         <p class="user-name" id="user-name">Kadache ahmed rami</p>
-        <img src="pics/pfp.svg" class="pfp">
-        <img src="pics/arrow.svg" class="arrow" id="arrow">
+        <img src="/publier/description/pics/pfp.svg" class="pfp">
+        <img src="/publier/description/pics/arrow.svg" class="arrow" id="arrow">
       </div>
     </ul>
      
@@ -57,29 +57,27 @@
 
 
   <script>
-    document.getElementById('prochaine').addEventListener('click', () => {
-         const divContent = document.getElementById('description').value;
-         sendDataToBackend(divContent);
-     });
-
-     function sendDataToBackend(content) {
-         fetch('/description', {
-             method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({ content }),
-         })
-         .then(response => {
+    document.getElementById('prochaine').addEventListener('click', async () => {
+         const content = document.getElementById('description').value;
+         try {
+             const response = await fetch('/description', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({ content }),
+             });
              if (response.ok) {
-                 console.log('Content sent successfully!');
+                 window.location.href = '/';
              } else {
-                 console.error('Failed to send content.');
+                 alert('Description invalide, réessayez.');
              }
-         })
-         .catch(error => console.error('Error:', error));
-     }
- </script>
+         } catch (error) {
+             console.error('Error:', error);
+             alert('Erreur réseau, réessayez.');
+         }
+     });
+  </script>
 <script src="/publier/description/script.js"></script>
 </body>
 </html>

@@ -229,19 +229,19 @@ document.addEventListener('DOMContentLoaded', function() {
   btn1.addEventListener('click', function() {
     resetButtons();
     this.style.backgroundColor = '#0082AE';
-    window.location.href = '../pub1/pass.html'; 
+    window.location.href = '/publier/page1'; 
   });
 
   btn2.addEventListener('click', function() {
     resetButtons();
     this.style.backgroundColor = '#0082AE';
-    window.location.href = '../pub2/pass.html'; 
+    window.location.href = '/publier/page2'; 
   });
 
   btn3.addEventListener('click', function() {
     resetButtons();
     this.style.backgroundColor = '#0082AE';
-    window.location.href = '../pub3/pass.html'; 
+    window.location.href = '/publier/page3'; 
   });
 
   btn4.addEventListener('click', function() {
@@ -254,16 +254,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 const precedentButton = document.getElementById('prec');
-const prochaineButton = document.getElementById('suiv');
 
-// Add event listener to the "precedent" button
-precedentButton.addEventListener('click', function() {
-    // Navigate to the previous page
-    window.history.back();
-});
-
-// Add event listener to the "prochaine" button
-prochaineButton.addEventListener('click', function() {
-    // Navigate to a new page
-    window.location.href = '../calendaire'; // Replace 'new_page.html' with the URL of the new page
-});
+// "Précédent" goes back without submitting the form
+if (precedentButton) {
+  precedentButton.addEventListener('click', function() {
+      window.location.href = '/publier/page3';
+  });
+}
+// NOTE: no click handler on #suiv — the form POST /arrivee0 submits
+// and the server redirects to /publier/calendaire.

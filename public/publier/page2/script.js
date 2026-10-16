@@ -254,23 +254,19 @@ document.addEventListener('DOMContentLoaded', function() {
   btn1.addEventListener('click', function() {
     resetButtons();
     this.style.backgroundColor = '#0082AE';
-    window.location.href = '../../views/publier/page1'; 
+    window.location.href = '/publier/page1'; 
   });
 
 });
 
 
 const precedentButton = document.getElementById('prec');
-const prochaineButton = document.getElementById('suiv');
 
-// Add event listener to the "precedent" button
-precedentButton.addEventListener('click', function() {
-    // Navigate to the previous page
-    window.location.href = '../page1';
-});
-
-// Add event listener to the "prochaine" button
-prochaineButton.addEventListener('click', function() {
-    // Navigate to a new page
-    window.location.href = '../page3'; // Replace 'new_page.html' with the URL of the new page
-});
+// "Précédent" goes back without submitting the form
+if (precedentButton) {
+  precedentButton.addEventListener('click', function() {
+      window.location.href = '/publier/page1';
+  });
+}
+// NOTE: no click handler on #suiv — the form POST /depart0 submits
+// and the server redirects to /publier/page3.

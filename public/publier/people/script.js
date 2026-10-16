@@ -295,21 +295,17 @@ if(parseInt(prix.value) > 1)
 
 
 
- // Get references to the buttons
+ // Get a reference to the "precedent" button
 const precedentButton = document.getElementById('precedent');
-const prochaineButton = document.getElementById('prochaine');
 
-// Add event listener to the "precedent" button
-precedentButton.addEventListener('click', function() {
-    // Navigate to the previous page
-    window.history.back();
-});
-
-// Add event listener to the "prochaine" button
-prochaineButton.addEventListener('click', function() {
-    // Navigate to a new page
-    window.location.href = '../prix'; // Replace 'new_page.html' with the URL of the new page
-});
+// "Précédent" goes back without losing form state
+if (precedentButton) {
+  precedentButton.addEventListener('click', function() {
+      window.history.back();
+  });
+}
+// NOTE: no click handler on #prochaine here — the inline script in
+// people.ejs saves via fetch('/places') then navigates to /publier/prix.
 
 
 
@@ -345,37 +341,37 @@ document.addEventListener('DOMContentLoaded', function() {
     btn1.addEventListener('click', function() {
       resetButtons();
       this.style.backgroundColor = '#0082AE';
-      window.location.href = '../pub1/pass.html'; 
+      window.location.href = '/publier/page1'; 
     });
   
     btn2.addEventListener('click', function() {
       resetButtons();
       this.style.backgroundColor = '#0082AE';
-      window.location.href = '../pub2/pass.html'; 
+      window.location.href = '/publier/page2'; 
     });
   
     btn3.addEventListener('click', function() {
       resetButtons();
       this.style.backgroundColor = '#0082AE';
-      window.location.href = '../pub3/pass.html'; 
+      window.location.href = '/publier/page3'; 
     });
   
     btn4.addEventListener('click', function() {
       resetButtons();
       this.style.backgroundColor = '#0082AE';
-      window.location.href = '../pub4/pass.html'; 
+      window.location.href = '/publier/page4'; 
     });
   
         btn5.addEventListener('click', function() {
           resetButtons();
           this.style.backgroundColor = '#0082AE';
-          window.location.href = '../calendaire/index.html'; 
+          window.location.href = '/publier/calendaire'; 
         });
       
         btn6.addEventListener('click', function() {
           resetButtons();
           this.style.backgroundColor = '#0082AE';
-          window.location.href = '../heure/pass.html'; 
+          window.location.href = '/publier/heure'; 
         });
       
         btn7.addEventListener('click', function() {

@@ -264,44 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// Access the submit button by its ID
-const submitButton = document.getElementById('suiv');
-
-
-// Add event listener to the submit button
-submitButton.addEventListener('click', async () => {
-    try {
-        // Get the value from the input field
-        const depart = document.getElementById('commencer').value;
-
-        // Send a POST request to the server with the data
-        const response = await fetch('/submitData', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                depart: depart
-            })
-        });
-
-        if (response.ok) {
-            // Redirect to the next page after successful save
-            window.location.href = '/publier/page2';
-        } else {
-            console.error('Server error:', response.status);
-        }
-    } catch (error) {
-        console.error('Error sending data to server:', error);
-    }
-});
-
-
-
-  
-  // Add event listener to the "prochaine" button
-//   prochaineButton.addEventListener('click', function() {
-      // Navigate to a new page
-       // Replace 'new_page.html' with the URL of the new page
-//   });
+// NOTE: form POST /depart handles submit + redirect to /publier/page2.
+// The old fetch('/submitData') handler was removed (route never existed,
+// and it triple-submitted alongside the form).
   

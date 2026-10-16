@@ -91,28 +91,26 @@
 
     </main>
     <script>
-       document.getElementById('prochaine').addEventListener('click', () => {
-            const divContent = document.getElementById('dateData').innerHTML;
-            sendDataToBackend(divContent);
-        });
-
-        function sendDataToBackend(content) {
-            fetch('/date', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content }),
-            })
-            .then(response => {
+       document.getElementById('prochaine').addEventListener('click', async () => {
+            const content = document.getElementById('dateData').innerHTML;
+            try {
+                const response = await fetch('/date', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content }),
+                });
                 if (response.ok) {
-                    console.log('Content sent successfully!');
+                    window.location.href = '/publier/heure';
                 } else {
-                    console.error('Failed to send content.');
+                    alert('Date invalide, réessayez.');
                 }
-            })
-            .catch(error => console.error('Error:', error));
-        }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erreur réseau, réessayez.');
+            }
+        });
     </script>
     <script src="/publier/calendaire/script.js"></script>
   </body>
