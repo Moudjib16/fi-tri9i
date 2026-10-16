@@ -1,34 +1,34 @@
-# Fi Tri9i — Covoiturage algérien
+# Fi Tri9i — Algerian Carpooling
 
-Fi Tri9i ("sur ma route", en dialecte algérien) est une application web de covoiturage
-wilaya par wilaya : les conducteurs publient leurs trajets en 9 étapes, les passagers
-s'inscrivent, se connectent et réservent leurs places.
+Fi Tri9i ("on my way", in Algerian dialect) is a carpooling web app organized by
+wilaya: drivers publish their trips through a 9-step wizard, passengers sign up,
+log in, and book their seats.
 
-## Fonctionnalités
+## Features
 
-- Inscription / connexion avec mot de passe haché (bcrypt) et session persistante
-- Assistant de publication en 9 étapes : wilaya et commune de départ, wilaya et
-  commune d'arrivée, date, heure, nombre de places, prix, description
-- Validation côté serveur à chaque étape + réponses JSON pour les étapes AJAX
-- Pages d'erreur dédiées (email existant, utilisateur introuvable, mot de passe erroné, 404)
-- Sécurité de base : helmet, limitation de débit sur l'authentification, cookies httpOnly
+- Sign-up / login with hashed passwords (bcrypt) and persistent sessions
+- 9-step publishing wizard: departure wilaya and commune, arrival wilaya and
+  commune, date, time, seat count, price, description
+- Server-side validation at every step + JSON responses for the AJAX steps
+- Dedicated error pages (existing email, user not found, wrong password, 404)
+- Basic security: helmet, rate limiting on authentication, httpOnly cookies
 
-## Stack technique
+## Tech stack
 
 Node.js + Express 4, EJS, Mongoose (MongoDB), express-session, bcrypt, helmet,
 express-rate-limit, morgan.
 
-## Prérequis
+## Prerequisites
 
 - Node.js >= 18
-- MongoDB accessible (local ou conteneur Docker sur le port 27017)
+- A reachable MongoDB (local or Docker container on port 27017)
 
-## Installation et lancement
+## Install and run
 
 ```powershell
 npm install
 npm start       # http://localhost:3000
-npm run dev     # avec rechargement automatique (nodemon)
+npm run dev     # with auto-reload (nodemon)
 ```
 
 ## Configuration (.env)
@@ -40,30 +40,30 @@ SESSION_SECRET=change-me-in-production
 NODE_ENV=development
 ```
 
-Voir `.env.example` pour le modèle. Le fichier `.env` local est ignoré par git.
+See `.env.example` for the template. The local `.env` file is ignored by git.
 
-## Parcours de test
+## Test walkthrough
 
-1. `/signup` — créer un compte (mot de passe de 6 caractères minimum, Client=1 / Driver=2)
-2. `/login` — email inconnu → page « User Not Found », mauvais mot de passe → « Wrong Password »
-3. `/publier/page1` → … → `/publier/description` — publier un trajet (les formulaires
-   redirigent, les étapes date/heure/places/prix/description sauvegardent en AJAX)
-4. Vérifier dans MongoDB : `db.users.find()` et `db.trips.find()` sur la base `MyApp`
+1. `/signup` — create an account (password of at least 6 characters, Client=1 / Driver=2)
+2. `/login` — unknown email → "User Not Found" page, wrong password → "Wrong Password" page
+3. `/publier/page1` → … → `/publier/description` — publish a trip (form steps
+   redirect, date/time/places/price/description steps save via AJAX)
+4. Check MongoDB: `db.users.find()` and `db.trips.find()` on the `MyApp` database
 
-## Structure du projet
+## Project structure
 
 ```text
-app.js            # application Express (routes auth + wizard)
-db/db.js          # connexion Mongoose (via MONGO_URI)
-models/           # schémas User et Trip
-views/            # gabarits EJS (home, login, signup, publier/*, partials)
-public/           # CSS, JS et images par page
+app.js            # Express application (auth + wizard routes)
+db/db.js          # Mongoose connection (via MONGO_URI)
+models/           # User and Trip schemas
+views/            # EJS templates (home, login, signup, publier/*, partials)
+public/           # per-page CSS, JS and images
 ```
 
-## Feuille de route
+## Roadmap
 
-- Extraction des routes dans des routeurs Express (`routes/`)
-- Store de session persistant (connect-mongo) pour la production
-- Recherche de trajets, profils, messagerie, paiement (les menus pointent ces
-  futures pages)
-- Suite de tests automatisés (supertest) et validation avec Joi/Zod
+- Extract routes into Express routers (`routes/`)
+- Persistent session store (connect-mongo) for production
+- Trip search, profiles, messaging, payments (menus already point to these
+  future pages)
+- Automated test suite (supertest) and validation with Joi/Zod
