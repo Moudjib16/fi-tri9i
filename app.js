@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
@@ -14,14 +15,14 @@ const bodyParser = require('body-parser');
 app.set('view engine', 'ejs');
 
 // Static files
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 //session middleware to store user data
 app.use(session({
-  secret: 'ID',
+  secret: process.env.SESSION_SECRET || 'ID',
   resave: false,
   saveUninitialized: true,
 }));
@@ -428,7 +429,7 @@ app.use((req, res) => {
 
 
 // server start
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
  console.log(`App listening at port ${port}`);
