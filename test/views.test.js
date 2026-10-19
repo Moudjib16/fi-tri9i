@@ -67,6 +67,18 @@ test('trip detail shows a booking action for guests', async () => {
   assert.match(html, /Rami/);
 });
 
+test('about page renders the guest navbar and calls to action', async () => {
+  const html = await renderFile(view('a-propos.ejs'), {
+    stylesheet: 'a-propos/',
+    title: 'À propos',
+    currentUser: null,
+  });
+
+  assert.match(html, /Fi Tri9i/);
+  assert.match(html, /Rechercher un trajet/);
+  assert.match(html, /Publier un trajet/);
+});
+
 test('my trips renders published and reserved sections', async () => {
   const html = await renderFile(view('mes-trajets.ejs'), {
     stylesheet: 'mes-trajets/',

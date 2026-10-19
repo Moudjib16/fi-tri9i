@@ -489,6 +489,7 @@
   
   .shortcut
   {
+    text-decoration: none;
     font-weight: bold;
   width: 362px;
   height: 74px;

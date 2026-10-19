@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fi Tri9i | À propos</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
+  <link rel="stylesheet" href="/a-propos/style.css">
+</head>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="about-page">
+    <section class="about-hero">
+      <p class="eyebrow">À propos</p>
+      <h1>Fi Tri9i, le covoiturage à l'algérienne.</h1>
+      <p>
+        Fi Tri9i met en relation les conducteurs qui ont des places libres avec
+        les passagers qui vont dans la même direction. Publiez un trajet, trouvez
+        votre prochaine destination et partagez les frais.
+      </p>
+    </section>
+
+    <section class="about-grid">
+      <article>
+        <h2>Publiez en quelques étapes</h2>
+        <p>
+          Indiquez la wilaya et la commune de départ et d'arrivée, la date,
+          l'heure, le nombre de places et le prix. Votre trajet apparaît
+          immédiatement dans la recherche.
+        </p>
+      </article>
+      <article>
+        <h2>Réservez votre place</h2>
+        <p>
+          Filtrez par départ, arrivée, date et nombre de places. Ouvrez le trajet
+          qui vous convient et réservez votre place en un clic.
+        </p>
+      </article>
+      <article>
+        <h2>Gardez le contrôle</h2>
+        <p>
+          Retrouvez vos trajets publiés et vos réservations dans « Mes trajets ».
+          Annulez une réservation ou supprimez un trajet à tout moment.
+        </p>
+      </article>
+    </section>
+
+    <section class="about-cta">
+      <h2>Prêt à prendre la route ?</h2>
+      <div class="about-actions">
+        <a class="primary" href="/trajets">Rechercher un trajet</a>
+        <a class="secondary" href="/publier/page1">Publier un trajet</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

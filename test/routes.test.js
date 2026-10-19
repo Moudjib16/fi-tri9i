@@ -186,6 +186,10 @@ test('public pages render and guest actions redirect to login', async () => {
   assert.equal(home.status, 200);
   assert.match(await home.text(), /Fi Tri9i/);
 
+  const about = await fetch(`${baseUrl}/a-propos`);
+  assert.equal(about.status, 200);
+  assert.match(await about.text(), /Rechercher un trajet/);
+
   const listing = await fetch(`${baseUrl}/trajets?arrivee=Bejaia`);
   assert.equal(listing.status, 200);
   const listingHtml = await listing.text();

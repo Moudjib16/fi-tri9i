@@ -200,6 +200,10 @@ app.get('/home', (req, res) => {
     res.redirect('/');
   });
 
+app.get('/a-propos', (req, res) => {
+  res.render('a-propos', { stylesheet: 'a-propos/', title: 'À propos' });
+});
+
 // Trip search / listing
 app.get('/trajets', async (req, res) => {
   try {
