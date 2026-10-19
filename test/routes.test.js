@@ -52,6 +52,14 @@ function matchesTrip(candidate, filter) {
     if (key === 'places') {
       return (candidate.places || 0) >= value.$gte;
     }
+    if (key === '$expr') {
+      const [left, right] = value.$gte[0].$subtract;
+      const leftValue = candidate[left.replace('$', '')] || 0;
+      const rightValue = right.$ifNull
+        ? candidate[right.$ifNull[0].replace('$', '')] || 0
+        : right;
+      return leftValue - rightValue >= value.$gte[1];
+    }
     if (value instanceof RegExp) {
       return value.test(candidate[key] || '');
     }
@@ -225,6 +233,9 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
   const bookedHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
   assert.match(bookedHtml, /Annuler ma réservation/);
   assert.match(bookedHtml, /1 \/ 2/);
+
+  const fullSearch = await (await fetch(`${baseUrl}/trajets?places=2`)).text();
+  assert.match(fullSearch, /0 trajets trouvés/);
 
   const cancel = await fetch(`${baseUrl}/trajets/${tripId}/annuler`, {
     method: 'POST',

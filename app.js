@@ -212,7 +212,14 @@ app.get('/trajets', async (req, res) => {
     const filter = {};
     if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
     if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
-    if (places) filter.places = { $gte: places };
+    if (places) {
+      filter.$expr = {
+        $gte: [
+          { $subtract: ['$places', { $ifNull: ['$places_taken', 0] }] },
+          places,
+        ],
+      };
+    }
     if (date) {
       const displayDate = dateToDisplay(date);
       if (displayDate) filter.dateData = displayDate;
