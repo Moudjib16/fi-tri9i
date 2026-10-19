@@ -64,6 +64,10 @@ const Schema = new mongoose.Schema({
     }],
 }, { timestamps: true });
 
+Schema.index({ depart: 1, arrivee: 1 });
+Schema.index({ driver: 1 });
+Schema.index({ passengers: 1 });
+
 const trip = mongoose.models.trip || mongoose.model('trip', Schema);
 
 module.exports = trip;

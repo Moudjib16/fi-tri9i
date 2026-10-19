@@ -62,11 +62,12 @@
                 </div>
               </dl>
 
+              <% const passengerNames = passengers.filter(function (p) { return p && p.name; }).map(function (p) { return p.name; }); %>
               <p class="my-count">
-                Réservations : <strong><%= passengers.length %></strong>
-                <% if (passengers.length) { %>
+                Réservations : <strong><%= passengerNames.length %></strong>
+                <% if (passengerNames.length) { %>
                   &middot;
-                  <%= passengers.map(function (p) { return p.name; }).join(', ') %>
+                  <%= passengerNames.join(', ') %>
                 <% } %>
               </p>
 
