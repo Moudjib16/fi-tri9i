@@ -74,6 +74,17 @@ const fakeTrip = {
   findById(id) {
     return tripChain(state.trips.find((candidate) => String(candidate._id) === String(id)) || null);
   },
+  findOneAndDelete(filter) {
+    const index = state.trips.findIndex((candidate) => String(candidate._id) === String(filter._id));
+    if (index === -1) {
+      return null;
+    }
+    const driver = state.trips[index].driver ? String(state.trips[index].driver._id) : null;
+    if (filter.driver && driver !== String(filter.driver)) {
+      return null;
+    }
+    return state.trips.splice(index, 1)[0];
+  },
   findOneAndUpdate(filter, update) {
     const found = state.trips.find((candidate) => String(candidate._id) === String(filter._id));
     if (!found) {
@@ -221,6 +232,14 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
   });
   assert.equal(stepWithoutDraft.status, 302);
   assert.equal(stepWithoutDraft.headers.get('location'), '/publier/page1');
+
+  const forbiddenDelete = await fetch(`${baseUrl}/trajets/${tripId}/supprimer`, {
+    method: 'POST',
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(forbiddenDelete.status, 302);
+  assert.equal(forbiddenDelete.headers.get('location'), `/trajets/${tripId}?error=forbidden`);
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',

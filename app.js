@@ -362,6 +362,32 @@ app.post('/trajets/:id/annuler', async (req, res) => {
   }
 });
 
+// Delete a published trip (driver only)
+app.post('/trajets/:id/supprimer', requireUser, async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return tripNotFound(res);
+  }
+
+  try {
+    const deletedTrip = await trip.findOneAndDelete({
+      _id: req.params.id,
+      driver: req.session.userId,
+    });
+
+    if (!deletedTrip) {
+      return res.redirect(`/trajets/${req.params.id}?error=forbidden`);
+    }
+
+    if (String(req.session.tripId || '') === String(req.params.id)) {
+      delete req.session.tripId;
+    }
+    return res.redirect('/mes-trajets?deleted=1');
+  } catch (err) {
+    console.error(err);
+    return res.redirect(`/trajets/${req.params.id}?error=unavailable`);
+  }
+});
+
 // Trips published and booked by the current user
 app.get('/mes-trajets', async (req, res) => {
   if (!req.session.userId) {

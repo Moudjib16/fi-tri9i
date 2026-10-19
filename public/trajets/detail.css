@@ -123,6 +123,14 @@
   background: #fbd5da;
 }
 
+.btn.danger {
+  background: #8a2130;
+}
+
+.btn.danger:hover {
+  background: #6f1825;
+}
+
 .status-badge {
   display: inline-block;
   padding: 9px 16px;
