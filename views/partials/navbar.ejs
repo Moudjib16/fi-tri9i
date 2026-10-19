@@ -1,24 +1,59 @@
+<style>
+  .menu .logout-form { margin: 0; padding: 0; width: 100%; }
+  .menu button.option { border: 0; padding: 0; font-family: inherit; }
+</style>
+
 <nav class="navbar">
-    <ul>
-      <a class="logo" href="/">
-        <p>Fi Tri9i</p>  
-        <img src="/publier/page1/pics/car.svg" class="logo_img">
-        </a>
-  
-        
-        <a href="/" class="pub">
-        <img src="/publier/page1/pics/rech.svg" class="plus">
-        <li class="Publiertrajet">Recherche</li>
+  <ul>
+    <a class="logo" href="/">
+      <p>Fi Tri9i</p>
+      <img src="/home/pics/car.svg" class="logo_img">
+    </a>
+
+    <a href="/" class="pub">
+      <img src="/home/pics/rech.svg" class="plus">
+      <li class="Publiertrajet">Recherche</li>
+    </a>
+
+    <a href="/publier/page1" class="pub">
+      <img src="/home/pics/plus.svg" class="plus">
+      <li class="Publiertrajet">Publier trajet</li>
+    </a>
+
+    <div class="auth">
+      <p class="user-name" id="user-name"><%= currentUser ? currentUser.name : 'Invité' %></p>
+      <img src="/home/pics/pfp.svg" class="pfp">
+      <img src="/home/pics/arrow.svg" class="arrow" id="arrow">
+    </div>
+  </ul>
+
+  <div class="menu" id="menu">
+    <% if (currentUser) { %>
+      <a class="option" href="/publier/page1">
+        <img src="/home/pics/menu-icons/trajet.png" class="icon">
+        <p class="text">Publier un trajet</p>
+        <p class="cotation">&gt;</p>
       </a>
-
-       <!-- this place is important it change depending on the user-->
-      <div class="auth">
-        <p class="user-name" id="user-name">Kadache ahmed rami</p>
-        <img src="/publier/page1/pics/pfp.svg" class="pfp">
-        <img src="/publier/page1/pics/arrow.svg" class="arrow" id="arrow">
-      </div>
-    </ul>
-     
-    <div class="menu" id="menu"></div>
-
-  </nav>
+      <div class="line"></div>
+      <form class="logout-form" action="/logout" method="post">
+        <button type="submit" class="option">
+          <img src="/home/pics/menu-icons/log-out.png" class="icon">
+          <p class="text">Déconnexion</p>
+          <p class="cotation">&gt;</p>
+        </button>
+      </form>
+    <% } else { %>
+      <a class="option" href="/login">
+        <img src="/home/pics/menu-icons/log.png" class="icon">
+        <p class="text">Connexion</p>
+        <p class="cotation">&gt;</p>
+      </a>
+      <div class="line"></div>
+      <a class="option" href="/signup">
+        <img src="/home/pics/menu-icons/sign.png" class="icon">
+        <p class="text">Inscription</p>
+        <p class="cotation">&gt;</p>
+      </a>
+    <% } %>
+  </div>
+</nav>

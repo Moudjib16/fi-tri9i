@@ -37,6 +37,25 @@ app.use(session({
 }));
 app.use(bodyParser.json());
 
+// Expose the logged-in user to every rendered view
+app.use(async (req, res, next) => {
+  res.locals.currentUser = null;
+  if (!req.session.userId) {
+    return next();
+  }
+  try {
+    const currentUser = await user.findById(req.session.userId).select('name email userType').lean();
+    if (currentUser) {
+      res.locals.currentUser = currentUser;
+    } else {
+      delete req.session.userId;
+    }
+  } catch (err) {
+    console.error('Unable to load session user:', err.message);
+  }
+  return next();
+});
+
 // Basic brute-force protection for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

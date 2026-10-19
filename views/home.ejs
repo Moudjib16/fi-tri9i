@@ -3,33 +3,7 @@
   <%- include('./partials/head.ejs') %>
 <body>
 
-  <nav class="navbar">
-    <ul>
-      <div class="logo">
-      <p>Fi Tri9i</p>  
-      <img src="/home/pics/car.svg" class="logo_img">
-      </div>
-
-      <a href="../recherche/pass.html" class="Recherche">
-        <img src="/home/pics/rech.svg" class="rech">
-        <li class="R">Recherche</li>
-      </a>
-
-      <a href="./publier/page1" class="pub">
-        <img src="/home/pics/plus.svg" class="plus">
-        <li class="Publiertrajet">Publier trajet</li>
-      </a>
-       <!-- this place is important it change depending on the user-->
-      <div class="auth">
-        <p class="user-name" id="user-name">Kadache ahmed rami</p>
-        <img src="/home/pics/pfp.svg" class="pfp">
-        <img src="/home/pics/arrow.svg" class="arrow" id="arrow">
-      </div>
-    </ul>
-     
-    <div class="menu" id="menu"></div>
-
-  </nav>
+<%- include('./partials/navbar.ejs') %>
 
   <main class="content">
 
