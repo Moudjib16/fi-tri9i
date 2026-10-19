@@ -320,6 +320,36 @@ app.post('/trajets/:id/annuler', async (req, res) => {
   }
 });
 
+// Trips published and booked by the current user
+app.get('/mes-trajets', async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent('/mes-trajets')}`);
+  }
+
+  try {
+    const [published, booked] = await Promise.all([
+      trip.find({ driver: req.session.userId })
+        .populate('passengers', 'name')
+        .sort({ createdAt: -1 })
+        .lean(),
+      trip.find({ passengers: req.session.userId })
+        .populate('driver', 'name')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    return res.render('mes-trajets', {
+      stylesheet: 'mes-trajets/',
+      title: 'Mes trajets',
+      published,
+      booked,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ message: 'Unable to load your trips' });
+  }
+});
+
 app.get('/signup', (req, res) => {
   res.render('signup', {exist: ''});
 });

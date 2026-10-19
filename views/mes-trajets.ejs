@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fi Tri9i | Mes trajets</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
+  <link rel="stylesheet" href="/trajets/style.css">
+  <link rel="stylesheet" href="/mes-trajets/style.css">
+</head>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="page">
+    <header class="my-header">
+      <div>
+        <h1>Mes trajets</h1>
+        <p class="muted">Retrouvez les trajets que vous publiez et vos réservations.</p>
+      </div>
+      <a class="publish-link" href="/publier/page1">Publier un trajet</a>
+    </header>
+
+    <section class="my-section">
+      <div class="results-head">
+        <h2>Trajets publiés (<%= published.length %>)</h2>
+      </div>
+
+      <% if (!published.length) { %>
+        <div class="empty-state">
+          <h3>Vous n'avez publié aucun trajet.</h3>
+          <p>Publiez votre premier trajet pour partager vos places.</p>
+          <a href="/publier/page1">Publier un trajet</a>
+        </div>
+      <% } else { %>
+        <div class="trip-grid">
+          <% published.forEach(function (t) { %>
+            <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
+            <% const passengers = t.passengers || []; %>
+            <article class="trip-card">
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Places</dt>
+                  <dd><%= remaining %> / <%= t.places %></dd>
+                </div>
+              </dl>
+
+              <p class="my-count">
+                Réservations : <strong><%= passengers.length %></strong>
+                <% if (passengers.length) { %>
+                  &middot;
+                  <%= passengers.map(function (p) { return p.name; }).join(', ') %>
+                <% } %>
+              </p>
+
+              <div class="trip-card-footer">
+                <span></span>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="my-section" id="reservations">
+      <div class="results-head">
+        <h2>Mes réservations (<%= booked.length %>)</h2>
+      </div>
+
+      <% if (!booked.length) { %>
+        <div class="empty-state">
+          <h3>Vous n'avez aucune réservation.</h3>
+          <p>Parcourez les trajets disponibles et réservez votre place.</p>
+          <a href="/trajets">Rechercher un trajet</a>
+        </div>
+      <% } else { %>
+        <div class="trip-grid">
+          <% booked.forEach(function (t) { %>
+            <article class="trip-card">
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Conducteur</dt>
+                  <dd><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></dd>
+                </div>
+              </dl>
+
+              <div class="trip-card-footer">
+                <form action="/trajets/<%= t._id %>/annuler" method="post">
+                  <button type="submit" class="cancel-link">Annuler</button>
+                </form>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>
