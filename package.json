@@ -12,7 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
     "connect-mongo": "^5.1.0",
     "dotenv": "^16.4.5",
