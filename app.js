@@ -8,35 +8,70 @@ const trip = require('./models/publier');
 const bcrypt = require('bcrypt');
 const connectDB = require('./db/db');
 const session = require ('express-session');
+const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const bodyParser = require('body-parser');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = process.env.SESSION_SECRET || 'fi-tri9i-dev-secret';
+
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET must be set in production');
+}
 
 // Register view engine
 app.set('view engine', 'ejs');
+app.disable('x-powered-by');
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware
-app.use(helmet());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.urlencoded({ extended: true }));
-//session middleware to store user data
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'data:'],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+    },
+  },
+}));
+app.use(morgan(isProduction ? 'combined' : 'dev'));
+app.use(express.urlencoded({ extended: true, limit: '32kb' }));
+
+// Sessions are persisted in MongoDB so logins survive restarts
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/MyApp',
+  collectionName: 'sessions',
+  ttl: 7 * 24 * 60 * 60,
+  crypto: { secret: sessionSecret },
+});
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'ID',
+  secret: sessionSecret,
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '32kb' }));
 
 // Expose the logged-in user to every rendered view
 app.use(async (req, res, next) => {
