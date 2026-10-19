@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fi Tri9i | Détail du trajet</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
+  <link rel="stylesheet" href="/trajets/style.css">
+  <link rel="stylesheet" href="/trajets/detail.css">
+</head>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="page detail-page">
+    <a class="back-link" href="/trajets">&larr; Retour aux trajets</a>
+
+    <% if (notice) { %>
+      <div class="banner success"><%= notice %></div>
+    <% } %>
+    <% if (cancelled) { %>
+      <div class="banner success"><%= cancelled %></div>
+    <% } %>
+    <% if (error) { %>
+      <div class="banner error">
+        <% if (error === 'full') { %>Ce trajet est complet.
+        <% } else if (error === 'already') { %>Vous avez déjà réservé ce trajet.
+        <% } else if (error === 'driver') { %>Vous ne pouvez pas réserver votre propre trajet.
+        <% } else { %>Réservation impossible pour le moment.
+        <% } %>
+      </div>
+    <% } %>
+
+    <article class="detail-card">
+      <header class="detail-header">
+        <p class="detail-kicker">Trajet</p>
+        <h1>
+          <span><%= trip.depart %></span>
+          <span class="route-arrow">&rarr;</span>
+          <span><%= trip.arrivee || 'Destination à préciser' %></span>
+        </h1>
+        <% if (trip.depart0 || trip.arrivee0) { %>
+          <p class="detail-communes">
+            <%= trip.depart0 || '' %><% if (trip.depart0 && trip.arrivee0) { %> &middot; <% } %><%= trip.arrivee0 || '' %>
+          </p>
+        <% } %>
+      </header>
+
+      <dl class="trip-meta detail-meta">
+        <div>
+          <dt>Date</dt>
+          <dd><%= trip.dateData || 'À préciser' %></dd>
+        </div>
+        <div>
+          <dt>Heure</dt>
+          <dd><%= trip.time || 'À préciser' %></dd>
+        </div>
+        <div>
+          <dt>Prix par place</dt>
+          <dd><%= trip.price || 'À préciser' %></dd>
+        </div>
+        <div>
+          <dt>Places restantes</dt>
+          <dd><%= remaining %> / <%= trip.places %></dd>
+        </div>
+      </dl>
+
+      <section class="detail-section">
+        <h2>Conducteur</h2>
+        <p><%= trip.driver && trip.driver.name ? trip.driver.name : 'Anonyme' %></p>
+      </section>
+
+      <% if (trip.description) { %>
+        <section class="detail-section">
+          <h2>Description</h2>
+          <p><%= trip.description %></p>
+        </section>
+      <% } %>
+
+      <footer class="detail-actions">
+        <% if (isDriver) { %>
+          <span class="status-badge">Votre trajet</span>
+        <% } else if (isBooked) { %>
+          <form action="/trajets/<%= trip._id %>/annuler" method="post">
+            <button type="submit" class="btn secondary">Annuler ma réservation</button>
+          </form>
+        <% } else if (remaining <= 0) { %>
+          <span class="status-badge muted-badge">Trajet complet</span>
+        <% } else if (!currentUser) { %>
+          <a class="btn" href="/login?next=<%= encodeURIComponent('/trajets/' + trip._id) %>">Se connecter pour réserver</a>
+        <% } else { %>
+          <form action="/trajets/<%= trip._id %>/reserver" method="post">
+            <button type="submit" class="btn">Réserver une place</button>
+          </form>
+        <% } %>
+      </footer>
+    </article>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

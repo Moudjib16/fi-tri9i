@@ -90,10 +90,13 @@
                 <p class="trip-description"><%= t.description %></p>
               <% } %>
 
-              <p class="trip-driver">
-                Conducteur :
-                <strong><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></strong>
-              </p>
+              <div class="trip-card-footer">
+                <p class="trip-driver">
+                  Conducteur :
+                  <strong><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></strong>
+                </p>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+              </div>
             </article>
           <% }); %>
         </div>

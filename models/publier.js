@@ -58,6 +58,10 @@ const Schema = new mongoose.Schema({
         ref: 'User',
         default: null
     },
+    passengers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
 }, { timestamps: true });
 
 const trip = mongoose.models.trip || mongoose.model('trip', Schema);

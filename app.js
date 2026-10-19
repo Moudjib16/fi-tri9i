@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
 const user = require('./models/signup');
 const trip = require('./models/publier');
 const bcrypt = require('bcrypt');
@@ -137,7 +138,7 @@ app.post('/login', async (req,res) =>{
     const passwordMatch = await bcrypt.compare(password, check.password);
     if(passwordMatch){
       req.session.userId = check._id;
-      return res.redirect('/');
+      return res.redirect(safeRedirect(req.body.next) || '/');
     }
     else{
       return res.status(401).render('login/wrongpass');
@@ -201,12 +202,130 @@ app.get('/trajets', async (req, res) => {
   }
 });
 
+// Trip details
+app.get('/trajets/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return tripNotFound(res);
+  }
+
+  try {
+    const foundTrip = await trip.findById(req.params.id).populate('driver', 'name').lean();
+    if (!foundTrip) {
+      return tripNotFound(res);
+    }
+
+    const userId = req.session.userId ? String(req.session.userId) : null;
+    const passengerIds = (foundTrip.passengers || []).map(String);
+    const driverId = foundTrip.driver ? String(foundTrip.driver._id) : null;
+    const isDriver = Boolean(userId && driverId === userId);
+    const isBooked = Boolean(userId && passengerIds.includes(userId));
+    const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
+
+    return res.render('trajet', {
+      stylesheet: 'trajet/',
+      title: 'Détail du trajet',
+      trip: foundTrip,
+      isDriver,
+      isBooked,
+      remaining,
+      notice: req.query.booked ? 'Votre place est réservée.' : '',
+      cancelled: req.query.cancelled ? 'Votre réservation a été annulée.' : '',
+      error: req.query.error || '',
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ message: 'Unable to load trip' });
+  }
+});
+
+// Reserve a seat
+app.post('/trajets/:id/reserver', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.redirect('/trajets');
+  }
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent(`/trajets/${req.params.id}`)}`);
+  }
+
+  const tripUrl = `/trajets/${req.params.id}`;
+
+  try {
+    const updatedTrip = await trip.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        driver: { $ne: req.session.userId },
+        passengers: { $ne: req.session.userId },
+        $expr: { $lt: [{ $ifNull: ['$places_taken', 0] }, '$places'] },
+      },
+      {
+        $push: { passengers: req.session.userId },
+        $inc: { places_taken: 1 },
+      },
+      { new: true }
+    );
+
+    if (updatedTrip) {
+      return res.redirect(`${tripUrl}?booked=1`);
+    }
+
+    const foundTrip = await trip.findById(req.params.id).lean();
+    if (!foundTrip) {
+      return tripNotFound(res);
+    }
+    if (foundTrip.driver && String(foundTrip.driver) === String(req.session.userId)) {
+      return res.redirect(`${tripUrl}?error=driver`);
+    }
+    if ((foundTrip.passengers || []).map(String).includes(String(req.session.userId))) {
+      return res.redirect(`${tripUrl}?error=already`);
+    }
+    if ((foundTrip.places_taken || 0) >= (foundTrip.places || 0)) {
+      return res.redirect(`${tripUrl}?error=full`);
+    }
+    return res.redirect(`${tripUrl}?error=unavailable`);
+  } catch (err) {
+    console.error(err);
+    return res.redirect(`${tripUrl}?error=unavailable`);
+  }
+});
+
+// Cancel a reservation
+app.post('/trajets/:id/annuler', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.redirect('/trajets');
+  }
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent(`/trajets/${req.params.id}`)}`);
+  }
+
+  const tripUrl = `/trajets/${req.params.id}`;
+
+  try {
+    const updatedTrip = await trip.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        passengers: req.session.userId,
+        places_taken: { $gt: 0 },
+      },
+      {
+        $pull: { passengers: req.session.userId },
+        $inc: { places_taken: -1 },
+      },
+      { new: true }
+    );
+
+    return res.redirect(updatedTrip ? `${tripUrl}?cancelled=1` : `${tripUrl}?error=unavailable`);
+  } catch (err) {
+    console.error(err);
+    return res.redirect(`${tripUrl}?error=unavailable`);
+  }
+});
+
 app.get('/signup', (req, res) => {
   res.render('signup', {exist: ''});
 });
 
 app.get('/login', (req, res) => {
-  res.render('login');
+  res.render('login', { next: safeRedirect(req.query.next) });
 });
 
 
@@ -229,6 +348,14 @@ async function getSessionTrip(req) {
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function tripNotFound(res) {
+  return res.status(404).render('404', { stylesheet: '404/', title: '404' });
+}
+
+function safeRedirect(value) {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '';
 }
 
 function escapeRegex(value) {
