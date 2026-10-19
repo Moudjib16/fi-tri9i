@@ -79,6 +79,17 @@ test('about page renders the guest navbar and calls to action', async () => {
   assert.match(html, /Publier un trajet/);
 });
 
+test('time step exposes every selectable departure time', async () => {
+  const html = await renderFile(view('publier/heure.ejs'), {
+    currentUser: null,
+  });
+
+  const options = html.match(/class="time-option"/g) || [];
+  assert.equal(options.length, 108);
+  assert.match(html, /À quelle heure partez-vous/);
+  assert.doesNotMatch(html, /id="time-option"/);
+});
+
 test('my trips renders published and reserved sections', async () => {
   const html = await renderFile(view('mes-trajets.ejs'), {
     stylesheet: 'mes-trajets/',

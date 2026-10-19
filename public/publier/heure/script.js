@@ -23,7 +23,7 @@ arrow.addEventListener('click',function(){
 })
 
 let clock =document.getElementById("clock");
-let time = document.querySelectorAll('#time-option');
+let time = document.querySelectorAll('.time-option');
 let arr = document.getElementById('arr');
 let white = document.getElementById('white');
 let prix= document.getElementById("prix");
