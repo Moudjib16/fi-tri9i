@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const bodyParser = require('body-parser');
+const { pickString, safeRedirect, escapeRegex, dateToDisplay } = require('./lib/validation');
 
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET || 'fi-tri9i-dev-secret';
@@ -29,7 +30,7 @@ if (isProduction) {
 }
 
 // Static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { redirect: false }));
 
 // Middleware
 app.use(helmet({
@@ -52,12 +53,14 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 app.use(express.urlencoded({ extended: true, limit: '32kb' }));
 
 // Sessions are persisted in MongoDB so logins survive restarts
-const sessionStore = MongoStore.create({
-  mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/MyApp',
-  collectionName: 'sessions',
-  ttl: 7 * 24 * 60 * 60,
-  crypto: { secret: sessionSecret },
-});
+const sessionStore = process.env.NODE_ENV === 'test'
+  ? undefined
+  : MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/MyApp',
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60,
+    crypto: { secret: sessionSecret },
+  });
 
 app.use(session({
   secret: sessionSecret,
@@ -102,9 +105,6 @@ const authLimiter = rateLimit({
 });
 app.use('/login', authLimiter);
 app.use('/signup', authLimiter);
-
-// Connect to MongoDB
-connectDB();
 
 // Routes
 app.get('/', (req, res) => {
@@ -411,36 +411,8 @@ async function getSessionTrip(req) {
   return { existingTrip };
 }
 
-function pickString(value) {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
 function tripNotFound(res) {
   return res.status(404).render('404', { stylesheet: '404/', title: '404' });
-}
-
-function safeRedirect(value) {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '';
-}
-
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// The wizard stores dates as "12 December 2024"
-function dateToDisplay(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return '';
-  }
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-  return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 // POST request to save a new trip and store its ID in the session
@@ -720,8 +692,13 @@ app.use((err, req, res, next) => {
 
 
 // server start
-const port = process.env.PORT || 3000;
+if (require.main === module) {
+  connectDB();
+  const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
- console.log(`App listening at port ${port}`);
-});
+  app.listen(port, () => {
+    console.log(`App listening at port ${port}`);
+  });
+}
+
+module.exports = app;
