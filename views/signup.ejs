@@ -4,43 +4,43 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Registration or Sign Up form in HTML CSS | CodingLab </title> 
+    <title>Fi Tri9i | Inscription</title>
     <link rel="stylesheet" href="/signup/style.css">
    </head>
 <body>
   <div class="wrapper">
-    <h2>Registration</h2> 
-    <form action="/signup" , method="post">
+    <h2>Inscription</h2>
+    <form action="/signup" method="post">
       <div class="input-box">
-        <input type="text" name="name" placeholder="Enter your name" required>
+        <input type="text" name="name" placeholder="Votre nom" required>
       </div>
       <div class="input-box">
-        <input type="text" name="email" placeholder="Enter your email" required>
+        <input type="email" name="email" placeholder="Votre email" required>
       </div>
       <%= exist %>
       <div class="input-box">
-        <input type="password" name="password" placeholder="Create password" required>
+        <input type="password" name="password" placeholder="Créer un mot de passe" minlength="6" required>
       </div>
       <div class="input-box">
-        <input type="password" name="confirm-password" placeholder="Confirm password" required>
+        <input type="password" name="confirm-password" placeholder="Confirmer le mot de passe" minlength="6" required>
       </div>
       <div class="input-box">
-        <label for="userType">Select User Type:</label>
+        <label for="userType">Je suis :</label>
         <select id="userType" name="userType" required>
-        <option value="1">Client</option>
-        <option value="2">Driver</option>
+        <option value="1">Passager</option>
+        <option value="2">Conducteur</option>
         </select>
       </div>
       <br>
       <div class="policy">
-        <input type="checkbox">
-        <h3>I accept all terms & condition</h3>
+        <input type="checkbox" required>
+        <h3>J'accepte les conditions d'utilisation</h3>
       </div>
       <div class="input-box button">
-        <input type="Submit" value="Register Now">
+        <input type="Submit" value="S'inscrire">
       </div>
       <div class="text">
-        <h3>Already have an account? <a href="/login">Login now</a></h3>
+        <h3>Déjà un compte ? <a href="/login">Se connecter</a></h3>
       </div>
     </form>
   </div>

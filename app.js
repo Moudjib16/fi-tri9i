@@ -415,8 +415,22 @@ function tripNotFound(res) {
   return res.status(404).render('404', { stylesheet: '404/', title: '404' });
 }
 
+function requireUser(req, res, next) {
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent(req.originalUrl)}`);
+  }
+  return next();
+}
+
+function requireDraftTrip(req, res, next) {
+  if (!req.session.tripId) {
+    return res.redirect('/publier/page1');
+  }
+  return next();
+}
+
 // POST request to save a new trip and store its ID in the session
-app.post('/depart', async (req, res) => {
+app.post('/depart', requireUser, async (req, res) => {
   try {
     const depart = pickString(req.body.depart || req.body.content);
     if (!depart) {
@@ -444,7 +458,7 @@ app.post('/depart', async (req, res) => {
 });
 
 // POST request to update the 'depart0' property of the trip using the stored ID
-app.post('/depart0', async (req, res) => {
+app.post('/depart0', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const depart0 = pickString(req.body.depart0 ?? req.body.content);
     if (!depart0) {
@@ -471,7 +485,7 @@ app.post('/depart0', async (req, res) => {
   }
 });
 
-app.post('/arrivee', async (req, res) => {
+app.post('/arrivee', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const arrivee = pickString(req.body.arrivee ?? req.body.content);
     if (!arrivee) {
@@ -498,7 +512,7 @@ app.post('/arrivee', async (req, res) => {
   }
 });
 
-app.post('/arrivee0', async (req, res) => {
+app.post('/arrivee0', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const arrivee0 = pickString(req.body.arrivee0 ?? req.body.content);
     if (!arrivee0) {
@@ -525,7 +539,7 @@ app.post('/arrivee0', async (req, res) => {
   }
 });
 
-app.post('/date', async (req, res) => {
+app.post('/date', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const dateData = pickString(req.body.content ?? req.body.dateData ?? req.body.date);
     if (!dateData) {
@@ -550,7 +564,7 @@ app.post('/date', async (req, res) => {
   }
 });
 
-app.post('/time', async (req, res) => {
+app.post('/time', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const time = pickString(req.body.content ?? req.body.time);
     if (!time) {
@@ -571,7 +585,7 @@ app.post('/time', async (req, res) => {
   }
 });
 
-app.post('/places', async (req, res) => {
+app.post('/places', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const rawPlaces = req.body.content ?? req.body.places;
     const places = Number(rawPlaces);
@@ -593,7 +607,7 @@ app.post('/places', async (req, res) => {
   }
 });
 
-app.post('/price', async (req, res) => {
+app.post('/price', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const price = pickString(req.body.content ?? req.body.price);
     if (!price) {
@@ -614,7 +628,7 @@ app.post('/price', async (req, res) => {
   }
 });
 
-app.post('/description', async (req, res) => {
+app.post('/description', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const description = pickString(req.body.content ?? req.body.description);
     if (description.length > 1000) {
@@ -638,39 +652,39 @@ app.post('/description', async (req, res) => {
 
 //'Publier' pages routing
 
-app.get('/publier/page1', (req, res) => {
+app.get('/publier/page1', requireUser, (req, res) => {
   res.render('publier/page1');
 });
 
-app.get('/publier/page2', (req, res) => {
+app.get('/publier/page2', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/page2');
 });
 
-app.get('/publier/page3', (req, res) => {
+app.get('/publier/page3', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/page3');
 });
 
-app.get('/publier/page4', (req, res) => {
+app.get('/publier/page4', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/page4');
 });
 
-app.get('/publier/calendaire', (req, res) => {
+app.get('/publier/calendaire', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/calendaire');
 });
 
-app.get('/publier/heure', (req, res) => {
+app.get('/publier/heure', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/heure');
 });
 
-app.get('/publier/people', (req, res) => {
+app.get('/publier/people', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/people');
 });
 
-app.get('/publier/prix', (req, res) => {
+app.get('/publier/prix', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/prix');
 });
 
-app.get('/publier/description', (req, res) => {
+app.get('/publier/description', requireUser, requireDraftTrip, (req, res) => {
   res.render('publier/description');
 });
 

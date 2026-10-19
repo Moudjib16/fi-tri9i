@@ -187,6 +187,10 @@ test('public pages render and guest actions redirect to login', async () => {
   const mine = await fetch(`${baseUrl}/mes-trajets`, { redirect: 'manual' });
   assert.equal(mine.status, 302);
   assert.equal(mine.headers.get('location'), '/login?next=%2Fmes-trajets');
+
+  const publish = await fetch(`${baseUrl}/publier/page1`, { redirect: 'manual' });
+  assert.equal(publish.status, 302);
+  assert.equal(publish.headers.get('location'), '/login?next=%2Fpublier%2Fpage1');
 });
 
 test('a logged-in passenger can reserve and cancel a seat', async () => {
@@ -199,6 +203,16 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
   assert.equal(login.status, 302);
   const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
   assert.match(cookie, /^connect\.sid=/);
+
+  const publish = await fetch(`${baseUrl}/publier/page1`, { headers: { cookie } });
+  assert.equal(publish.status, 200);
+
+  const stepWithoutDraft = await fetch(`${baseUrl}/publier/page2`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(stepWithoutDraft.status, 302);
+  assert.equal(stepWithoutDraft.headers.get('location'), '/publier/page1');
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',
