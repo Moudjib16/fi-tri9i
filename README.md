@@ -12,6 +12,7 @@ log in, and book their seats.
 - Trip search by departure, arrival, date and available seats
 - Trip details with seat reservation and cancellation
 - "My trips" dashboard: published rides and reservations in one place
+- About page, session-aware navbar and working footer/shortcut links
 - Server-side validation at every step + JSON responses for the AJAX steps
 - Dedicated error pages (existing email, user not found, wrong password, 404)
 - Security: helmet with CSP, rate limiting on authentication, httpOnly cookies
@@ -79,6 +80,6 @@ test/             # node:test suites (validation, views, booking flow)
 ## Roadmap
 
 - Extract routes into Express routers (`routes/`)
-- Trip editing/deletion and driver profiles
+- Trip editing and driver profiles
 - Messaging, payments, email verification, password reset
 - Replace `'unsafe-inline'` in the CSP by moving inline page scripts to files
