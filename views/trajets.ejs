@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fi Tri9i | Trajets</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
+  <link rel="stylesheet" href="/trajets/style.css">
+</head>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="page">
+    <section class="search-panel">
+      <div>
+        <h1>Trajets disponibles</h1>
+        <p class="muted">Trouvez votre prochain covoiturage en Algérie.</p>
+      </div>
+
+      <form class="trip-search" action="/trajets" method="get">
+        <label>
+          <span>Départ</span>
+          <input type="text" name="depart" value="<%= filters.depart %>" placeholder="ex : Alger">
+        </label>
+        <label>
+          <span>Arrivée</span>
+          <input type="text" name="arrivee" value="<%= filters.arrivee %>" placeholder="ex : Bejaia">
+        </label>
+        <label>
+          <span>Date</span>
+          <input type="date" name="date" value="<%= filters.date %>">
+        </label>
+        <label>
+          <span>Places</span>
+          <input type="number" name="places" min="1" max="8" value="<%= filters.places %>" placeholder="1">
+        </label>
+        <button type="submit">Rechercher</button>
+      </form>
+    </section>
+
+    <section class="results">
+      <div class="results-head">
+        <h2><%= trips.length %> trajet<%= trips.length === 1 ? '' : 's' %> trouvé<%= trips.length === 1 ? '' : 's' %></h2>
+        <a class="publish-link" href="/publier/page1">Publier un trajet</a>
+      </div>
+
+      <% if (!trips.length) { %>
+        <div class="empty-state">
+          <h3>Aucun trajet ne correspond à votre recherche.</h3>
+          <p>Essayez un autre itinéraire ou publiez votre propre trajet.</p>
+          <a href="/trajets">Réinitialiser la recherche</a>
+        </div>
+      <% } else { %>
+        <div class="trip-grid">
+          <% trips.forEach(function (t) { %>
+            <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
+            <article class="trip-card">
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <% if (t.depart0 || t.arrivee0) { %>
+                <p class="trip-communes">
+                  <%= t.depart0 || '' %><% if (t.depart0 && t.arrivee0) { %> &middot; <% } %><%= t.arrivee0 || '' %>
+                </p>
+              <% } %>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Places</dt>
+                  <dd><%= remaining %> / <%= t.places %></dd>
+                </div>
+              </dl>
+
+              <% if (t.description) { %>
+                <p class="trip-description"><%= t.description %></p>
+              <% } %>
+
+              <p class="trip-driver">
+                Conducteur :
+                <strong><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></strong>
+              </p>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

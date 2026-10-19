@@ -12,22 +12,22 @@
       <div class="empty"></div>
       <div class="part1">Trouver Votre prochaine Destination</div>
 
-      <div class="search">
+      <form class="search" action="/trajets" method="get">
 
         <img src="/home/pics/pos.svg" class="pos">
-        <input type="text" class="input1" id="input1" placeholder="Où souhaitez-vous aller ?">
+        <input type="text" class="input1" id="input1" name="arrivee" placeholder="Où souhaitez-vous aller ?">
         <div class="vertical"></div>
       
         <img src="/home/pics/cal.svg" class="cal">
-        <input type="date" class="input2" id="input2" placeholder="Aujourd'hui">
+        <input type="date" class="input2" id="input2" name="date" placeholder="Aujourd'hui">
         <div class="vertical"></div>
 
 
         <img src="/home/pics/pp.svg" class="pp">
-        <input type="number" class="input3" id="input3" placeholder="01">
+        <input type="number" class="input3" id="input3" name="places" min="1" max="8" placeholder="01">
        
-        <button class="look" id="look">Recherche</button>
-      </div>
+        <button class="look" id="look" type="submit">Recherche</button>
+      </form>
 
     </div>
 

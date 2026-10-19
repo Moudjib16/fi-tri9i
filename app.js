@@ -164,6 +164,43 @@ app.get('/home', (req, res) => {
     res.redirect('/');
   });
 
+// Trip search / listing
+app.get('/trajets', async (req, res) => {
+  try {
+    const depart = pickString(req.query.depart);
+    const arrivee = pickString(req.query.arrivee);
+    const date = pickString(req.query.date);
+    const requestedPlaces = Number(req.query.places);
+    const places = Number.isInteger(requestedPlaces) && requestedPlaces > 0 ? requestedPlaces : '';
+
+    const filter = {};
+    if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
+    if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
+    if (places) filter.places = { $gte: places };
+    if (date) {
+      const displayDate = dateToDisplay(date);
+      if (displayDate) filter.dateData = displayDate;
+    }
+
+    const trips = await trip
+      .find(filter)
+      .populate('driver', 'name')
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    return res.render('trajets', {
+      stylesheet: 'trajets/',
+      title: 'Trajets',
+      trips,
+      filters: { depart, arrivee, date, places },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ message: 'Unable to load trips' });
+  }
+});
+
 app.get('/signup', (req, res) => {
   res.render('signup', {exist: ''});
 });
@@ -192,6 +229,26 @@ async function getSessionTrip(req) {
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// The wizard stores dates as "12 December 2024"
+function dateToDisplay(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return '';
+  }
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 // POST request to save a new trip and store its ID in the session
