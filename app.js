@@ -367,9 +367,12 @@ app.post('/trajets/:id/annuler', async (req, res) => {
 });
 
 // Delete a published trip (driver only)
-app.post('/trajets/:id/supprimer', requireUser, async (req, res) => {
+app.post('/trajets/:id/supprimer', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return tripNotFound(res);
+  }
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent(`/trajets/${req.params.id}`)}`);
   }
 
   try {
@@ -459,6 +462,13 @@ function requireUser(req, res, next) {
   return next();
 }
 
+function requirePublishUser(req, res, next) {
+  if (!req.session.userId) {
+    return res.redirect('/login?next=%2Fpublier%2Fpage1');
+  }
+  return next();
+}
+
 function requireDraftTrip(req, res, next) {
   if (!req.session.tripId) {
     return res.redirect('/publier/page1');
@@ -467,7 +477,7 @@ function requireDraftTrip(req, res, next) {
 }
 
 // POST request to save a new trip and store its ID in the session
-app.post('/depart', requireUser, async (req, res) => {
+app.post('/depart', requirePublishUser, async (req, res) => {
   try {
     const depart = pickString(req.body.depart || req.body.content);
     if (!depart) {

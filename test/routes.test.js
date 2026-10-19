@@ -214,6 +214,15 @@ test('public pages render and guest actions redirect to login', async () => {
   const publish = await fetch(`${baseUrl}/publier/page1`, { redirect: 'manual' });
   assert.equal(publish.status, 302);
   assert.equal(publish.headers.get('location'), '/login?next=%2Fpublier%2Fpage1');
+
+  const depart = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ depart: 'Alger' }),
+    redirect: 'manual',
+  });
+  assert.equal(depart.status, 302);
+  assert.equal(depart.headers.get('location'), '/login?next=%2Fpublier%2Fpage1');
 });
 
 test('a logged-in passenger can reserve and cancel a seat', async () => {
