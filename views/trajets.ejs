@@ -1,40 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fi Tri9i | Trajets</title>
-  <link rel="stylesheet" href="/shared/navbar.css">
-  <link rel="stylesheet" href="/trajets/style.css">
-</head>
+<%- include('./partials/head.ejs', { title: 'Trajets' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <main class="page">
-    <section class="search-panel">
+  <main class="site-main">
+    <header class="page-hero">
       <div>
-        <h1>Trajets disponibles</h1>
-        <p class="muted">Trouvez votre prochain covoiturage en Algérie.</p>
+        <p class="eyebrow">Trouver un trajet</p>
+        <h1>Votre prochaine destination.</h1>
+        <p>Comparez les trajets publiés par la communauté et réservez la place qui vous convient.</p>
       </div>
+      <a class="btn secondary" href="/publier/page1">Publier un trajet</a>
+    </header>
 
+    <section class="search-card" aria-label="Filtrer les trajets">
       <form class="trip-search" action="/trajets" method="get">
-        <label>
+        <label class="field">
           <span>Départ</span>
           <input type="text" name="depart" value="<%= filters.depart %>" placeholder="ex : Alger">
         </label>
-        <label>
+        <label class="field">
           <span>Arrivée</span>
-          <input type="text" name="arrivee" value="<%= filters.arrivee %>" placeholder="ex : Bejaia">
+          <input type="text" name="arrivee" value="<%= filters.arrivee %>" placeholder="ex : Béjaïa">
         </label>
-        <label>
+        <label class="field">
           <span>Date</span>
           <input type="date" name="date" value="<%= filters.date %>">
         </label>
-        <label>
+        <label class="field">
           <span>Places</span>
           <input type="number" name="places" min="1" max="5" value="<%= filters.places %>" placeholder="1">
         </label>
-        <label>
+        <label class="field">
           <span>Trier par</span>
           <select name="sort">
             <option value="soonest" <%= filters.sort === 'soonest' ? 'selected' : '' %>>Départ le plus proche</option>
@@ -42,26 +40,27 @@
             <option value="recent" <%= filters.sort === 'recent' ? 'selected' : '' %>>Publication récente</option>
           </select>
         </label>
-        <button type="submit">Rechercher</button>
+        <button class="btn" type="submit">Rechercher</button>
       </form>
     </section>
 
     <section class="results">
       <div class="results-head">
         <h2><%= pagination.total %> trajet<%= pagination.total === 1 ? '' : 's' %> trouvé<%= pagination.total === 1 ? '' : 's' %></h2>
-        <a class="publish-link" href="/publier/page1">Publier un trajet</a>
+        <a class="publish-link" href="/trajets">Réinitialiser les filtres</a>
       </div>
 
       <% if (!trips.length) { %>
         <div class="empty-state">
           <h3>Aucun trajet ne correspond à votre recherche.</h3>
-          <p>Essayez un autre itinéraire ou publiez votre propre trajet.</p>
-          <a href="/trajets">Réinitialiser la recherche</a>
+          <p>Essayez un autre itinéraire, une autre date, ou publiez votre propre trajet.</p>
+          <a class="btn" href="/publier/page1">Publier un trajet</a>
         </div>
       <% } else { %>
         <div class="trip-grid">
           <% trips.forEach(function (t) { %>
             <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
+            <% const driverName = t.driver && t.driver.name ? t.driver.name : 'Anonyme'; %>
             <article class="trip-card">
               <div class="trip-route">
                 <span><%= t.depart %></span>
@@ -100,10 +99,10 @@
 
               <div class="trip-card-footer">
                 <p class="trip-driver">
-                  Conducteur :
-                  <strong><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></strong>
+                  <span class="avatar" aria-hidden="true"><%= driverName.trim().charAt(0) %></span>
+                  <strong><%= driverName %></strong>
                 </p>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
               </div>
             </article>
           <% }); %>
@@ -129,6 +128,7 @@
     </section>
   </main>
 
+  <%- include('./partials/footer.ejs') %>
   <script src="/shared/navbar.js"></script>
 </body>
 </html>

@@ -1,53 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/publier/page1/style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-  <title >Fi Tri9i</title>
-</head>
+<%- include('../partials/head.ejs', { title: 'Publier un trajet' }) %>
 <body>
-
- <div id="page1">
   <%- include('../partials/navbar.ejs') %>
 
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 1 }) %>
 
-  <main class="content">
-    <% if (trip) { %>
-      <p class="draft-resume" style="text-align: center; margin: 0 0 16px; color: #046076; font-weight: 600;">
-        Vous avez un brouillon en cours.
-        <a href="/publier/continuer" style="color: #0082ae; text-decoration: underline;">Reprendre là où vous en étiez</a>
-      </p>
-    <% } %>
-    <form action="/depart" method="post">
-      <%- include('../partials/csrf-input.ejs') %>
-  
-      <div class="row"> 
-        <button id="btn1" ></button>
-        <button id="btn2" ></button>
-        <button id="btn3" ></button>
-        <button id="btn4" ></button>
-        <button id="btn5" ></button>
-        <button id="btn6" ></button>
-        <button id="btn7" ></button>
-        <button id="btn8" ></button>
-        <button id="btn9" ></button>
-      </div>
-   
+    <section class="wizard-card">
+      <p class="eyebrow">Publier un trajet</p>
+      <h1 class="wizard-title">D'où partez-vous ?</h1>
+      <p class="wizard-help">Commencez par la wilaya de départ. Vous pourrez préciser la commune à l'étape suivante.</p>
 
-    <div class="wilaya">Quelle est la wilaya de départ ?</div>
-    
-    <input type="text" name="depart" id="commencer" placeholder="  ex : Adrar" value="<%= trip && trip.depart ? trip.depart : '' %>" required>
-    <button id="suiv" type="submit">Suivant</button>
-    <img src="/publier/page1/pics/Group (1).png" alt="" id="hi" height="400px">
-    </form>
+      <% if (trip) { %>
+        <p class="draft-resume">
+          Vous avez un brouillon en cours.
+          <a href="/publier/continuer">Reprendre là où vous en étiez</a>
+        </p>
+      <% } %>
+
+      <form class="wizard-form" action="/depart" method="post">
+        <%- include('../partials/csrf-input.ejs') %>
+        <label class="field">
+          <span>Wilaya de départ</span>
+          <input type="text" name="depart" id="commencer" placeholder="ex : Alger" value="<%= trip && trip.depart ? trip.depart : '' %>" required autofocus>
+        </label>
+        <div class="wizard-actions">
+          <a class="btn ghost" href="/mes-trajets">Annuler</a>
+          <button class="btn" id="suiv" type="submit">Continuer &rarr;</button>
+        </div>
+      </form>
+    </section>
   </main>
 
-
- </div>
-
-<script src="/publier/page1/script.js"></script>
-<script src="/shared/navbar.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

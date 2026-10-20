@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fi Tri9i | Email déjà utilisé</title>
-  <link rel="stylesheet" href="/shared/navbar.css">
-  <link rel="stylesheet" href="/signup/exist.css">
-  <link rel="stylesheet" href="/shared/auth.css">
-</head>
+<%- include('../partials/head.ejs', { title: 'Email déjà utilisé' }) %>
 <body>
   <%- include('../partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2>Cet email est déjà utilisé</h2>
-    <p>L'email fourni est déjà enregistré. Choisissez un autre email ou <a href="/">retournez à l'accueil</a>.</p>
-    <a href="/signup" class="button">Retour à l'inscription</a>
-  </div>
+  <main class="status-page">
+    <div class="status-card">
+      <span class="status-code">@</span>
+      <h1>Cet email est déjà utilisé</h1>
+      <p>L'email fourni est déjà enregistré. Choisissez une autre adresse ou connectez-vous à votre compte.</p>
+      <div class="status-actions">
+        <a class="btn" href="/signup">Retour à l'inscription</a>
+        <a class="btn secondary" href="/login">Se connecter</a>
+      </div>
+    </div>
+  </main>
 
   <script src="/shared/navbar.js"></script>
 </body>

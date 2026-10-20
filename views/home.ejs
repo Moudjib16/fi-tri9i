@@ -1,123 +1,225 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <%- include('./partials/head.ejs') %>
+<%- include('./partials/head.ejs', { title: 'Covoiturage en Algérie' }) %>
 <body>
+  <%- include('./partials/navbar.ejs') %>
 
-<%- include('./partials/navbar.ejs') %>
+  <main>
+    <div class="site-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Covoiturage entre Algériens</p>
+          <h1>La route est meilleure quand elle est partagée.</h1>
+          <p class="lead">
+            Trouvez une place libre, publiez votre prochain trajet et voyagez
+            partout en Algérie en partageant les frais. Simple, local, humain.
+          </p>
 
-  <main class="content">
+          <form class="hero-search" action="/trajets" method="get">
+            <div class="search-grid">
+              <label class="field">
+                <span>Départ</span>
+                <input type="text" name="depart" placeholder="Alger" autocomplete="address-level2">
+              </label>
+              <label class="field">
+                <span>Arrivée</span>
+                <input type="text" name="arrivee" placeholder="Béjaïa" autocomplete="address-level2">
+              </label>
+              <label class="field">
+                <span>Date</span>
+                <input type="date" name="date">
+              </label>
+              <label class="field">
+                <span>Places</span>
+                <input type="number" name="places" min="1" max="5" placeholder="1">
+              </label>
+              <button class="btn" type="submit">Rechercher</button>
+            </div>
+          </form>
 
-   
-    <div class="box">
-      <div class="empty"></div>
-      <div class="part1">Trouvez votre prochaine destination</div>
-
-      <form class="search" action="/trajets" method="get">
-
-        <img src="/home/pics/pos.svg" class="pos">
-        <input type="text" class="input1" id="input1" name="arrivee" placeholder="Où souhaitez-vous aller ?">
-        <div class="vertical"></div>
-      
-        <img src="/home/pics/cal.svg" class="cal">
-        <input type="date" class="input2" id="input2" name="date" placeholder="Aujourd'hui">
-        <div class="vertical"></div>
-
-
-        <img src="/home/pics/pp.svg" class="pp">
-        <input type="number" class="input3" id="input3" name="places" min="1" max="5" placeholder="01">
-       
-        <button class="look" id="look" type="submit">Rechercher</button>
-      </form>
-
-    </div>
-
-
-    <div class="sanction0">
-      <h1 class="subtit0">Pourquoi nous choisir ?</h1>
-      
-      <div class="subsac0">
-        <div class="subbox0">
-          <img class="subimg" src="/home/pics/coins.svg">
-          <h1 class="tit0">Vos trajets préférés à petits prix</h1>
-          <p class="tex0">Où que vous alliez, trouvez le trajet idéal parmi notre large choix de covoiturages.</p>
+          <ul class="trust-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+              Trajets vérifiés
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+              Sans frais de service
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+              Communauté locale
+            </li>
+          </ul>
         </div>
 
-        <div class="subbox1">
-          <img class="subimg" src="/home/pics/shield.svg">
-          <h1 class="tit1">Voyagez en toute confiance</h1>
-          <p class="tex1">Des profils vérifiés et des trajets publiés par la communauté pour voyager sereinement.</p>
+        <div class="hero-visual">
+          <div class="ride-preview" aria-label="Aperçu d'un trajet">
+            <div class="ride-preview-top">
+              <span class="ride-label">Prochain départ</span>
+              <span class="pill">3 places libres</span>
+            </div>
+
+            <div class="ride-route">
+              <div class="ride-stop">
+                <strong>Alger</strong>
+                <span>Bab Ezzouar · 08:00</span>
+              </div>
+              <div class="ride-stop end">
+                <strong>Béjaïa</strong>
+                <span>Amizour · 11:30</span>
+              </div>
+            </div>
+
+            <div class="ride-driver">
+              <span class="avatar" aria-hidden="true">R</span>
+              <div>
+                <strong>Rami</strong>
+                <span>Conducteur · 4,9 ★</span>
+              </div>
+              <div class="ride-price">
+                <strong>1 200</strong>
+                <span>DA / place</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="subbox2">
-          <img class="subimg" src="/home/pics/flash.svg">
-          <h1 class="tit0">Recherchez, cliquez et réservez ! </h1>
-          <p class="tex2">Cherchez, comparez et réservez votre place en quelques clics.</p>
+      </section>
+
+      <section class="stats-strip" aria-label="Fi Tri9i en chiffres">
+        <div class="stat-item">
+          <strong>5</strong>
+          <span>places par trajet, pas plus</span>
         </div>
-      </div>
-
-    </div>
-
-
-
-    <div class="band">
-
-      <a class="shortcut" href="/trajets?depart=Alger&amp;arrivee=Bejaia"> <p>Alger ⟶ Bejaia &ThinSpace;400DA</p><p class="c">></p> </a>
-      <a class="shortcut" href="/trajets?depart=Oran&amp;arrivee=Constantine"> <p>Oran ⟶ Constantine &ThinSpace;1000DA</p><p class="c">></p> </a>
-      <a class="shortcut" href="/trajets?depart=Alger&amp;arrivee=Batna"> <p>Alger ⟶ Batna &ThinSpace;500DA</p><p class="c">></p> </a>
-    </div>
-
-
-    <div class="sanction1">
-
-      <div class="half0">
-        <div class="color0"><img src="/home/pics/pips.svg" class="pips">  </div>
-        
-        <div class="element0">
-          <h1 class="ht">Découvrez de nouvelles villes sans vous ruiner avec Fi Tri9i</h1>
-          <p class="sub-ht">Partagez les frais du trajet et découvrez de nouvelles destinations à petit prix.</p>
-          <a href="/trajets" class="but0"><p>Découvrir notre offre</p></a>
+        <div class="stat-item">
+          <strong>0</strong>
+          <span>frais de service cachés</span>
         </div>
-      </div>
-
-      <div class="half1">
-        <div class="element1">
-          <h1 class="ht">Voyagez en toute confiance</h1>
-          <p class="sub-ht">Chez Fi Tri9i, nous mettons tout en œuvre pour vous proposer une plateforme aussi sécurisée que possible.</p>
-          <a href="/a-propos" class="but1"><p>En savoir plus</p></a>
+        <div class="stat-item">
+          <strong>58</strong>
+          <span>wilayas à parcourir ensemble</span>
         </div>
-        <div class="color1"> <img src="/home/pics/wave.svg" class="wave"> </div>
-      </div>
+      </section>
 
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Pourquoi Fi Tri9i</p>
+            <h2>Un covoiturage simple, local et humain.</h2>
+          </div>
+          <p>Une plateforme pensée pour les trajets du quotidien comme pour les grandes traversées.</p>
+        </div>
 
-    </div>
-    
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"></path><circle cx="18" cy="15" r="3"></circle></svg>
+            </div>
+            <h3>Des trajets à petits prix</h3>
+            <p>Partagez les frais du carburant et voyagez sans exploser votre budget.</p>
+          </article>
 
-    <div class="sanction2">
+          <article class="feature-card">
+            <div class="icon-tile accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </div>
+            <h3>Voyagez en confiance</h3>
+            <p>Des profils identifiés, des trajets publiés par la communauté et un suivi clair de vos réservations.</p>
+          </article>
 
+          <article class="feature-card">
+            <div class="icon-tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"></path></svg>
+            </div>
+            <h3>Publiez en quelques clics</h3>
+            <p>Indiquez votre itinéraire, votre date et votre prix. Votre trajet est visible immédiatement.</p>
+          </article>
+        </div>
+      </section>
 
-      <div class="card0">
-        <img src="/home/pics/poep.svg"  class="last-img1">
-       
-        <h1 class="bigt0">À propos</h1>
-        <p class="smallt">Découvrez notre mission et comment Fi Tri9i facilite le covoiturage en Algérie.</p>
-        <a href="/a-propos" class="more">En savoir plus</a>
-      </div>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Comment ça marche</p>
+            <h2>Trois étapes, une seule route.</h2>
+          </div>
+        </div>
 
-      <div class="card1">
-        <img src="/home/pics/paper.svg" class="last-img0">
-        <h1 class="bigt1">Comment ça marche</h1>
-        <p class="smallt">Publiez votre trajet ou réservez une place en quelques étapes simples.</p>
-        <a href="/a-propos" class="more">En savoir plus</a>
-      </div>
+        <div class="steps-grid">
+          <article class="step-card">
+            <span class="step-number">1</span>
+            <h3>Cherchez votre trajet</h3>
+            <p>Filtrez par ville de départ, destination, date et nombre de places.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">2</span>
+            <h3>Réservez votre place</h3>
+            <p>Consultez les détails, le conducteur et le prix, puis réservez en un clic.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">3</span>
+            <h3>Prenez la route</h3>
+            <p>Retrouvez votre réservation dans « Mes trajets » et partagez le voyage.</p>
+          </article>
+        </div>
+      </section>
 
-      <div class="card0">
-        <img src="/home/pics/home.svg"  class="last-img2">
-        <h1 class="bigt0">Une communauté de confiance</h1>
-        <p class="smallt">Rejoignez des milliers de voyageurs et partagez la route en toute simplicité.</p>
-        <a href="/trajets" class="more">Voir les trajets</a>
-      </div>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Destinations populaires</p>
+            <h2>Les routes que l'on aime partager.</h2>
+          </div>
+          <a class="btn secondary" href="/trajets">Voir tous les trajets</a>
+        </div>
+
+        <div class="routes-grid">
+          <a class="route-card" href="/trajets?depart=Alger&amp;arrivee=Bejaia">
+            <span class="route-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path><circle cx="5" cy="19" r="2"></circle><circle cx="19" cy="13" r="2"></circle></svg>
+            </span>
+            <span>
+              <strong>Alger → Béjaïa</strong>
+              <span>Le long de la côte</span>
+            </span>
+            <span class="route-price">dès 400 DA</span>
+          </a>
+
+          <a class="route-card" href="/trajets?depart=Oran&amp;arrivee=Constantine">
+            <span class="route-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path><circle cx="5" cy="19" r="2"></circle><circle cx="19" cy="13" r="2"></circle></svg>
+            </span>
+            <span>
+              <strong>Oran → Constantine</strong>
+              <span>La grande traversée</span>
+            </span>
+            <span class="route-price">dès 1 000 DA</span>
+          </a>
+
+          <a class="route-card" href="/trajets?depart=Alger&amp;arrivee=Batna">
+            <span class="route-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path><circle cx="5" cy="19" r="2"></circle><circle cx="19" cy="13" r="2"></circle></svg>
+            </span>
+            <span>
+              <strong>Alger → Batna</strong>
+              <span>Cap sur les Aurès</span>
+            </span>
+            <span class="route-price">dès 500 DA</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="cta-band">
+        <div>
+          <h2>Votre prochain trajet commence ici.</h2>
+          <p>Que vous ayez une place libre ou besoin d'en trouver une, la route est plus simple à plusieurs.</p>
+        </div>
+        <a class="btn" href="/publier/page1">Publier un trajet</a>
+      </section>
     </div>
   </main>
+
   <%- include('./partials/footer.ejs') %>
-<script src="/shared/navbar.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

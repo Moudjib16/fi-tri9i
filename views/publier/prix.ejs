@@ -1,87 +1,69 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/publier/prix/style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-  <title >Fi Tri9i</title>
-  <%- include('../partials/csrf-meta.ejs') %>
-</head>
+<%- include('../partials/head.ejs', { title: 'Fixer le prix' }) %>
 <body>
+  <%- include('../partials/navbar.ejs') %>
 
-<%- include('../partials/navbar.ejs') %>
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 8 }) %>
 
+    <section class="wizard-card">
+      <p class="eyebrow">Publier un trajet</p>
+      <h1 class="wizard-title">Fixez votre prix par place.</h1>
+      <p class="wizard-help">Un prix juste pour partager les frais. Vous restez libre de l'ajuster avant publication.</p>
 
-  <main class="content">
-    <div class="row-btn"> 
-      <button id="btn1" ></button>
-      <button id="btn2" ></button>
-      <button id="btn3" ></button>
-      <button id="btn4" ></button>
-      <button id="btn5" ></button>
-      <button id="btn6" ></button>
-      <button id="btn7" ></button>
-      <button id="btn8" ></button>
-      <button id="btn9" ></button>
-    </div>
-    <h1 class="title">Fixez votre prix par place</h1>
-    <% if (typeof error !== 'undefined' && error) { %>
-      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
-        Indiquez un prix valide entre 1 et 100000 DA.
-      </p>
-    <% } %>
-    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
-    <div class="row">
-      <img src="/publier/prix/pics/img.svg" class="img">
-      <div class="row1">
-        <button class="minuss" id="minuss">−</button>
-        <input value="<%= trip && trip.price ? trip.price : '200da' %>" class="prix" id="prix" maxlength="6" >
-        <button class="pluss" id="pluss">+</button>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="form-error" role="alert">Indiquez un prix valide entre 1 et 100 000 DA.</p>
+      <% } %>
+      <p id="wizard-error" class="form-error" role="alert" hidden></p>
+
+      <div class="counter">
+        <button class="minuss" id="minuss" type="button" aria-label="Baisser le prix">&minus;</button>
+        <input value="<%= trip && trip.price ? trip.price : '200da' %>" id="prix" maxlength="6" inputmode="numeric" aria-label="Prix par place">
+        <button class="pluss" id="pluss" type="button" aria-label="Augmenter le prix">+</button>
       </div>
 
-   
+      <p class="counter-note">Le prix est affiché en dinars algériens (DA).</p>
 
-    </div>
-    <div class="row1">
-      <button class="precedent" id="precedent">précédent</button>
-      <button class="prochaine" id="prochaine">continuer</button>
-    </div>
+      <div class="wizard-actions">
+        <button class="btn secondary precedent" id="precedent" type="button">Précédent</button>
+        <button class="btn" id="prochaine" type="button">Continuer &rarr;</button>
+      </div>
+    </section>
   </main>
-
 
   <script>
     const errorBox = document.getElementById('wizard-error');
 
     function showError(message) {
-        errorBox.textContent = message;
-        errorBox.hidden = false;
+      errorBox.textContent = message;
+      errorBox.hidden = false;
     }
 
     document.getElementById('prochaine').addEventListener('click', async () => {
-         errorBox.hidden = true;
-         const content = document.getElementById('prix').value;
-         try {
-             const response = await fetch('/price', {
-                 method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json',
-                 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-             },
-                 body: JSON.stringify({ content }),
-             });
-             if (response.ok) {
-                 window.location.href = '/publier/description';
-             } else {
-                 showError('Prix invalide, réessayez.');
-             }
-         } catch (error) {
-             console.error('Error:', error);
-             showError('Erreur réseau, réessayez.');
-         }
-     });
+      errorBox.hidden = true;
+      const content = document.getElementById('prix').value;
+      try {
+        const response = await fetch('/price', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          },
+          body: JSON.stringify({ content }),
+        });
+        if (response.ok) {
+          window.location.href = '/publier/description';
+        } else {
+          showError('Prix invalide, réessayez.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showError('Erreur réseau, réessayez.');
+      }
+    });
   </script>
-<script src="/publier/prix/script.js"></script>
-<script src="/shared/navbar.js"></script>
+  <script src="/publier/prix/script.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

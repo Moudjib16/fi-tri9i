@@ -1,85 +1,76 @@
-<style>
-  .navbar ul > li { display: flex; align-items: center; }
-  .menu .logout-form { margin: 0; padding: 0; width: 100%; }
-  .menu button.option { border: 0; padding: 0; font-family: inherit; }
-  .menu-toggle { border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; }
-  .flash-banner { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(1120px, calc(100% - 32px)); padding: 12px 18px; border-radius: 12px; font-weight: 600; text-align: center; box-shadow: 0 10px 30px rgba(4, 96, 118, 0.16); }
-  .flash-banner.success { background: #e6f7ee; color: #0b6b3a; border: 1px solid #b7e4c9; }
-  .flash-banner.error { background: #fdecec; color: #9b1c1c; border: 1px solid #f5c2c2; }
-</style>
+<% const signedIn = typeof currentUser !== 'undefined' && currentUser; %>
+<header class="site-header">
+  <nav class="nav-shell" aria-label="Navigation principale">
+    <a class="brand" href="/" aria-label="Fi Tri9i, accueil">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path>
+          <circle cx="5" cy="19" r="2"></circle>
+          <circle cx="19" cy="13" r="2"></circle>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <strong>Fi Tri9i</strong>
+        <span>Covoiturage</span>
+      </span>
+    </a>
 
-<nav class="navbar">
-  <ul>
-    <li>
-      <a class="logo" href="/">
-        <p>Fi Tri9i</p>
-        <img src="/home/pics/car.svg" class="logo_img" alt="">
-      </a>
-    </li>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="/trajets">Trouver un trajet</a>
+      <a class="nav-link" href="/publier/page1">Publier</a>
+      <a class="nav-link" href="/a-propos">À propos</a>
+      <% if (signedIn) { %>
+        <a class="nav-link" href="/mes-trajets">Mes trajets</a>
+      <% } %>
+    </div>
 
-    <li>
-      <a href="/trajets" class="pub">
-        <img src="/home/pics/rech.svg" class="plus" alt="">
-        <span class="Publiertrajet">Recherche</span>
-      </a>
-    </li>
+    <div class="nav-actions">
+      <% if (signedIn) { %>
+        <a class="btn nav-cta" href="/publier/page1">Publier un trajet</a>
+        <div class="profile">
+          <button class="profile-button" type="button" id="menu-toggle" aria-expanded="false" aria-controls="menu" aria-label="Ouvrir le menu du compte">
+            <span class="avatar" aria-hidden="true"><%= currentUser.name ? currentUser.name.trim().charAt(0) : '?' %></span>
+            <span class="profile-name"><%= currentUser.name || 'Mon compte' %></span>
+            <svg class="profile-arrow" id="arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m5 7 5 5 5-5"></path>
+            </svg>
+          </button>
 
-    <li>
-      <a href="/publier/page1" class="pub">
-        <img src="/home/pics/plus.svg" class="plus" alt="">
-        <span class="Publiertrajet">Publier trajet</span>
-      </a>
-    </li>
+          <div class="profile-panel" id="menu" hidden>
+            <a href="/mes-trajets">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18V6a2 2 0 0 1 2-2h5l2 3h5a2 2 0 0 1 2 2v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"></path></svg>
+              Mes trajets
+            </a>
+            <a href="/publier/page1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              Publier un trajet
+            </a>
+            <div class="panel-divider"></div>
+            <form class="profile-form" action="/logout" method="post">
+              <%- include('./csrf-input.ejs') %>
+              <button type="submit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path></svg>
+                Déconnexion
+              </button>
+            </form>
+          </div>
+        </div>
+      <% } else { %>
+        <a class="nav-ghost" href="/login">Connexion</a>
+        <a class="btn nav-cta" href="/signup">Inscription</a>
+      <% } %>
 
-    <li class="auth">
-      <p class="user-name" id="user-name"><%= currentUser ? currentUser.name : 'Invité' %></p>
-      <img src="/home/pics/pfp.svg" class="pfp" alt="">
-      <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu" aria-label="Ouvrir le menu">
-        <img src="/home/pics/arrow.svg" class="arrow" id="arrow" alt="">
+      <button class="mobile-nav-toggle" type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Ouvrir la navigation">
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
-    </li>
-  </ul>
-
-  <div class="menu" id="menu">
-    <% if (currentUser) { %>
-      <a class="option" href="/mes-trajets">
-        <img src="/home/pics/menu-icons/trajet.png" class="icon">
-        <p class="text">Mes trajets</p>
-        <p class="cotation">&gt;</p>
-      </a>
-      <div class="line"></div>
-      <a class="option" href="/publier/page1">
-        <img src="/home/pics/menu-icons/trajet.png" class="icon">
-        <p class="text">Publier un trajet</p>
-        <p class="cotation">&gt;</p>
-      </a>
-      <div class="line"></div>
-      <form class="logout-form" action="/logout" method="post">
-        <%- include('./csrf-input.ejs') %>
-        <button type="submit" class="option">
-          <img src="/home/pics/menu-icons/log-out.png" class="icon">
-          <p class="text">Déconnexion</p>
-          <p class="cotation">&gt;</p>
-        </button>
-      </form>
-    <% } else { %>
-      <a class="option" href="/login">
-        <img src="/home/pics/menu-icons/log.png" class="icon">
-        <p class="text">Connexion</p>
-        <p class="cotation">&gt;</p>
-      </a>
-      <div class="line"></div>
-      <a class="option" href="/signup">
-        <img src="/home/pics/menu-icons/sign.png" class="icon">
-        <p class="text">Inscription</p>
-        <p class="cotation">&gt;</p>
-      </a>
-    <% } %>
-  </div>
-</nav>
+    </div>
+  </nav>
+</header>
 
 <% if (typeof flash !== 'undefined' && (flash.success || flash.error)) { %>
-  <div class="flash-banner <%= flash.error ? 'error' : 'success' %>" role="<%= flash.error ? 'alert' : 'status' %>">
+  <div class="flash <%= flash.error ? 'error' : 'success' %>" role="<%= flash.error ? 'alert' : 'status' %>">
     <%= flash.error || flash.success %>
   </div>
 <% } %>

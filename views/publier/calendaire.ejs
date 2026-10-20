@@ -1,136 +1,102 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Stay organized with our user-friendly Calendar featuring events, reminders, and a customizable interface. Built with HTML, CSS, and JavaScript. Start scheduling today!"
-    />
-    <meta
-      name="keywords"
-      content="calendar, events, reminders, javascript, html, css, open source coding"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
-      integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <link rel="stylesheet" href="/publier/calendaire/style.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-    <title>Calendar with Events</title>
-    <%- include('../partials/csrf-meta.ejs') %>
-  </head>
-  <body>
+<%- include('../partials/head.ejs', { title: 'Choisir une date' }) %>
+<body>
+  <%- include('../partials/navbar.ejs') %>
 
-    <main>
-    <div class="big">
-      <div class="row"> 
-        <button id="btn1" ></button>
-        <button id="btn2" ></button>
-        <button id="btn3" ></button>
-        <button id="btn4" ></button>
-        <button id="btn5" ></button>
-        <button id="btn6" ></button>
-        <button id="btn7" ></button>
-        <button id="btn8" ></button>
-        <button id="btn9" ></button>
-      </div>
-    <h1>Quand partez-vous ?</h1>
-    <% if (typeof error !== 'undefined' && error) { %>
-      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
-        <% if (error === 'past') { %>Cette date est déjà passée. Choisissez une date à venir.
-        <% } else { %>Choisissez une date valide pour continuer.
-        <% } %>
-      </p>
-    <% } %>
-    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
-    <div class="container">
-    
-      <div class="right">
-        <div class="today-date">
-          <div class="event-day">wed</div>
-          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? trip.dateData : '' %>"><%= trip && trip.dateData ? trip.dateData : '' %></div>
-        </div>
-        <div class="events"></div>
-      
-      </div>
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 5 }) %>
 
-      <div class="left">
-        <div class="calendar">
+    <section class="wizard-card">
+      <p class="eyebrow">Publier un trajet</p>
+      <h1 class="wizard-title">Quand partez-vous ?</h1>
+      <p class="wizard-help">Choisissez la date de votre départ. Vous pourrez ajuster l'heure à l'étape suivante.</p>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="form-error" role="alert">
+          <% if (error === 'past') { %>Cette date est déjà passée. Choisissez une date à venir.
+          <% } else { %>Choisissez une date valide pour continuer.
+          <% } %>
+        </p>
+      <% } %>
+      <p id="wizard-error" class="form-error" role="alert" hidden></p>
+
+      <div class="calendar-grid">
+        <div class="calendar-panel calendar">
           <div class="month">
-            <i class="fas fa-angle-left prev"></i>
-            <div class="date">december 2015</div>
-            <i class="fas fa-angle-right next"></i>
+            <button class="prev" type="button" aria-label="Mois précédent">&larr;</button>
+            <div class="date">January 2026</div>
+            <button class="next" type="button" aria-label="Mois suivant">&rarr;</button>
           </div>
-          <div class="weekdays">
-            <div>S</div>
+          <div class="weekdays" aria-hidden="true">
+            <div>D</div>
+            <div>L</div>
             <div>M</div>
-            <div>T</div>
-            <div>W</div>
-            <div>T</div>
-            <div>F</div>
+            <div>M</div>
+            <div>J</div>
+            <div>V</div>
             <div>S</div>
           </div>
           <div class="days"></div>
           <div class="goto-today">
             <div class="goto">
-              <input type="text" placeholder="mm/yyyy" class="date-input" />
-              <button class="goto-btn">Go</button>
+              <input type="text" placeholder="mm/yyyy" class="date-input" aria-label="Aller à un mois">
+              <button class="goto-btn" type="button">Aller</button>
             </div>
-            <button class="today-btn">Today</button>
+            <button class="today-btn" type="button">Aujourd'hui</button>
           </div>
         </div>
+
+        <aside class="calendar-side">
+          <div class="event-day">Choisir</div>
+          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? trip.dateData : '' %>"><%= trip && trip.dateData ? trip.dateData : '' %></div>
+          <div class="events">Sélectionnez un jour dans le calendrier pour continuer.</div>
+        </aside>
       </div>
-      
-  
-    </div>
-    </div>
-  
 
-    <div class="row">
-      <button class="precedent" id="precedent">précédent</button>
-      <button class="prochaine" id="prochaine">continuer</button>
-     </div>
-  
-   
+      <div class="wizard-actions">
+        <button class="btn secondary precedent" id="precedent" type="button">Précédent</button>
+        <button class="btn" id="prochaine" type="button">Continuer &rarr;</button>
+      </div>
+    </section>
+  </main>
 
-    </main>
-    <script>
-        const errorBox = document.getElementById('wizard-error');
+  <script>
+    const errorBox = document.getElementById('wizard-error');
 
-        function showError(message) {
-            errorBox.textContent = message;
-            errorBox.hidden = false;
-        }
+    document.getElementById('precedent').addEventListener('click', function () {
+      window.location.href = '/publier/page4';
+    });
 
-        document.getElementById('prochaine').addEventListener('click', async () => {
-            errorBox.hidden = true;
-            const content = document.getElementById('dateData').innerHTML;
-            try {
-                const response = await fetch('/date', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({ content }),
-                });
-                if (response.ok) {
-                    window.location.href = '/publier/heure';
-                } else {
-                    showError('Date invalide, réessayez.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showError('Erreur réseau, réessayez.');
-            }
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+    }
+
+    document.getElementById('prochaine').addEventListener('click', async () => {
+      errorBox.hidden = true;
+      const content = document.getElementById('dateData').innerHTML;
+      try {
+        const response = await fetch('/date', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          },
+          body: JSON.stringify({ content }),
         });
-    </script>
-    <script src="/publier/calendaire/script.js"></script>
-    <script src="/shared/navbar.js"></script>
-  </body>
+        if (response.ok) {
+          window.location.href = '/publier/heure';
+        } else {
+          showError('Date invalide, réessayez.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showError('Erreur réseau, réessayez.');
+      }
+    });
+  </script>
+  <script src="/publier/calendaire/script.js"></script>
+  <script src="/shared/navbar.js"></script>
+</body>
 </html>

@@ -10,9 +10,10 @@ const eventDay = document.querySelector('.event-day');
 const eventDate = document.querySelector('.event-date');
 
 const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ];
+const weekdays = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 const today = new Date();
 let month = today.getMonth();
@@ -26,12 +27,13 @@ function isSameDay(a, b) {
 }
 
 function formatDate(value) {
-  return `${value.getDate()} ${months[value.getMonth()]} ${value.getFullYear()}`;
+  const label = `${weekdays[value.getDay()]} ${value.getDate()} ${months[value.getMonth()]} ${value.getFullYear()}`;
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function updateHeader() {
   if (eventDay) {
-    eventDay.textContent = selected.toString().split(' ')[0];
+    eventDay.textContent = weekdays[selected.getDay()];
   }
   if (eventDate) {
     eventDate.textContent = formatDate(selected);
@@ -51,7 +53,8 @@ function initCalendar() {
   const startDay = firstDay.getDay();
   const nextDays = 7 - lastDay.getDay() - 1;
 
-  monthLabel.textContent = `${months[month]} ${year}`;
+  const monthName = months[month];
+  monthLabel.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
 
   let days = '';
 
@@ -129,7 +132,9 @@ if (gotoButton && dateInput) {
       initCalendar();
       return;
     }
-    alert('Date invalide');
+    if (typeof showError === 'function') {
+      showError('Format attendu : mm/yyyy.');
+    }
   });
 }
 

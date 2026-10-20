@@ -1,52 +1,75 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fi Tri9i | Inscription</title>
-    <link rel="stylesheet" href="/shared/navbar.css">
-    <link rel="stylesheet" href="/signup/style.css">
-    <link rel="stylesheet" href="/shared/auth.css">
-  </head>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Inscription' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2>Inscription</h2>
-    <form action="/signup" method="post">
-      <%- include('./partials/csrf-input.ejs') %>
-      <div class="input-box">
-        <input type="text" name="name" placeholder="Votre nom" autocomplete="name" required>
+  <main class="auth-body">
+    <section class="auth-layout">
+      <aside class="auth-aside">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path>
+              <circle cx="5" cy="19" r="2"></circle>
+              <circle cx="19" cy="13" r="2"></circle>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Fi Tri9i</strong>
+            <span>Covoiturage</span>
+          </span>
+        </a>
+        <h1>Rejoignez la route.</h1>
+        <p>Créez votre compte pour réserver une place ou proposer vos prochains trajets.</p>
+        <p class="auth-quote">Une communauté locale, des voyages plus simples et des frais partagés.</p>
+      </aside>
+
+      <div class="auth-card">
+        <p class="eyebrow">Bienvenue</p>
+        <h2>Inscription</h2>
+        <p class="auth-intro">Quelques informations suffisent pour commencer.</p>
+
+        <% if (typeof exist !== 'undefined' && exist) { %>
+          <p class="auth-error"><%= exist %></p>
+        <% } %>
+
+        <form class="auth-form" action="/signup" method="post">
+          <%- include('./partials/csrf-input.ejs') %>
+          <label class="field">
+            <span>Nom complet</span>
+            <input type="text" name="name" placeholder="Votre nom" autocomplete="name" required>
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="vous@exemple.dz" autocomplete="email" required>
+          </label>
+          <label class="field">
+            <span>Mot de passe</span>
+            <input type="password" name="password" placeholder="6 caractères minimum" autocomplete="new-password" minlength="6" required>
+          </label>
+          <label class="field">
+            <span>Confirmer le mot de passe</span>
+            <input type="password" name="confirm-password" placeholder="Retapez le mot de passe" autocomplete="new-password" minlength="6" required>
+          </label>
+          <label class="field">
+            <span>Je suis</span>
+            <select id="userType" name="userType" required>
+              <option value="1">Passager</option>
+              <option value="2">Conducteur</option>
+            </select>
+          </label>
+          <div class="policy">
+            <input type="checkbox" name="terms" id="terms" required>
+            <label for="terms">J'accepte les conditions d'utilisation de Fi Tri9i.</label>
+          </div>
+          <button class="btn block" type="submit">S'inscrire</button>
+        </form>
+
+        <p class="auth-switch">Déjà un compte ? <a href="/login">Connexion</a></p>
       </div>
-      <div class="input-box">
-        <input type="email" name="email" placeholder="Votre email" autocomplete="email" required>
-      </div>
-      <%= exist %>
-      <div class="input-box">
-        <input type="password" name="password" placeholder="Créer un mot de passe" autocomplete="new-password" minlength="6" required>
-      </div>
-      <div class="input-box">
-        <input type="password" name="confirm-password" placeholder="Confirmer le mot de passe" autocomplete="new-password" minlength="6" required>
-      </div>
-      <div class="input-box">
-        <label for="userType">Je suis :</label>
-        <select id="userType" name="userType" required>
-          <option value="1">Passager</option>
-          <option value="2">Conducteur</option>
-        </select>
-      </div>
-      <div class="policy">
-        <input type="checkbox" name="terms" id="terms" required>
-        <label for="terms"><h3>J'accepte les conditions d'utilisation</h3></label>
-      </div>
-      <div class="input-box button">
-        <input type="submit" value="S'inscrire">
-      </div>
-      <div class="text">
-        <h3>Déjà un compte ? <a href="/login">Se connecter</a></h3>
-      </div>
-    </form>
-  </div>
+    </section>
+  </main>
 
   <script src="/shared/navbar.js"></script>
 </body>

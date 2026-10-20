@@ -1,60 +1,117 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fi Tri9i | À propos</title>
-  <link rel="stylesheet" href="/shared/navbar.css">
-  <link rel="stylesheet" href="/a-propos/style.css">
-</head>
+<%- include('./partials/head.ejs', { title: 'À propos' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <main class="about-page">
-    <section class="about-hero">
-      <p class="eyebrow">À propos</p>
-      <h1>Fi Tri9i, le covoiturage à l'algérienne.</h1>
-      <p>
-        Fi Tri9i met en relation les conducteurs qui ont des places libres avec
-        les passagers qui vont dans la même direction. Publiez un trajet, trouvez
-        votre prochaine destination et partagez les frais.
-      </p>
-    </section>
-
-    <section class="about-grid">
-      <article>
-        <h2>Publiez en quelques étapes</h2>
-        <p>
-          Indiquez la wilaya et la commune de départ et d'arrivée, la date,
-          l'heure, le nombre de places et le prix. Votre trajet apparaît
-          immédiatement dans la recherche.
+  <main class="site-main">
+    <section class="hero" style="padding-top: 46px;">
+      <div class="hero-copy">
+        <p class="eyebrow">À propos</p>
+        <h1>Le covoiturage à l'algérienne.</h1>
+        <p class="lead">
+          Fi Tri9i met en relation les conducteurs qui ont des places libres avec
+          les passagers qui vont dans la même direction. Publiez un trajet, trouvez
+          votre prochaine destination et partagez les frais.
         </p>
-      </article>
-      <article>
-        <h2>Réservez votre place</h2>
-        <p>
-          Filtrez par départ, arrivée, date et nombre de places. Ouvrez le trajet
-          qui vous convient et réservez votre place en un clic.
-        </p>
-      </article>
-      <article>
-        <h2>Gardez le contrôle</h2>
-        <p>
-          Retrouvez vos trajets publiés et vos réservations dans « Mes trajets ».
-          Annulez une réservation ou supprimez un trajet à tout moment.
-        </p>
-      </article>
-    </section>
-
-    <section class="about-cta">
-      <h2>Prêt à prendre la route ?</h2>
-      <div class="about-actions">
-        <a class="primary" href="/trajets">Rechercher un trajet</a>
-        <a class="secondary" href="/publier/page1">Publier un trajet</a>
+        <div class="status-actions" style="justify-content: flex-start; margin-top: 26px;">
+          <a class="btn" href="/trajets">Rechercher un trajet</a>
+          <a class="btn secondary" href="/publier/page1">Publier un trajet</a>
+        </div>
       </div>
+
+      <div class="hero-visual">
+        <div class="ride-preview">
+          <div class="ride-preview-top">
+            <span class="ride-label">Notre mission</span>
+            <span class="pill">Local et humain</span>
+          </div>
+          <div class="ride-route">
+            <div class="ride-stop">
+              <strong>Partager</strong>
+              <span>Des places libres dans chaque voiture</span>
+            </div>
+            <div class="ride-stop end">
+              <strong>Relier</strong>
+              <span>Les villes et les communautés d'Algérie</span>
+            </div>
+          </div>
+          <div class="ride-driver">
+            <span class="avatar" aria-hidden="true">F</span>
+            <div>
+              <strong>Fi Tri9i</strong>
+              <span>La route, ensemble</span>
+            </div>
+            <div class="ride-price">
+              <strong>58</strong>
+              <span>wilayas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Ce qui nous guide</p>
+          <h2>Voyager plus simplement, à plusieurs.</h2>
+        </div>
+        <p>Une plateforme légère, sans intermédiaire inutile, qui laisse la place aux rencontres et au partage des frais.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path><circle cx="4" cy="19" r="2"></circle><circle cx="20" cy="13" r="2"></circle></svg>
+          </div>
+          <h3>Publiez en quelques étapes</h3>
+          <p>Indiquez la wilaya et la commune de départ et d'arrivée, la date, l'heure, le nombre de places et le prix. Votre trajet apparaît immédiatement dans la recherche.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="icon-tile accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.9"></path></svg>
+          </div>
+          <h3>Réservez votre place</h3>
+          <p>Filtrez par départ, arrivée, date et nombre de places. Ouvrez le trajet qui vous convient et réservez votre place en un clic.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="icon-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+          </div>
+          <h3>Gardez le contrôle</h3>
+          <p>Retrouvez vos trajets publiés et vos réservations dans « Mes trajets ». Annulez une réservation ou un trajet selon les règles de la plateforme.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="stats-strip" aria-label="Les engagements Fi Tri9i">
+      <div class="stat-item">
+        <strong>5</strong>
+        <span>places maximum par voiture</span>
+      </div>
+      <div class="stat-item">
+        <strong>0</strong>
+        <span>commission sur le partage des frais</span>
+      </div>
+      <div class="stat-item">
+        <strong>100 %</strong>
+        <span>des trajets publiés par la communauté</span>
+      </div>
+    </section>
+
+    <section class="cta-band" style="margin-top: 48px;">
+      <div>
+        <h2>Prêt à prendre la route ?</h2>
+        <p>Trouvez un trajet près de chez vous ou proposez vos places libres à d'autres voyageurs.</p>
+      </div>
+      <a class="btn" href="/trajets">Rechercher un trajet</a>
     </section>
   </main>
 
+  <%- include('./partials/footer.ejs') %>
   <script src="/shared/navbar.js"></script>
 </body>
 </html>

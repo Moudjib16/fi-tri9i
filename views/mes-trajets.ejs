@@ -1,26 +1,42 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fi Tri9i | Mes trajets</title>
-  <link rel="stylesheet" href="/shared/navbar.css">
-  <link rel="stylesheet" href="/trajets/style.css">
-  <link rel="stylesheet" href="/mes-trajets/style.css">
-</head>
+<%- include('./partials/head.ejs', { title: 'Mes trajets' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <main class="page">
-    <header class="my-header">
+  <main class="site-main">
+    <header class="dashboard-header">
       <div>
+        <p class="eyebrow">Mon espace</p>
         <h1>Mes trajets</h1>
-        <p class="muted">Retrouvez les trajets que vous publiez et vos réservations.</p>
+        <p>Retrouvez les trajets que vous publiez et vos réservations.</p>
       </div>
-      <a class="publish-link" href="/publier/page1">Publier un trajet</a>
+      <a class="btn" href="/publier/page1">Publier un trajet</a>
     </header>
 
     <% const draftTrips = typeof drafts !== 'undefined' ? drafts : []; %>
+    <% const cancelledList = typeof cancelledTrips !== 'undefined' ? cancelledTrips : []; %>
+    <% const bookedList = typeof booked !== 'undefined' ? booked : []; %>
+
+    <section class="dashboard-stats" aria-label="Résumé de votre activité">
+      <div class="stat-card">
+        <strong><%= published.length %></strong>
+        <span>trajet<%= published.length === 1 ? '' : 's' %> publié<%= published.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= bookedList.length %></strong>
+        <span>réservation<%= bookedList.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= draftTrips.length %></strong>
+        <span>brouillon<%= draftTrips.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= cancelledList.length %></strong>
+        <span>trajet<%= cancelledList.length === 1 ? '' : 's' %> annulé<%= cancelledList.length === 1 ? '' : 's' %></span>
+      </div>
+    </section>
+
     <% if (draftTrips.length) { %>
       <section class="my-section">
         <div class="results-head">
@@ -56,12 +72,12 @@
                 </div>
               </dl>
 
-              <div class="trip-card-footer draft-actions">
+              <div class="trip-card-footer">
                 <form action="/trajets/<%= t._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce brouillon ?');">
                   <%- include('./partials/csrf-input.ejs') %>
                   <button type="submit" class="cancel-link">Supprimer</button>
                 </form>
-                <a class="trip-link" href="/publier/continuer/<%= t._id %>">Reprendre</a>
+                <a class="trip-link" href="/publier/continuer/<%= t._id %>">Reprendre &rarr;</a>
               </div>
             </article>
           <% }); %>
@@ -78,13 +94,14 @@
         <div class="empty-state">
           <h3>Vous n'avez publié aucun trajet.</h3>
           <p>Publiez votre premier trajet pour partager vos places.</p>
-          <a href="/publier/page1">Publier un trajet</a>
+          <a class="btn" href="/publier/page1">Publier un trajet</a>
         </div>
       <% } else { %>
         <div class="trip-grid">
           <% published.forEach(function (t) { %>
             <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
             <% const passengers = t.passengers || []; %>
+            <% const passengerNames = passengers.filter(function (p) { return p && p.name; }).map(function (p) { return p.name; }); %>
             <article class="trip-card">
               <div class="trip-route">
                 <span><%= t.depart %></span>
@@ -111,18 +128,16 @@
                 </div>
               </dl>
 
-              <% const passengerNames = passengers.filter(function (p) { return p && p.name; }).map(function (p) { return p.name; }); %>
               <p class="my-count">
                 Réservations : <strong><%= passengerNames.length %></strong>
                 <% if (passengerNames.length) { %>
-                  &middot;
-                  <%= passengerNames.join(', ') %>
+                  &middot; <%= passengerNames.join(', ') %>
                 <% } %>
               </p>
 
               <div class="trip-card-footer">
-                <span></span>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+                <span class="pill"><%= remaining %> place<%= remaining === 1 ? '' : 's' %> libre<%= remaining === 1 ? '' : 's' %></span>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
               </div>
             </article>
           <% }); %>
@@ -130,7 +145,6 @@
       <% } %>
     </section>
 
-    <% const cancelledList = typeof cancelledTrips !== 'undefined' ? cancelledTrips : []; %>
     <% if (cancelledList.length) { %>
       <section class="my-section">
         <div class="results-head">
@@ -164,7 +178,7 @@
 
               <div class="trip-card-footer">
                 <span></span>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
               </div>
             </article>
           <% }); %>
@@ -174,19 +188,20 @@
 
     <section class="my-section" id="reservations">
       <div class="results-head">
-        <h2>Mes réservations (<%= booked.length %>)</h2>
+        <h2>Mes réservations (<%= bookedList.length %>)</h2>
       </div>
 
-      <% if (!booked.length) { %>
+      <% if (!bookedList.length) { %>
         <div class="empty-state">
           <h3>Vous n'avez aucune réservation.</h3>
           <p>Parcourez les trajets disponibles et réservez votre place.</p>
-          <a href="/trajets">Rechercher un trajet</a>
+          <a class="btn" href="/trajets">Rechercher un trajet</a>
         </div>
       <% } else { %>
         <div class="trip-grid">
-          <% booked.forEach(function (t) { %>
+          <% bookedList.forEach(function (t) { %>
             <% const tripPast = Boolean(t.departureAt && new Date(t.departureAt) <= new Date()); %>
+            <% const bookedDriver = t.driver && t.driver.name ? t.driver.name : 'Anonyme'; %>
             <article class="trip-card<%= t.status === 'cancelled' ? ' cancelled-card' : '' %>">
               <% if (t.status === 'cancelled') { %>
                 <span class="draft-badge cancelled-badge">Annulé par le conducteur</span>
@@ -214,7 +229,7 @@
                 </div>
                 <div>
                   <dt>Conducteur</dt>
-                  <dd><%= t.driver && t.driver.name ? t.driver.name : 'Anonyme' %></dd>
+                  <dd><%= bookedDriver %></dd>
                 </div>
               </dl>
 
@@ -227,7 +242,7 @@
                 <% } else { %>
                   <span></span>
                 <% } %>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
               </div>
             </article>
           <% }); %>
@@ -236,6 +251,7 @@
     </section>
   </main>
 
+  <%- include('./partials/footer.ejs') %>
   <script src="/shared/navbar.js"></script>
 </body>
 </html>

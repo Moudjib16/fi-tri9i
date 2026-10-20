@@ -1,44 +1,32 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/publier/page3/style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-  <title >Fi Tri9i</title>
-</head>
+<%- include('../partials/head.ejs', { title: 'Publier un trajet' }) %>
 <body>
+  <%- include('../partials/navbar.ejs') %>
 
-<%- include('../partials/navbar.ejs') %>
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 3 }) %>
 
+    <section class="wizard-card">
+      <p class="eyebrow">Publier un trajet</p>
+      <h1 class="wizard-title">Où allez-vous ?</h1>
+      <p class="wizard-help">Indiquez la wilaya d'arrivée de votre trajet.</p>
 
-  <main class="content">
-    <form action="/arrivee" method="post">
-      <%- include('../partials/csrf-input.ejs') %>
-  
-    <div class="row"> 
-      <button id="btn1" ></button>
-      <button id="btn2" ></button>
-      <button id="btn3" ></button>
-      <button id="btn4" ></button>
-      <button id="btn5" ></button>
-      <button id="btn6" ></button>
-      <button id="btn7" ></button>
-      <button id="btn8" ></button>
-      <button id="btn9" ></button>
-    </div>
-    <div class="wilaya">Quelle est la wilaya d'arrivée ?</div>
-    <input type="text" name="arrivee" id="commencer" placeholder="  ex : Adrar" value="<%= trip && trip.arrivee ? trip.arrivee : '' %>" required>
-    <button id="suiv" type="submit">Suivant</button>
-    <button id="prec" type="button">Précédent</button>
-    <img src="/publier/page3/pics/undraw_location_tracking_re_n3ok 1.png" class="hi" alt="">
-    </form>
-
+      <form class="wizard-form" action="/arrivee" method="post">
+        <%- include('../partials/csrf-input.ejs') %>
+        <label class="field">
+          <span>Wilaya d'arrivée</span>
+          <input type="text" name="arrivee" id="commencer" placeholder="ex : Béjaïa" value="<%= trip && trip.arrivee ? trip.arrivee : '' %>" required autofocus>
+        </label>
+        <div class="wizard-actions">
+          <button class="btn secondary precedent" id="prec" type="button">Précédent</button>
+          <button class="btn" id="suiv" type="submit">Continuer &rarr;</button>
+        </div>
+      </form>
+    </section>
   </main>
 
-
-
-<script src="/publier/page3/script.js"></script>
-<script src="/shared/navbar.js"></script>
+  <script src="/publier/page3/script.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

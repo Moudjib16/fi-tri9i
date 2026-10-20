@@ -4,27 +4,46 @@ const arr = document.getElementById('arr');
 const white = document.getElementById('white');
 const prix = document.getElementById('prix');
 
-function toggleTimeMenu() {
+function setTimeMenuOpen(open) {
   if (!white || !prix || !arr || !clock) {
     return;
   }
-  const isOpen = prix.style.display === 'flex';
-  prix.style.display = isOpen ? 'none' : 'flex';
-  white.style.display = isOpen ? 'flex' : 'none';
-  arr.style.rotate = isOpen ? '0deg' : '180deg';
-  clock.style.backgroundColor = isOpen ? 'white' : '#E3F1F6';
+  prix.style.display = open ? 'flex' : 'none';
+  white.style.display = open ? 'flex' : 'none';
+  arr.style.rotate = open ? '180deg' : '0deg';
+  arr.setAttribute('aria-expanded', String(open));
+}
+
+function toggleTimeMenu() {
+  if (!white) {
+    return;
+  }
+  setTimeMenuOpen(white.style.display !== 'flex');
 }
 
 if (arr) {
   arr.addEventListener('click', toggleTimeMenu);
 }
 
+if (white) {
+  white.addEventListener('click', function () {
+    setTimeMenuOpen(false);
+  });
+}
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape' && white && white.style.display === 'flex') {
+    setTimeMenuOpen(false);
+    arr.focus();
+  }
+});
+
 timeOptions.forEach(function (option) {
   option.addEventListener('click', function () {
     if (clock) {
       clock.value = option.innerText;
     }
-    toggleTimeMenu();
+    setTimeMenuOpen(false);
   });
 });
 
@@ -34,10 +53,3 @@ if (precedentButton) {
     window.history.back();
   });
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-  const btn6 = document.getElementById('btn6');
-  if (btn6) {
-    btn6.style.backgroundColor = '#0082AE';
-  }
-});

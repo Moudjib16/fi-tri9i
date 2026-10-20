@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
-<%- include('./partials/head.ejs') %>
-<link rel="stylesheet" href="/shared/navbar.css">
-<link rel="stylesheet" href="/shared/auth.css">
+<%- include('./partials/head.ejs', { title: 'Page introuvable' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2>404 - Page introuvable</h2>
-    <p>La page que vous cherchez a peut-être été supprimée, renommée ou est temporairement indisponible.</p>
-    <a href="/" class="button">Retour à l'accueil</a>
-  </div>
+  <main class="status-page">
+    <div class="status-card">
+      <span class="status-code">404</span>
+      <h1>Cette route ne mène nulle part.</h1>
+      <p>La page que vous cherchez a peut-être été supprimée, renommée ou est temporairement indisponible.</p>
+      <div class="status-actions">
+        <a class="btn" href="/">Retour à l'accueil</a>
+        <a class="btn secondary" href="/trajets">Voir les trajets</a>
+      </div>
+    </div>
+  </main>
 
+  <%- include('./partials/footer.ejs') %>
   <script src="/shared/navbar.js"></script>
 </body>
 </html>

@@ -90,7 +90,7 @@ lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers
 models/           # User and Trip schemas
 views/            # EJS templates (home, trajets, trajet, publier/*, partials)
-public/           # per-page CSS, JS and images
+public/           # shared design system (ui.css) and page scripts
 test/             # node:test suites (validation, views, booking flow)
 ```
 

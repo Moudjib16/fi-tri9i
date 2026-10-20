@@ -1,6 +1,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="/<%= stylesheet %>style.css">
-  <title >Fi Tri9i | <%= title  %></title>
+  <link rel="stylesheet" href="/shared/ui.css">
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+  <title>Fi Tri9i | <%= typeof title !== 'undefined' ? title : 'Covoiturage en Algérie' %></title>
 </head>

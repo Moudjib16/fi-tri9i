@@ -1,0 +1,10 @@
+<% const wizardSteps = ['Départ', 'Commune', 'Arrivée', 'Commune', 'Date', 'Heure', 'Places', 'Prix', 'Description']; %>
+<ol class="wizard-progress" aria-label="Étapes de publication">
+  <% wizardSteps.forEach(function (label, index) { %>
+    <% const number = index + 1; %>
+    <li class="<%= number === step ? 'current' : (number < step ? 'done' : '') %>"<%= number === step ? ' aria-current="step"' : '' %>>
+      <span class="wizard-step-number"><%= number %></span>
+      <%= label %>
+    </li>
+  <% }); %>
+</ol>

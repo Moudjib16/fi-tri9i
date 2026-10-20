@@ -1,90 +1,72 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/publier/people/style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-  <title >Fi Tri9i</title>
-  <%- include('../partials/csrf-meta.ejs') %>
-</head>
+<%- include('../partials/head.ejs', { title: 'Choisir le nombre de places' }) %>
 <body>
+  <%- include('../partials/navbar.ejs') %>
 
-<%- include('../partials/navbar.ejs') %>
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 7 }) %>
 
+    <section class="wizard-card">
+      <p class="eyebrow">Publier un trajet</p>
+      <h1 class="wizard-title">Combien de places proposez-vous ?</h1>
+      <p class="wizard-help">Cinq places maximum par trajet, pour garder un voyage confortable.</p>
 
-  <main class="content">
-    <div class="row-btn"> 
-      <button id="btn1" ></button>
-      <button id="btn2" ></button>
-      <button id="btn3" ></button>
-      <button id="btn4" ></button>
-      <button id="btn5" ></button>
-      <button id="btn6" ></button>
-      <button id="btn7" ></button>
-      <button id="btn8" ></button>
-      <button id="btn9" ></button>
-    </div>
-    <h1 class="title">Combien de places proposez-vous ?</h1>
-    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
-   
-   
-      <div class="row1">
-        <button class="minuss" id="minuss">−</button>
-        <input value="<%= trip && trip.places ? trip.places : 1 %>" class="prix" id="prix" maxlength="6" >
-        <button class="pluss" id="pluss">+</button>
+      <p id="wizard-error" class="form-error" role="alert" hidden></p>
+
+      <div class="counter">
+        <button class="minuss" id="minuss" type="button" aria-label="Retirer une place">&minus;</button>
+        <input value="<%= trip && trip.places ? trip.places : 1 %>" id="prix" maxlength="6" inputmode="numeric" aria-label="Nombre de places">
+        <button class="pluss" id="pluss" type="button" aria-label="Ajouter une place">+</button>
       </div>
 
-      <div class="pips">
-        <img class="p1" id="p1" src="/publier/people/pics/p1.svg">
-        <img class="p2" id="p2" src="/publier/people/pics/p1.svg">
-        <img class="p3" id="p3" src="/publier/people/pics/p1.svg">
-        <img class="p4" id="p4" src="/publier/people/pics/p1.svg">
-        <img class="p5" id="p5" src="/publier/people/pics/p1.svg">
-    
-
+      <div class="seat-preview" aria-hidden="true">
+        <span class="seat-dot" id="p1">1</span>
+        <span class="seat-dot" id="p2">2</span>
+        <span class="seat-dot" id="p3">3</span>
+        <span class="seat-dot" id="p4">4</span>
+        <span class="seat-dot" id="p5">5</span>
       </div>
 
-   
-    <div class="row1">
-      <button class="precedent" id="precedent">précédent</button>
-      <button class="prochaine" id="prochaine">continuer</button>
-    </div>
+      <div class="wizard-actions">
+        <button class="btn secondary precedent" id="precedent" type="button">Précédent</button>
+        <button class="btn" id="prochaine" type="button">Continuer &rarr;</button>
+      </div>
+    </section>
   </main>
-
 
   <script>
     const errorBox = document.getElementById('wizard-error');
 
     function showError(message) {
-        errorBox.textContent = message;
-        errorBox.hidden = false;
+      errorBox.textContent = message;
+      errorBox.hidden = false;
     }
 
     document.getElementById('prochaine').addEventListener('click', async () => {
-         errorBox.hidden = true;
-         const content = document.getElementById('prix').value;
-         try {
-             const response = await fetch('/places', {
-                 method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json',
-                 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-             },
-                 body: JSON.stringify({ content }),
-             });
-             if (response.ok) {
-                 window.location.href = '/publier/prix';
-             } else {
-                 showError('Nombre de places invalide (1 à 5).');
-             }
-         } catch (error) {
-             console.error('Error:', error);
-             showError('Erreur réseau, réessayez.');
-         }
-     });
+      errorBox.hidden = true;
+      const content = document.getElementById('prix').value;
+      try {
+        const response = await fetch('/places', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          },
+          body: JSON.stringify({ content }),
+        });
+        if (response.ok) {
+          window.location.href = '/publier/prix';
+        } else {
+          showError('Nombre de places invalide (1 à 5).');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showError('Erreur réseau, réessayez.');
+      }
+    });
   </script>
-<script src="/publier/people/script.js"></script>
-<script src="/shared/navbar.js"></script>
+  <script src="/publier/people/script.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

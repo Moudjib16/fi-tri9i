@@ -1,48 +1,61 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/publier/description/style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
-  <title >Fi Tri9i</title>
-</head>
+<%- include('../partials/head.ejs', { title: 'Dernière étape' }) %>
 <body>
+  <%- include('../partials/navbar.ejs') %>
 
-<%- include('../partials/navbar.ejs') %>
+  <main class="wizard-shell">
+    <%- include('../partials/wizard-progress.ejs', { step: 9 }) %>
 
+    <section class="wizard-card">
+      <p class="eyebrow">Dernière étape</p>
+      <h1 class="wizard-title">Quelque chose à ajouter ?</h1>
+      <p class="wizard-help">Une précision sur le point de rendez-vous, les bagages ou l'ambiance du trajet aide les passagers à se décider.</p>
 
-  <main class="content">
-    <div class="row-btn"> 
-      <button id="btn1" ></button>
-      <button id="btn2" ></button>
-      <button id="btn3" ></button>
-      <button id="btn4" ></button>
-      <button id="btn5" ></button>
-      <button id="btn6" ></button>
-      <button id="btn7" ></button>
-      <button id="btn8" ></button>
-      <button id="btn9" ></button>
-    </div>
-    <h1 class="title">Quelque chose à ajouter sur votre trajet ?</h1>
-    <% if (typeof error !== 'undefined' && error) { %>
-      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
-        <% if (error === 'description') { %>La description est trop longue.
-        <% } else { %>Certaines étapes sont incomplètes. Vérifiez la date, l'heure et le prix.
-        <% } %>
-      </p>
-    <% } %>
-    <form action="/publier/publier" method="post">
-      <%- include('../partials/csrf-input.ejs') %>
-      <textarea maxlength="1000" class="in" placeholder="Bonjour ! je vais voir ma famille. J'ai beaucoup de place dans le coffre." id="description" name="description"><%= trip && trip.description ? trip.description : '' %></textarea>
-      <div class="row1">
-        <button class="precedent" id="precedent" type="button">précédent</button>
-        <button class="prochaine" id="prochaine" type="submit">publier</button>
-      </div>
-    </form>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="form-error" role="alert">
+          <% if (error === 'description') { %>La description est trop longue.
+          <% } else { %>Certaines étapes sont incomplètes. Vérifiez la date, l'heure et le prix.
+          <% } %>
+        </p>
+      <% } %>
+
+      <% if (trip) { %>
+        <div class="wizard-summary">
+          <div>
+            <span>Trajet</span>
+            <strong><%= trip.depart %><% if (trip.arrivee) { %> &rarr; <%= trip.arrivee %><% } %></strong>
+          </div>
+          <div>
+            <span>Date</span>
+            <strong><%= trip.dateData || 'À préciser' %><% if (trip.time) { %> · <%= trip.time %><% } %></strong>
+          </div>
+          <div>
+            <span>Places</span>
+            <strong><%= trip.places || 1 %></strong>
+          </div>
+          <div>
+            <span>Prix</span>
+            <strong><%= trip.price || 'À préciser' %></strong>
+          </div>
+        </div>
+      <% } %>
+
+      <form class="wizard-form" action="/publier/publier" method="post">
+        <%- include('../partials/csrf-input.ejs') %>
+        <label class="field">
+          <span>Description du trajet</span>
+          <textarea maxlength="1000" placeholder="Bonjour ! Je vais voir ma famille. J'ai de la place dans le coffre et je pars à l'heure." id="description" name="description"><%= trip && trip.description ? trip.description : '' %></textarea>
+        </label>
+        <div class="wizard-actions">
+          <button class="btn secondary precedent" id="precedent" type="button">Précédent</button>
+          <button class="btn" id="prochaine" type="submit">Publier le trajet</button>
+        </div>
+      </form>
+    </section>
   </main>
 
-<script src="/publier/description/script.js"></script>
-<script src="/shared/navbar.js"></script>
+  <script src="/publier/description/script.js"></script>
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

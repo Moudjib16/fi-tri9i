@@ -9,14 +9,12 @@ function updateSeatColor() {
     return;
   }
   const value = parseInt(placesInput.value, 10);
-  if (Number.isNaN(value)) {
-    placesInput.style.color = 'black';
+  if (Number.isNaN(value) || value <= 1) {
+    placesInput.dataset.tone = 'low';
   } else if (value > 3) {
-    placesInput.style.color = '#e05457';
-  } else if (value > 1) {
-    placesInput.style.color = 'green';
+    placesInput.dataset.tone = 'high';
   } else {
-    placesInput.style.color = 'black';
+    placesInput.dataset.tone = 'mid';
   }
 }
 
@@ -25,7 +23,7 @@ function updateSeatIcons(value) {
   for (let i = 1; i <= MAX_PLACES; i += 1) {
     const icon = document.getElementById(`p${i}`);
     if (icon) {
-      icon.style.display = i <= seats ? 'block' : 'none';
+      icon.style.display = i <= seats ? 'grid' : 'none';
     }
   }
 }
@@ -71,10 +69,6 @@ if (precedentButton) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  const btn7 = document.getElementById('btn7');
-  if (btn7) {
-    btn7.style.backgroundColor = '#0082AE';
-  }
   if (placesInput) {
     updateSeatColor();
     updateSeatIcons(parseInt(placesInput.value, 10));

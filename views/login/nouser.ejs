@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fi Tri9i | Utilisateur introuvable</title>
-  <link rel="stylesheet" href="/shared/navbar.css">
-  <link rel="stylesheet" href="/login/nouser.css">
-  <link rel="stylesheet" href="/shared/auth.css">
-</head>
+<%- include('../partials/head.ejs', { title: 'Utilisateur introuvable' }) %>
 <body>
   <%- include('../partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2>Utilisateur introuvable</h2>
-    <p>Aucun compte ne correspond à cet email.</p>
-    <div class="buttons">
-      <a href="/signup" class="button">Créer un compte</a>
-      <a href="/login" class="button">Retour à la connexion</a>
+  <main class="status-page">
+    <div class="status-card">
+      <span class="status-code">?</span>
+      <h1>Utilisateur introuvable</h1>
+      <p>Aucun compte ne correspond à cet email. Vérifiez l'adresse ou créez un nouveau compte.</p>
+      <div class="status-actions">
+        <a class="btn" href="/signup">Créer un compte</a>
+        <a class="btn secondary" href="/login">Retour à la connexion</a>
+      </div>
     </div>
-  </div>
+  </main>
 
   <script src="/shared/navbar.js"></script>
 </body>

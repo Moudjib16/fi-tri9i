@@ -1,35 +1,53 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fi Tri9i | Connexion</title>
-    <link rel="stylesheet" href="/shared/navbar.css">
-    <link rel="stylesheet" href="/login/login.css">
-    <link rel="stylesheet" href="/shared/auth.css">
-  </head>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Connexion' }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2>Connexion</h2>
-    <form action="/login" method="post">
-      <%- include('./partials/csrf-input.ejs') %>
-      <input type="hidden" name="next" value="<%= typeof next !== 'undefined' ? next : '' %>">
-      <div class="input-box">
-        <input type="email" name="email" placeholder="Votre email" autocomplete="email" required>
+  <main class="auth-body">
+    <section class="auth-layout">
+      <aside class="auth-aside">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path>
+              <circle cx="5" cy="19" r="2"></circle>
+              <circle cx="19" cy="13" r="2"></circle>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Fi Tri9i</strong>
+            <span>Covoiturage</span>
+          </span>
+        </a>
+        <h1>La route vous attend.</h1>
+        <p>Retrouvez vos trajets, vos réservations et les places libres près de chez vous.</p>
+        <p class="auth-quote">« Partager une voiture, c'est déjà commencer le voyage ensemble. »</p>
+      </aside>
+
+      <div class="auth-card">
+        <p class="eyebrow">Bon retour</p>
+        <h2>Connexion</h2>
+        <p class="auth-intro">Entrez vos identifiants pour retrouver votre compte.</p>
+
+        <form class="auth-form" action="/login" method="post">
+          <%- include('./partials/csrf-input.ejs') %>
+          <input type="hidden" name="next" value="<%= typeof next !== 'undefined' ? next : '' %>">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="vous@exemple.dz" autocomplete="email" required>
+          </label>
+          <label class="field">
+            <span>Mot de passe</span>
+            <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="current-password" required>
+          </label>
+          <button class="btn block" type="submit">Se connecter</button>
+        </form>
+
+        <p class="auth-switch">Pas encore de compte ? <a href="/signup">Inscription</a></p>
       </div>
-      <div class="input-box">
-        <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="current-password" required>
-      </div>
-      <div class="input-box button">
-        <input type="submit" value="Se connecter">
-      </div>
-      <div class="text">
-        <h3>Pas encore de compte ? <a href="/signup">S'inscrire</a></h3>
-      </div>
-    </form>
-  </div>
+    </section>
+  </main>
 
   <script src="/shared/navbar.js"></script>
 </body>

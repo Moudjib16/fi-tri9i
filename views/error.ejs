@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
-<%- include('./partials/head.ejs') %>
-<link rel="stylesheet" href="/shared/navbar.css">
-<link rel="stylesheet" href="/shared/auth.css">
+<%- include('./partials/head.ejs', { title: heading }) %>
 <body>
   <%- include('./partials/navbar.ejs') %>
 
-  <div class="wrapper">
-    <h2><%= status %> - <%= heading %></h2>
-    <p><%= message %></p>
-    <a href="/" class="button">Retour à l'accueil</a>
-  </div>
+  <main class="status-page">
+    <div class="status-card">
+      <span class="status-code"><%= status %></span>
+      <h1><%= heading %></h1>
+      <p><%= message %></p>
+      <div class="status-actions">
+        <a class="btn" href="/">Retour à l'accueil</a>
+        <a class="btn secondary" href="/trajets">Voir les trajets</a>
+      </div>
+    </div>
+  </main>
 
+  <%- include('./partials/footer.ejs') %>
   <script src="/shared/navbar.js"></script>
 </body>
 </html>
