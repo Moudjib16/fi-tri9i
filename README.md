@@ -73,9 +73,12 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 ## Project structure
 
 ```text
-app.js            # Express application (auth, search, booking, wizard routes)
+app.js            # Express setup, middleware and router mounting
+routes/           # pages, auth, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
+lib/session.js    # Session regeneration and route guards
+lib/http.js       # Shared HTTP helpers
 models/           # User and Trip schemas
 views/            # EJS templates (home, trajets, trajet, publier/*, partials)
 public/           # per-page CSS, JS and images
@@ -84,7 +87,6 @@ test/             # node:test suites (validation, views, booking flow)
 
 ## Roadmap
 
-- Extract routes into Express routers (`routes/`)
 - Trip editing and driver profiles
 - Messaging, payments, email verification, password reset
 - Replace `'unsafe-inline'` in the CSP by moving inline page scripts to files

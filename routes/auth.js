@@ -1,0 +1,101 @@
+const express = require('express');
+const bcrypt = require('bcrypt');
+const user = require('../models/signup');
+const { safeRedirect } = require('../lib/validation');
+const { regenerateSession } = require('../lib/session');
+
+const router = express.Router();
+
+router.get('/signup', (req, res) => {
+  res.render('signup', { exist: '' });
+});
+
+router.get('/login', (req, res) => {
+  res.render('login', { next: safeRedirect(req.query.next) });
+});
+
+router.post('/signup', async (req, res) => {
+  try {
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+    const confirmPassword = req.body['confirm-password'];
+    const userType = Number(req.body.userType);
+
+    if (!name || !email || !password || ![1, 2].includes(userType)) {
+      return res.status(400).render('signup', { exist: 'Please fill all fields correctly.' });
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      return res.status(400).render('signup', { exist: 'Password must be at least 6 characters.' });
+    }
+    if (confirmPassword !== undefined && confirmPassword !== password) {
+      return res.status(400).render('signup', { exist: 'Passwords do not match.' });
+    }
+
+    const userexist = await user.findOne({ email });
+    if (userexist) {
+      return res.status(409).render('signup/emailExist');
+    }
+
+    const saltRounds = 10;
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+    const userdata = new user({ name, email, password: hashPassword, userType });
+    const result = await userdata.save();
+    console.log('Saved to database:', result._id);
+    await regenerateSession(req);
+    req.session.userId = result._id;
+    return req.session.save((err) => {
+      if (err) {
+        return res.status(500).send({ message: 'Error saving session' });
+      }
+      return res.redirect('/');
+    });
+  } catch (err) {
+    console.log(err);
+    if (err && err.code === 11000) {
+      return res.status(409).render('signup/emailExist');
+    }
+    if (err && err.name === 'ValidationError') {
+      return res.status(400).render('signup', { exist: 'Invalid signup data.' });
+    }
+    return res.status(500).send({ message: 'Error saving to database' });
+  }
+});
+
+router.post('/login', async (req, res) => {
+  try {
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password;
+    if (!email || !password) {
+      return res.status(400).send('wrong details');
+    }
+    const check = await user.findOne({ email });
+    if (!check) {
+      return res.status(404).render('login/nouser');
+    }
+    const passwordMatch = await bcrypt.compare(password, check.password);
+    if (passwordMatch) {
+      const nextUrl = safeRedirect(req.body.next) || '/';
+      await regenerateSession(req);
+      req.session.userId = check._id;
+      return req.session.save((err) => {
+        if (err) {
+          return res.status(500).send('wrong details');
+        }
+        return res.redirect(nextUrl);
+      });
+    }
+    return res.status(401).render('login/wrongpass');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send('wrong details');
+  }
+});
+
+router.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/');
+  });
+});
+
+module.exports = router;
