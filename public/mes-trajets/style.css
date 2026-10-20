@@ -72,6 +72,15 @@
   align-items: center;
 }
 
+.cancelled-card {
+  opacity: 0.82;
+}
+
+.cancelled-badge {
+  background: #fdecec;
+  color: #9b1c1c;
+}
+
 @media (max-width: 640px) {
   .my-header {
     align-items: flex-start;

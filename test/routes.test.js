@@ -153,6 +153,9 @@ Object.assign(fakeTrip, {
     if (filter.driver && driver !== String(filter.driver)) {
       return null;
     }
+    if (filter.status && state.trips[index].status !== filter.status) {
+      return null;
+    }
     return state.trips.splice(index, 1)[0];
   },
   findOneAndUpdate(filter, update) {
@@ -178,11 +181,18 @@ Object.assign(fakeTrip, {
         return null;
       }
     }
-    if (filter.driver && filter.driver.$ne !== undefined) {
+    if (filter.driver) {
       const driver = found.driver ? String(found.driver._id || found.driver) : null;
-      if (driver === String(filter.driver.$ne)) {
+      if (filter.driver.$ne !== undefined) {
+        if (driver === String(filter.driver.$ne)) {
+          return null;
+        }
+      } else if (driver !== String(filter.driver)) {
         return null;
       }
+    }
+    if (filter.status && typeof filter.status === 'string' && found.status !== filter.status) {
+      return null;
     }
     if (filter.passengers !== undefined) {
       const passengers = (found.passengers || []).map(String);
@@ -215,6 +225,9 @@ Object.assign(fakeTrip, {
     }
     if (update.$inc && update.$inc.places_taken) {
       found.places_taken = (found.places_taken || 0) + update.$inc.places_taken;
+    }
+    if (update.$set) {
+      Object.assign(found, update.$set);
     }
     return found;
   },
@@ -260,6 +273,13 @@ test.before(async () => {
     email: 'sara@test.dz',
     password: await bcrypt.hash('secret1', 10),
     userType: 1,
+  });
+  state.users.push({
+    _id: driverId,
+    name: 'Karim',
+    email: 'karim@test.dz',
+    password: await bcrypt.hash('secret1', 10),
+    userType: 2,
   });
 
   server = app.listen(0);
@@ -547,4 +567,45 @@ test('drafts stay private and out of listings', async () => {
 
   const afterFlash = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
   assert.doesNotMatch(afterFlash, /Le trajet a été supprimé/);
+});
+
+test('driver can cancel a trip and passengers see it', async () => {
+  const passenger = await login('sara@test.dz', 'secret1');
+  const passengerDetail = await openPage(`/trajets/${tripId}`, passenger.cookie);
+  const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: passengerDetail.token }),
+    redirect: 'manual',
+  });
+  assert.equal(reserve.status, 302);
+
+  const driver = await login('karim@test.dz', 'secret1');
+  const driverDetail = await openPage(`/trajets/${tripId}`, driver.cookie);
+  assert.match(driverDetail.html, /Annuler le trajet/);
+
+  const cancelTrip = await fetch(`${baseUrl}/trajets/${tripId}/annuler-trajet`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: driver.cookie },
+    body: new URLSearchParams({ _csrf: driverDetail.token }),
+    redirect: 'manual',
+  });
+  assert.equal(cancelTrip.status, 302);
+  assert.equal(cancelTrip.headers.get('location'), '/mes-trajets');
+  assert.equal(state.trips[0].status, 'cancelled');
+
+  const driverTrips = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie: driver.cookie } })).text();
+  assert.match(driverTrips, /Trajets annulés \(1\)/);
+  assert.match(driverTrips, /Annulé/);
+
+  const passengerTrips = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie: passenger.cookie } })).text();
+  assert.match(passengerTrips, /Annulé par le conducteur/);
+  assert.doesNotMatch(passengerTrips, new RegExp(`/trajets/${tripId}/annuler"`));
+
+  const listing = await (await fetch(`${baseUrl}/trajets?depart=Alger`)).text();
+  assert.match(listing, /0 trajets trouvés/);
+
+  const cancelledDetail = await (await fetch(`${baseUrl}/trajets/${tripId}`)).text();
+  assert.match(cancelledDetail, /Annulé par le conducteur/);
+  assert.doesNotMatch(cancelledDetail, /Réserver une place/);
 });

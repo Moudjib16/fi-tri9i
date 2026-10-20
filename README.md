@@ -17,7 +17,10 @@ log in, and book their seats.
 - Trip search by departure, arrival, date and available seats, with sorting,
   pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation
-- "My trips" dashboard: drafts, published rides and reservations in one place
+- Drivers can cancel published trips; cancelled rides leave search, appear in
+  driver history, and are flagged in passengers' reservations
+- "My trips" dashboard: drafts, published rides, cancelled rides and
+  reservations in one place
 - Flash confirmations and errors for publishing, deleting, booking and
   cancelling trips
 - About page, session-aware navbar and working footer/shortcut links

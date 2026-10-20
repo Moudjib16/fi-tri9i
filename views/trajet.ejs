@@ -70,10 +70,23 @@
       <footer class="detail-actions">
         <% if (isDriver) { %>
           <span class="status-badge">Votre trajet</span>
-          <form action="/trajets/<%= trip._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce trajet ?');">
-            <%- include('./partials/csrf-input.ejs') %>
-            <button type="submit" class="btn danger">Supprimer le trajet</button>
-          </form>
+          <% if (typeof isDraft !== 'undefined' && isDraft) { %>
+            <form action="/trajets/<%= trip._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce brouillon ?');">
+              <%- include('./partials/csrf-input.ejs') %>
+              <button type="submit" class="btn danger">Supprimer le brouillon</button>
+            </form>
+          <% } else if (typeof isCancelled !== 'undefined' && isCancelled) { %>
+            <span class="status-badge muted-badge">Trajet annulé</span>
+          <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
+            <span class="status-badge muted-badge">Trajet passé</span>
+          <% } else { %>
+            <form action="/trajets/<%= trip._id %>/annuler-trajet" method="post" onsubmit="return confirm('Annuler ce trajet ? Les passagers devront chercher une autre place.');">
+              <%- include('./partials/csrf-input.ejs') %>
+              <button type="submit" class="btn danger">Annuler le trajet</button>
+            </form>
+          <% } %>
+        <% } else if (typeof isCancelled !== 'undefined' && isCancelled) { %>
+          <span class="status-badge muted-badge">Annulé par le conducteur</span>
         <% } else if (isBooked) { %>
           <form action="/trajets/<%= trip._id %>/annuler" method="post">
             <%- include('./partials/csrf-input.ejs') %>

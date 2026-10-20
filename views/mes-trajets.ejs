@@ -130,6 +130,48 @@
       <% } %>
     </section>
 
+    <% const cancelledList = typeof cancelledTrips !== 'undefined' ? cancelledTrips : []; %>
+    <% if (cancelledList.length) { %>
+      <section class="my-section">
+        <div class="results-head">
+          <h2>Trajets annulés (<%= cancelledList.length %>)</h2>
+        </div>
+
+        <div class="trip-grid">
+          <% cancelledList.forEach(function (t) { %>
+            <article class="trip-card cancelled-card">
+              <span class="draft-badge cancelled-badge">Annulé</span>
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+              </dl>
+
+              <div class="trip-card-footer">
+                <span></span>
+                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </section>
+    <% } %>
+
     <section class="my-section" id="reservations">
       <div class="results-head">
         <h2>Mes réservations (<%= booked.length %>)</h2>
@@ -144,7 +186,10 @@
       <% } else { %>
         <div class="trip-grid">
           <% booked.forEach(function (t) { %>
-            <article class="trip-card">
+            <article class="trip-card<%= t.status === 'cancelled' ? ' cancelled-card' : '' %>">
+              <% if (t.status === 'cancelled') { %>
+                <span class="draft-badge cancelled-badge">Annulé par le conducteur</span>
+              <% } %>
               <div class="trip-route">
                 <span><%= t.depart %></span>
                 <span class="route-arrow">&rarr;</span>
@@ -171,10 +216,14 @@
               </dl>
 
               <div class="trip-card-footer">
-                <form action="/trajets/<%= t._id %>/annuler" method="post">
-                  <%- include('./partials/csrf-input.ejs') %>
-                  <button type="submit" class="cancel-link">Annuler</button>
-                </form>
+                <% if (t.status !== 'cancelled') { %>
+                  <form action="/trajets/<%= t._id %>/annuler" method="post">
+                    <%- include('./partials/csrf-input.ejs') %>
+                    <button type="submit" class="cancel-link">Annuler</button>
+                  </form>
+                <% } else { %>
+                  <span></span>
+                <% } %>
                 <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet</a>
               </div>
             </article>

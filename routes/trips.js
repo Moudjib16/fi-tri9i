@@ -137,6 +137,7 @@ router.get('/trajets/:id', async (req, res) => {
     const isBooked = Boolean(userId && passengerIds.includes(userId));
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
     const isDraft = foundTrip.status === 'draft';
+    const isCancelled = foundTrip.status === 'cancelled';
     const hasDeparted = Boolean(foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt)));
 
     if (isDraft && !isDriver) {
@@ -150,6 +151,7 @@ router.get('/trajets/:id', async (req, res) => {
       isDriver,
       isBooked,
       isDraft,
+      isCancelled,
       hasDeparted,
       remaining,
     });
@@ -257,7 +259,45 @@ router.post('/trajets/:id/annuler', async (req, res) => {
   }
 });
 
-// Delete a published trip (driver only)
+// Cancel a published trip (driver only)
+router.post('/trajets/:id/annuler-trajet', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.redirect('/trajets');
+  }
+  if (!req.session.userId) {
+    return res.redirect(`/login?next=${encodeURIComponent(`/trajets/${req.params.id}`)}`);
+  }
+
+  const tripUrl = `/trajets/${req.params.id}`;
+
+  try {
+    const cancelledTrip = await trip.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        driver: req.session.userId,
+        status: 'published',
+        $or: [
+          { departureAt: { $gt: new Date() } },
+          { departureAt: null },
+        ],
+      },
+      { $set: { status: 'cancelled' } },
+      { new: true }
+    );
+
+    if (!cancelledTrip) {
+      return redirectWithTripError(req, res, tripUrl);
+    }
+
+    setFlash(req, 'success', 'Le trajet a été annulé.');
+    return res.redirect('/mes-trajets');
+  } catch (err) {
+    console.error(err);
+    return redirectWithTripError(req, res, tripUrl);
+  }
+});
+
+// Delete a draft (driver only)
 router.post('/trajets/:id/supprimer', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return tripNotFound(res);
@@ -270,6 +310,7 @@ router.post('/trajets/:id/supprimer', async (req, res) => {
     const deletedTrip = await trip.findOneAndDelete({
       _id: req.params.id,
       driver: req.session.userId,
+      status: 'draft',
     });
 
     if (!deletedTrip) {
@@ -294,7 +335,7 @@ router.get('/mes-trajets', async (req, res) => {
   }
 
   try {
-    const [published, booked, drafts] = await Promise.all([
+    const [published, booked, drafts, cancelledTrips] = await Promise.all([
       trip.find({ driver: req.session.userId, status: { $nin: ['draft', 'cancelled'] } })
         .populate('passengers', 'name')
         .sort({ createdAt: -1 })
@@ -306,6 +347,9 @@ router.get('/mes-trajets', async (req, res) => {
       trip.find({ driver: req.session.userId, status: 'draft' })
         .sort({ updatedAt: -1 })
         .lean(),
+      trip.find({ driver: req.session.userId, status: 'cancelled' })
+        .sort({ updatedAt: -1 })
+        .lean(),
     ]);
 
     return res.render('mes-trajets', {
@@ -314,6 +358,7 @@ router.get('/mes-trajets', async (req, res) => {
       published,
       booked,
       drafts,
+      cancelledTrips,
     });
   } catch (err) {
     console.error(err);

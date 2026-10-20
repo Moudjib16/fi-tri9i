@@ -112,9 +112,11 @@ test('my trips renders published and reserved sections', async () => {
     published: [{ ...sampleTrip, passengers: [{ name: 'Sara' }] }],
     booked: [{ ...sampleTrip, driver: { name: 'Karim' } }],
     drafts: [{ ...sampleTrip, depart: 'Draftville', arrivee: '', status: 'draft' }],
+    cancelledTrips: [{ ...sampleTrip, status: 'cancelled' }],
   });
 
   assert.match(html, /Brouillons \(1\)/);
+  assert.match(html, /Trajets annulés \(1\)/);
   assert.match(html, /Draftville/);
   assert.match(html, /Reprendre/);
   assert.match(html, /\/publier\/continuer\/64f000000000000000000001/);
