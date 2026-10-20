@@ -397,6 +397,96 @@ test('driver profile lists upcoming trips without exposing contact details', asy
   assert.equal(missing.status, 404);
 });
 
+test('driver can edit a published trip and seats cannot drop below reservations', async () => {
+  const editTripId = '64f000000000000000000303';
+  state.trips.push({
+    _id: editTripId,
+    status: 'published',
+    depart: 'Oran',
+    depart0: 'Es Senia',
+    arrivee: 'Tlemcen',
+    arrivee0: 'Chetouane',
+    dateData: '15 June 2031',
+    departureAt: new Date('2031-06-15T10:00:00Z'),
+    time: '10 : 00',
+    price: '900da',
+    priceDZD: 900,
+    places: 4,
+    places_taken: 2,
+    passengers: [passengerId, '64f000000000000000000304'],
+    description: 'Trajet à modifier',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const driver = await login('karim@test.dz', 'secret1');
+  const editPage = await openPage(`/trajets/${editTripId}/modifier`, driver.cookie);
+  assert.equal(editPage.response.status, 200);
+  assert.match(editPage.html, /Modifier le trajet/);
+  assert.match(editPage.html, /2 places déjà réservées/);
+
+  const update = await fetch(`${baseUrl}/trajets/${editTripId}/modifier`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: driver.cookie },
+    body: new URLSearchParams({
+      _csrf: editPage.token,
+      depart: 'Constantine',
+      depart0: 'El Khroub',
+      arrivee: 'Annaba',
+      arrivee0: 'El Bouni',
+      date: '2031-05-20',
+      time: '09:30',
+      places: '3',
+      price: '1500',
+      description: 'Trajet mis à jour',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(update.status, 302);
+  assert.equal(update.headers.get('location'), `/trajets/${editTripId}`);
+
+  const updated = state.trips.find((candidate) => candidate._id === editTripId);
+  assert.equal(updated.depart, 'Constantine');
+  assert.equal(updated.depart0, 'El Khroub');
+  assert.equal(updated.arrivee, 'Annaba');
+  assert.equal(updated.arrivee0, 'El Bouni');
+  assert.equal(updated.dateData, '20 May 2031');
+  assert.equal(updated.time, '09 : 30');
+  assert.equal(updated.departureAt.toISOString(), '2031-05-20T09:30:00.000Z');
+  assert.equal(updated.places, 3);
+  assert.equal(updated.price, '1500da');
+  assert.equal(updated.priceDZD, 1500);
+  assert.equal(updated.description, 'Trajet mis à jour');
+  assert.equal(updated.places_taken, 2);
+
+  const tooFewSeats = await fetch(`${baseUrl}/trajets/${editTripId}/modifier`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: driver.cookie },
+    body: new URLSearchParams({
+      _csrf: editPage.token,
+      depart: 'Constantine',
+      depart0: 'El Khroub',
+      arrivee: 'Annaba',
+      arrivee0: 'El Bouni',
+      date: '2031-05-20',
+      time: '09:30',
+      places: '1',
+      price: '1500',
+      description: 'Trajet mis à jour',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(tooFewSeats.status, 400);
+  assert.match(await tooFewSeats.text(), /déjà 2 réservations/);
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const forbidden = await openPage(`/trajets/${editTripId}/modifier`, passenger.cookie);
+  assert.equal(forbidden.response.status, 404);
+
+  const editIndex = state.trips.findIndex((candidate) => candidate._id === editTripId);
+  assert.notEqual(editIndex, -1);
+  state.trips.splice(editIndex, 1);
+});
+
 test('a logged-in passenger can reserve and cancel a seat', async () => {
   const session = await login('sara@test.dz', 'secret1');
   assert.equal(session.response.status, 302);

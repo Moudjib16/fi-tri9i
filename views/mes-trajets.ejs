@@ -137,7 +137,10 @@
 
               <div class="trip-card-footer">
                 <span class="pill"><%= remaining %> place<%= remaining === 1 ? '' : 's' %> libre<%= remaining === 1 ? '' : 's' %></span>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
+                <span class="trip-card-links">
+                  <a class="trip-link" href="/trajets/<%= t._id %>/modifier">Modifier</a>
+                  <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
+                </span>
               </div>
             </article>
           <% }); %>

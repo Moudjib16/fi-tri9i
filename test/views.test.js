@@ -65,6 +65,32 @@ test('trip detail shows a booking action for guests', async () => {
   assert.match(html, /Rami/);
 });
 
+test('edit form preloads trip values and reserves booked seats', async () => {
+  const html = await renderFile(view('trajet-modifier.ejs'), {
+    title: 'Modifier le trajet',
+    currentUser: { name: 'Rami' },
+    trip: { ...sampleTrip, places: 4, places_taken: 2 },
+    values: {
+      depart: 'Alger',
+      depart0: 'Bab Ezzouar',
+      arrivee: 'Bejaia',
+      arrivee0: 'Amizour',
+      date: '2030-12-12',
+      time: '08:00',
+      places: '4',
+      price: '1200',
+      description: 'Trajet tranquille',
+    },
+    error: 'Erreur de test',
+  });
+
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/modifier"/);
+  assert.match(html, /name="places"/);
+  assert.match(html, /min="2"/);
+  assert.match(html, /value="2030-12-12"/);
+  assert.match(html, /Erreur de test/);
+});
+
 test('about page renders the guest navbar and calls to action', async () => {
   const html = await renderFile(view('a-propos.ejs'), {
     stylesheet: 'a-propos/',

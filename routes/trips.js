@@ -5,6 +5,9 @@ const {
   pickString,
   escapeRegex,
   parseDateInput,
+  parseTimeInput,
+  parsePriceInput,
+  combineDepartureAt,
   isPastDate,
 } = require('../lib/validation');
 const { tripNotFound } = require('../lib/http');
@@ -25,6 +28,159 @@ function redirectWithTripError(req, res, tripUrl, code = 'unavailable') {
   setFlash(req, 'error', TRIP_ERROR_MESSAGES[code] || TRIP_ERROR_MESSAGES.unavailable);
   return res.redirect(tripUrl);
 }
+
+function editValuesFromTrip(foundTrip) {
+  const parsedDate = parseDateInput(foundTrip.dateData);
+  const parsedTime = parseTimeInput(foundTrip.time);
+  const parsedPrice = parsePriceInput(foundTrip.price);
+
+  return {
+    depart: foundTrip.depart || '',
+    depart0: foundTrip.depart0 || '',
+    arrivee: foundTrip.arrivee || '',
+    arrivee0: foundTrip.arrivee0 || '',
+    date: parsedDate ? parsedDate.date.toISOString().slice(0, 10) : '',
+    time: parsedTime
+      ? `${String(parsedTime.hours).padStart(2, '0')}:${String(parsedTime.minutes).padStart(2, '0')}`
+      : '',
+    places: String(foundTrip.places || 1),
+    price: String(foundTrip.priceDZD || (parsedPrice ? parsedPrice.amount : '')),
+    description: foundTrip.description || '',
+  };
+}
+
+function editValuesFromBody(body) {
+  return {
+    depart: pickString(body.depart),
+    depart0: pickString(body.depart0),
+    arrivee: pickString(body.arrivee),
+    arrivee0: pickString(body.arrivee0),
+    date: pickString(body.date),
+    time: pickString(body.time),
+    places: pickString(body.places),
+    price: pickString(body.price),
+    description: pickString(body.description),
+  };
+}
+
+async function loadEditableTrip(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    tripNotFound(res);
+    return null;
+  }
+
+  const editUrl = `/trajets/${req.params.id}/modifier`;
+  if (!req.session.userId) {
+    res.redirect(`/login?next=${encodeURIComponent(editUrl)}`);
+    return null;
+  }
+
+  const foundTrip = await trip.findById(req.params.id);
+  if (!foundTrip) {
+    tripNotFound(res);
+    return null;
+  }
+
+  const tripDriverId = foundTrip.driver
+    ? String(foundTrip.driver._id || foundTrip.driver)
+    : null;
+  if (tripDriverId !== String(req.session.userId)) {
+    tripNotFound(res);
+    return null;
+  }
+
+  if (
+    foundTrip.status !== 'published'
+    || (foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt)))
+  ) {
+    setFlash(req, 'error', 'Ce trajet ne peut plus être modifié.');
+    res.redirect(`/trajets/${req.params.id}`);
+    return null;
+  }
+
+  return foundTrip;
+}
+
+// Edit a published trip (driver only)
+router.get('/trajets/:id/modifier', async (req, res) => {
+  try {
+    const foundTrip = await loadEditableTrip(req, res);
+    if (!foundTrip) {
+      return;
+    }
+
+    return res.render('trajet-modifier', {
+      title: 'Modifier le trajet',
+      trip: foundTrip,
+      values: editValuesFromTrip(foundTrip),
+      error: '',
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ message: 'Unable to load edit form' });
+  }
+});
+
+router.post('/trajets/:id/modifier', async (req, res) => {
+  try {
+    const foundTrip = await loadEditableTrip(req, res);
+    if (!foundTrip) {
+      return;
+    }
+
+    const values = editValuesFromBody(req.body);
+    const parsedDate = parseDateInput(values.date);
+    const parsedTime = parseTimeInput(values.time);
+    const parsedPrice = parsePriceInput(values.price);
+    const places = Number(values.places);
+    const placesTaken = foundTrip.places_taken || 0;
+
+    let error = '';
+    if (!values.depart || !values.depart0 || !values.arrivee || !values.arrivee0) {
+      error = 'Renseignez la wilaya et la commune de départ et d’arrivée.';
+    } else if (!parsedDate || isPastDate(parsedDate.date)) {
+      error = 'Choisissez une date future.';
+    } else if (!parsedTime) {
+      error = 'Choisissez une heure valide.';
+    } else if (!Number.isInteger(places) || places < 1 || places > 5) {
+      error = 'Le nombre de places doit être compris entre 1 et 5.';
+    } else if (places < placesTaken) {
+      error = `Ce trajet a déjà ${placesTaken} réservation${placesTaken === 1 ? '' : 's'}.`;
+    } else if (!parsedPrice) {
+      error = 'Indiquez un prix valide entre 1 et 100 000 DA.';
+    } else if (values.description.length > 1000) {
+      error = 'La description est trop longue.';
+    }
+
+    if (error) {
+      return res.status(400).render('trajet-modifier', {
+        title: 'Modifier le trajet',
+        trip: foundTrip,
+        values,
+        error,
+      });
+    }
+
+    foundTrip.depart = values.depart;
+    foundTrip.depart0 = values.depart0;
+    foundTrip.arrivee = values.arrivee;
+    foundTrip.arrivee0 = values.arrivee0;
+    foundTrip.dateData = parsedDate.display;
+    foundTrip.time = parsedTime.display;
+    foundTrip.departureAt = combineDepartureAt(parsedDate.display, parsedTime.display);
+    foundTrip.places = places;
+    foundTrip.price = parsedPrice.display;
+    foundTrip.priceDZD = parsedPrice.amount;
+    foundTrip.description = values.description;
+
+    await foundTrip.save();
+    setFlash(req, 'success', 'Le trajet a été mis à jour.');
+    return res.redirect(`/trajets/${foundTrip._id}`);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ message: 'Unable to update trip' });
+  }
+});
 
 // Trip search / listing
 router.get('/trajets', async (req, res) => {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Modifier le trajet' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="wizard-shell edit-shell">
+    <a class="back-link" href="/trajets/<%= trip._id %>">&larr; Retour au trajet</a>
+
+    <section class="wizard-card">
+      <p class="eyebrow">Conducteur</p>
+      <h1 class="wizard-title">Modifier le trajet</h1>
+      <p class="wizard-help">Les passagers verront immédiatement les nouvelles informations.</p>
+
+      <% if (error) { %>
+        <p class="form-error" role="alert"><%= error %></p>
+      <% } %>
+
+      <form class="wizard-form" action="/trajets/<%= trip._id %>/modifier" method="post">
+        <%- include('./partials/csrf-input.ejs') %>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Wilaya de départ</span>
+            <input type="text" name="depart" value="<%= values.depart %>" required>
+          </label>
+          <label class="field">
+            <span>Commune de départ</span>
+            <input type="text" name="depart0" value="<%= values.depart0 %>" required>
+          </label>
+          <label class="field">
+            <span>Wilaya d'arrivée</span>
+            <input type="text" name="arrivee" value="<%= values.arrivee %>" required>
+          </label>
+          <label class="field">
+            <span>Commune d'arrivée</span>
+            <input type="text" name="arrivee0" value="<%= values.arrivee0 %>" required>
+          </label>
+          <label class="field">
+            <span>Date</span>
+            <input type="date" name="date" value="<%= values.date %>" required>
+          </label>
+          <label class="field">
+            <span>Heure</span>
+            <input type="time" name="time" value="<%= values.time %>" required>
+          </label>
+          <label class="field">
+            <span>Places au total</span>
+            <input
+              type="number"
+              name="places"
+              value="<%= values.places %>"
+              min="<%= Math.max(1, trip.places_taken || 0) %>"
+              max="5"
+              required
+            >
+            <% if (trip.places_taken) { %>
+              <small><%= trip.places_taken %> place<%= trip.places_taken === 1 ? '' : 's' %> déjà réservée<%= trip.places_taken === 1 ? '' : 's' %></small>
+            <% } %>
+          </label>
+          <label class="field">
+            <span>Prix par place (DA)</span>
+            <input type="number" name="price" value="<%= values.price %>" min="1" max="100000" required>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>À propos du trajet</span>
+          <textarea name="description" maxlength="1000"><%= values.description %></textarea>
+        </label>
+
+        <div class="wizard-actions">
+          <a class="btn ghost" href="/trajets/<%= trip._id %>">Annuler</a>
+          <button class="btn" type="submit">Enregistrer les modifications</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js" defer></script>
+</body>
+</html>

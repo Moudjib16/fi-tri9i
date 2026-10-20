@@ -19,6 +19,8 @@ log in, and book their seats.
 - Trip details with seat reservation and cancellation before departure; past
   reservations are read-only
 - Public driver profiles with upcoming trips and links from trip cards
+- Drivers can edit published trips while keeping enough seats for existing
+  reservations
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and

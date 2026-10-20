@@ -122,6 +122,7 @@
               <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
                 <span class="status-badge muted-badge">Trajet passé</span>
               <% } else { %>
+                <a class="btn secondary block" href="/trajets/<%= trip._id %>/modifier">Modifier le trajet</a>
                 <form action="/trajets/<%= trip._id %>/annuler-trajet" method="post" data-confirm="Annuler ce trajet ? Les passagers devront chercher une autre place.">
                   <%- include('./partials/csrf-input.ejs') %>
                   <button type="submit" class="btn danger block">Annuler le trajet</button>

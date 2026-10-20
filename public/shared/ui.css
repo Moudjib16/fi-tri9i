@@ -1347,6 +1347,12 @@ textarea:focus-visible {
   text-decoration: underline;
 }
 
+.trip-card-links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .draft-badge,
 .status-badge {
   display: inline-flex;
@@ -2029,6 +2035,18 @@ a.driver-card:hover strong {
 .wizard-form {
   display: grid;
   gap: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .wizard-actions {
@@ -2751,6 +2769,10 @@ a.driver-card:hover strong {
 
   .wizard-card {
     padding: 24px 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 
   .wizard-actions {
