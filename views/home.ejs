@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <%- include('./partials/head.ejs') %>
 <body>
 
@@ -10,7 +10,7 @@
    
     <div class="box">
       <div class="empty"></div>
-      <div class="part1">Trouver Votre prochaine Destination</div>
+      <div class="part1">Trouvez votre prochaine destination</div>
 
       <form class="search" action="/trajets" method="get">
 
@@ -24,33 +24,33 @@
 
 
         <img src="/home/pics/pp.svg" class="pp">
-        <input type="number" class="input3" id="input3" name="places" min="1" max="8" placeholder="01">
+        <input type="number" class="input3" id="input3" name="places" min="1" max="5" placeholder="01">
        
-        <button class="look" id="look" type="submit">Recherche</button>
+        <button class="look" id="look" type="submit">Rechercher</button>
       </form>
 
     </div>
 
 
     <div class="sanction0">
-      <h1 class="subtit0">Pourquoi Tu Nous Choisis ?</h1>
+      <h1 class="subtit0">Pourquoi nous choisir ?</h1>
       
       <div class="subsac0">
         <div class="subbox0">
           <img class="subimg" src="/home/pics/coins.svg">
           <h1 class="tit0">Vos trajets préférés à petits prix</h1>
-          <p class="tex0">Où que vous alliez, en bus ou en covoiturage, trouvez le trajet idéal parmi notre large choix . </p>
+          <p class="tex0">Où que vous alliez, trouvez le trajet idéal parmi notre large choix de covoiturages.</p>
         </div>
 
         <div class="subbox1">
           <img class="subimg" src="/home/pics/shield.svg">
           <h1 class="tit1">Voyagez en toute confiance</h1>
-          <p class="tex1">Où que vous alliez, en bus ou en covoiturage, trouvez le trajet idéal parmi notre large choix .</p>
+          <p class="tex1">Des profils vérifiés et des trajets publiés par la communauté pour voyager sereinement.</p>
         </div>
         <div class="subbox2">
           <img class="subimg" src="/home/pics/flash.svg">
           <h1 class="tit0">Recherchez, cliquez et réservez ! </h1>
-          <p class="tex2">Où que vous alliez, en bus ou en covoiturage, trouvez le trajet idéal parmi notre large choix .</p>
+          <p class="tex2">Cherchez, comparez et réservez votre place en quelques clics.</p>
         </div>
       </div>
 
@@ -72,17 +72,17 @@
         <div class="color0"><img src="/home/pics/pips.svg" class="pips">  </div>
         
         <div class="element0">
-          <h1 class="ht">Découvrez de nouvelles villes sans vous ruiner avec les bus FI TRI9I !</h1>
-          <p class="sub-ht">dévoilez leurs charmes cachés et plongez dans l'excitation de l'inconnu. Laissez-nous vous guider vers des aventures urbaines inoubliables."</p>
-          <a href="/trajets" class="but0"><p>Decouvrir notre offre</p></a>
+          <h1 class="ht">Découvrez de nouvelles villes sans vous ruiner avec Fi Tri9i</h1>
+          <p class="sub-ht">Partagez les frais du trajet et découvrez de nouvelles destinations à petit prix.</p>
+          <a href="/trajets" class="but0"><p>Découvrir notre offre</p></a>
         </div>
       </div>
 
       <div class="half1">
         <div class="element1">
-          <h1 class="ht">Aidez-nous à vous protéger contre les arnaques</h1>
-          <p class="sub-ht">Chez BlaBlaCar, nous mettons tout en œuvre pour vous proposer une plateforme aussi sécurisée que possible. Mais les tentatives d'arnaque demeurent une réalité,</p>
-          <a href="/trajets" class="but1"><p>Decouvrir notre offre</p></a>
+          <h1 class="ht">Voyagez en toute confiance</h1>
+          <p class="sub-ht">Chez Fi Tri9i, nous mettons tout en œuvre pour vous proposer une plateforme aussi sécurisée que possible.</p>
+          <a href="/a-propos" class="but1"><p>En savoir plus</p></a>
         </div>
         <div class="color1"> <img src="/home/pics/wave.svg" class="wave"> </div>
       </div>
@@ -98,26 +98,26 @@
         <img src="/home/pics/poep.svg"  class="last-img1">
        
         <h1 class="bigt0">À propos</h1>
-        <p class="smallt">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+        <p class="smallt">Découvrez notre mission et comment Fi Tri9i facilite le covoiturage en Algérie.</p>
         <a href="/a-propos" class="more">En savoir plus</a>
       </div>
 
       <div class="card1">
         <img src="/home/pics/paper.svg" class="last-img0">
-        <h1 class="bigt1">Espace presse</h1>
-        <p class="smallt">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+        <h1 class="bigt1">Comment ça marche</h1>
+        <p class="smallt">Publiez votre trajet ou réservez une place en quelques étapes simples.</p>
         <a href="/a-propos" class="more">En savoir plus</a>
       </div>
 
       <div class="card0">
         <img src="/home/pics/home.svg"  class="last-img2">
-        <h1 class="bigt0">Citoyens du monde</h1>
-        <p class="smallt">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
-        <a href="/a-propos" class="more">En savoir plus</a>
+        <h1 class="bigt0">Une communauté de confiance</h1>
+        <p class="smallt">Rejoignez des milliers de voyageurs et partagez la route en toute simplicité.</p>
+        <a href="/trajets" class="more">Voir les trajets</a>
       </div>
     </div>
   </main>
   <%- include('./partials/footer.ejs') %>
-<script src="/home/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

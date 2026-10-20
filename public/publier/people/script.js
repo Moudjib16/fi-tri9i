@@ -1,234 +1,82 @@
+const plusButton = document.getElementById('pluss');
+const minusButton = document.getElementById('minuss');
+const placesInput = document.getElementById('prix');
 
-let arrow = document.getElementById('arrow');
-let menu = document.getElementById('menu');
-let visible = false;
+const MAX_PLACES = 5;
 
+function updateSeatColor() {
+  if (!placesInput) {
+    return;
+  }
+  const value = parseInt(placesInput.value, 10);
+  if (Number.isNaN(value)) {
+    placesInput.style.color = 'black';
+  } else if (value > 3) {
+    placesInput.style.color = '#e05457';
+  } else if (value > 1) {
+    placesInput.style.color = 'green';
+  } else {
+    placesInput.style.color = 'black';
+  }
+}
 
-
-arrow.addEventListener('click',function(){
-
-    if( !visible ){
-        visible= !visible;
-        menu.style.display = 'flex';
-        arrow.style.rotate ='180deg';
+function updateSeatIcons(value) {
+  const seats = Number.isInteger(value) ? value : 0;
+  for (let i = 1; i <= MAX_PLACES; i += 1) {
+    const icon = document.getElementById(`p${i}`);
+    if (icon) {
+      icon.style.display = i <= seats ? 'block' : 'none';
     }
-    else
-    {
-        visible= !visible;
-        menu.style.display = 'none';
-        arrow.style.rotate ='0deg';
+  }
+}
+
+if (placesInput) {
+  placesInput.addEventListener('input', function () {
+    updateSeatColor();
+    updateSeatIcons(parseInt(placesInput.value, 10));
+  });
+}
+
+if (plusButton) {
+  plusButton.addEventListener('click', function () {
+    const value = parseInt(placesInput.value, 10);
+    if (Number.isNaN(value) || value >= MAX_PLACES) {
+      placesInput.value = Number.isNaN(value) ? 1 : value;
+    } else {
+      placesInput.value = value + 1;
     }
-    
-
-})
-
-
-
-
-
-
-
-let plusbtn=document.getElementById('pluss');
-let minusbtn=document.getElementById('minuss');
-let prix=document.getElementById('prix');
-
-
-function adjust_color()
-{    
-if(parseInt(prix.value) <= 3 && parseInt(prix.value) > 1)
-{
-    prix.style.color='green';
-
-  
-}
-else 
-{
-if(parseInt(prix.value) > 3)
-{
-    prix.style.color='#e05457'; 
-  
-  
-    
-
-}
-else{
-    prix.style.color='black'; 
-}
-}
+    updateSeatColor();
+    updateSeatIcons(parseInt(placesInput.value, 10));
+  });
 }
 
-
-
-let p1 = document.getElementById('p1');
-let p2 = document.getElementById('p2');
-let p3 = document.getElementById('p3');
-let p4 = document.getElementById('p4');
-let p5 = document.getElementById('p5');
-
-console.log(p1);
-
-
-function update_caracters(a){
-    switch(a){
-    case 1:
-        p1.style.display='none';
-        p2.style.display='none';
-        p4.style.display='none';
-        p5.style.display='none';
-    break;
-    case 2:
-        p1.style.display='block';
-        p2.style.display='none';
-        p4.style.display='none';
-        p5.style.display='none';
-    break;
-    case 3:
-        p1.style.display='block';
-        p2.style.display='none';
-        p4.style.display='none';
-        p5.style.display='block';
-    break;
-    case 4:
-        p1.style.display='block';
-        p2.style.display='block';
-        p4.style.display='none';
-        p5.style.display='block';
-    break;
-    case 5:
-        p1.style.display='block';
-        p2.style.display='block';
-        p4.style.display='block';
-        p5.style.display='block';
-    break;
-
-    default:
-        p1.style.display='none';
-        p2.style.display='none';
-        p4.style.display='none';
-        p5.style.display='none';
+if (minusButton) {
+  minusButton.addEventListener('click', function () {
+    const value = parseInt(placesInput.value, 10);
+    if (Number.isNaN(value) || value <= 1) {
+      placesInput.value = 1;
+    } else {
+      placesInput.value = value - 1;
     }
-
+    updateSeatColor();
+    updateSeatIcons(parseInt(placesInput.value, 10));
+  });
 }
 
-
-
-prix.addEventListener('input',function(event){
-
-    adjust_color();
-    update_caracters(parseInt(prix.value));
-})
-
-
-plusbtn.addEventListener('click',function(){
-if(parseInt(prix.value) < 5)
-{
-    prix.value=parseInt(prix.value)+1;
-    adjust_color();
-    update_caracters(parseInt(prix.value));
-}
-
-})
-
-
-minusbtn.addEventListener('click',function(){
-if(parseInt(prix.value) > 1)
-{
-    prix.value=parseInt(prix.value)-1;
-    adjust_color();
-    update_caracters(parseInt(prix.value));
-}
-
-     
- })
-
-
-
-
- // Get a reference to the "precedent" button
 const precedentButton = document.getElementById('precedent');
-
-// "Précédent" goes back without losing form state
 if (precedentButton) {
-  precedentButton.addEventListener('click', function() {
-      window.history.back();
+  precedentButton.addEventListener('click', function () {
+    window.history.back();
   });
 }
-// NOTE: no click handler on #prochaine here — the inline script in
-// people.ejs saves via fetch('/places') then navigates to /publier/prix.
 
-
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    const btn1 = document.getElementById('btn1');
-    const btn2 = document.getElementById('btn2');
-    const btn3 = document.getElementById('btn3');
-    const btn4 = document.getElementById('btn4');
-    const btn5 = document.getElementById('btn5');
-    const btn6 = document.getElementById('btn6');
-    const btn7 = document.getElementById('btn7');
-    const btn8 = document.getElementById('btn8');
-    const btn9 = document.getElementById('btn9');
-  
-    // Fonction pour réinitialiser la couleur de fond de tous les boutons
-    function resetButtons() {
-      btn1.style.backgroundColor = '#ffffff';
-      btn2.style.backgroundColor = '#ffffff';
-      btn3.style.backgroundColor = '#ffffff';
-      btn4.style.backgroundColor = '#ffffff';
-      btn5.style.backgroundColor = '#ffffff';
-      btn6.style.backgroundColor = '#ffffff';
-      btn7.style.backgroundColor = '#ffffff';
-      btn8.style.backgroundColor = '#ffffff';
-      btn9.style.backgroundColor = '#ffffff';
-    }
-  
-    // Initialiser la couleur de fond du premier bouton
+document.addEventListener('DOMContentLoaded', function () {
+  const btn7 = document.getElementById('btn7');
+  if (btn7) {
     btn7.style.backgroundColor = '#0082AE';
-  
-    btn1.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page1'; 
-    });
-  
-    btn2.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page2'; 
-    });
-  
-    btn3.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page3'; 
-    });
-  
-    btn4.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page4'; 
-    });
-  
-        btn5.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-          window.location.href = '/publier/calendaire'; 
-        });
-      
-        btn6.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-          window.location.href = '/publier/heure'; 
-        });
-      
-        btn7.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-        });
-      
-      
-  });
-  
-  
+  }
+  if (placesInput) {
+    updateSeatColor();
+    updateSeatIcons(parseInt(placesInput.value, 10));
+  }
+});

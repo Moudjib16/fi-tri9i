@@ -1,0 +1,13 @@
+body {
+  padding-top: 110px;
+}
+
+.wrapper {
+  margin: 24px auto;
+}
+
+@media only screen and (max-width: 640px) {
+  body {
+    padding-top: 92px;
+  }
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
     </div>
 
     <div class="wilaya">Veuillez préciser la commune d'arrivée :</div>
-    <input type="text" name="arrivee0" id="commencer" placeholder="  ex : Adrar" required>
+    <input type="text" name="arrivee0" id="commencer" placeholder="  ex : Adrar" value="<%= trip && trip.arrivee0 ? trip.arrivee0 : '' %>" required>
     <button id="suiv" type="submit">Suivant</button>
     <button id="prec" type="button">Précédent</button>
     <img src="/publier/page4/pics/bouteflika.png" alt="" id="hi" height="380px" width="380px">
@@ -37,5 +37,6 @@
 
 
 <script src="/publier/page4/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

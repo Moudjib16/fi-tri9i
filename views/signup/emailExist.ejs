@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email Exists</title>
+  <title>Fi Tri9i | Email déjà utilisé</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
   <link rel="stylesheet" href="/signup/exist.css">
+  <link rel="stylesheet" href="/shared/auth.css">
 </head>
 <body>
+  <%- include('../partials/navbar.ejs') %>
+
   <div class="wrapper">
-    <h2>Email Already Exists</h2>
-    <p>The email you provided is already registered. Please choose a different email or <a href="/">go back to the home page</a>.</p>
-    <a href="/signup" class="button">Go Back</a>
+    <h2>Cet email est déjà utilisé</h2>
+    <p>L'email fourni est déjà enregistré. Choisissez un autre email ou <a href="/">retournez à l'accueil</a>.</p>
+    <a href="/signup" class="button">Retour à l'inscription</a>
   </div>
+
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

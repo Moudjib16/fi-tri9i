@@ -60,6 +60,12 @@ function matchesTrip(candidate, filter) {
         : right;
       return leftValue - rightValue >= value.$gte[1];
     }
+    if (key === 'status' && value && value.$nin) {
+      return !value.$nin.includes(candidate.status);
+    }
+    if (key === 'status' && value && value.$ne !== undefined) {
+      return candidate.status !== value.$ne;
+    }
     if (value instanceof RegExp) {
       return value.test(candidate[key] || '');
     }
@@ -88,6 +94,9 @@ const fakeTrip = {
   findOneAndUpdate(filter, update) {
     const found = state.trips.find((candidate) => String(candidate._id) === String(filter._id));
     if (!found) {
+      return null;
+    }
+    if (filter.status && filter.status.$nin && filter.status.$nin.includes(found.status)) {
       return null;
     }
     if (filter.driver && filter.driver.$ne !== undefined) {
@@ -279,4 +288,45 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
 
   const cancelledHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
   assert.match(cancelledHtml, /Réserver une place/);
+});
+
+test('drafts stay private and out of listings', async () => {
+  const draftId = '64f000000000000000000099';
+  state.trips.push({
+    _id: draftId,
+    status: 'draft',
+    depart: 'Draftville',
+    depart0: 'Centre',
+    arrivee: 'Bejaia',
+    arrivee0: 'Amizour',
+    dateData: '12 December 2026',
+    time: '08 : 00',
+    price: '1200da',
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: '',
+    driver: { _id: passengerId, name: 'Sara' },
+  });
+
+  const listing = await (await fetch(`${baseUrl}/trajets`)).text();
+  assert.doesNotMatch(listing, /Draftville/);
+
+  const guestDetail = await fetch(`${baseUrl}/trajets/${draftId}`, { redirect: 'manual' });
+  assert.equal(guestDetail.status, 404);
+
+  const login = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ email: 'sara@test.dz', password: 'secret1' }),
+    redirect: 'manual',
+  });
+  const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+
+  const mine = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
+  assert.doesNotMatch(mine, /Draftville/);
+
+  const ownerDetail = await fetch(`${baseUrl}/trajets/${draftId}`, { headers: { cookie } });
+  assert.equal(ownerDetail.status, 200);
+  assert.match(await ownerDetail.text(), /brouillon/);
 });

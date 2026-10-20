@@ -9,6 +9,8 @@ log in, and book their seats.
 - Sign-up / login with hashed passwords (bcrypt) and Mongo-backed sessions
 - 9-step publishing wizard (login required): departure wilaya and commune,
   arrival wilaya and commune, date, time, seat count, price, description
+- Drafts are private: a trip only appears in search after the final "publier"
+  step validates that every required step is complete
 - Trip search by departure, arrival, date and available seats
 - Trip details with seat reservation and cancellation
 - "My trips" dashboard: published rides and reservations in one place
@@ -58,9 +60,9 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
    seats), then open a result
 4. Log in and click "Réserver une place"; cancel from the trip page or
    `/mes-trajets`
-5. `/publier/page1` → … → `/publier/description` — publish a trip (login
-   required; form steps redirect, date/time/places/price/description steps save
-   via AJAX)
+5. `/publier/page1` → … → `/publier/description` — complete the wizard and click
+   "publier" (login required; incomplete drafts stay private and are not listed
+   in search or "Mes trajets")
 6. `/mes-trajets` — see published trips and reservations
 7. Check MongoDB: `db.users.find()`, `db.trips.find()` and
    `db.sessions.find()` on the `MyApp` database

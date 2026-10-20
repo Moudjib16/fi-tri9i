@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,8 +26,8 @@
       <button id="btn8" ></button>
       <button id="btn9" ></button>
     </div>
-    <div class="wilaya">Qu'elle est la Wilaya d'arrivée ?</div>
-    <input type="text" name="arrivee" id="commencer" placeholder="  ex : Adrar" required>
+    <div class="wilaya">Quelle est la wilaya d'arrivée ?</div>
+    <input type="text" name="arrivee" id="commencer" placeholder="  ex : Adrar" value="<%= trip && trip.arrivee ? trip.arrivee : '' %>" required>
     <button id="suiv" type="submit">Suivant</button>
     <button id="prec" type="button">Précédent</button>
     <img src="/publier/page3/pics/undraw_location_tracking_re_n3ok 1.png" class="hi" alt="">
@@ -38,5 +38,6 @@
 
 
 <script src="/publier/page3/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

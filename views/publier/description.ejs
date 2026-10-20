@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,36 +25,16 @@
       <button id="btn9" ></button>
     </div>
     <h1 class="title">Quelque chose à ajouter sur votre trajet ?</h1>
-     <textarea maxlength="1000" class="in" placeholder="Bonjour ! je vais voir ma famille . J'ai beaucouop de place dans le coffre ." id="description"></textarea>
-    <div class="row1">
-      <button class="precedent" id="precedent">précédent</button>
-      <button class="prochaine" id="prochaine">continuer</button>
-    </div>
+    <form action="/publier/publier" method="post">
+      <textarea maxlength="1000" class="in" placeholder="Bonjour ! je vais voir ma famille. J'ai beaucoup de place dans le coffre." id="description" name="description"><%= trip && trip.description ? trip.description : '' %></textarea>
+      <div class="row1">
+        <button class="precedent" id="precedent" type="button">précédent</button>
+        <button class="prochaine" id="prochaine" type="submit">publier</button>
+      </div>
+    </form>
   </main>
 
-
-  <script>
-    document.getElementById('prochaine').addEventListener('click', async () => {
-         const content = document.getElementById('description').value;
-         try {
-             const response = await fetch('/description', {
-                 method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/json',
-                 },
-                 body: JSON.stringify({ content }),
-             });
-             if (response.ok) {
-                 window.location.href = '/';
-             } else {
-                 alert('Description invalide, réessayez.');
-             }
-         } catch (error) {
-             console.error('Error:', error);
-             alert('Erreur réseau, réessayez.');
-         }
-     });
-  </script>
 <script src="/publier/description/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Not Found</title>
+  <title>Fi Tri9i | Utilisateur introuvable</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
   <link rel="stylesheet" href="/login/nouser.css">
+  <link rel="stylesheet" href="/shared/auth.css">
 </head>
 <body>
+  <%- include('../partials/navbar.ejs') %>
+
   <div class="wrapper">
-    <h2>User Not Found</h2>
-    <p>The user you are looking for does not exist.</p>
+    <h2>Utilisateur introuvable</h2>
+    <p>Aucun compte ne correspond à cet email.</p>
     <div class="buttons">
-      <a href="/signup" class="button">Go to Signup</a>
-      <a href="/login" class="button">Go Back to Login</a>
+      <a href="/signup" class="button">Créer un compte</a>
+      <a href="/login" class="button">Retour à la connexion</a>
     </div>
   </div>
+
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

@@ -211,9 +211,11 @@ app.get('/trajets', async (req, res) => {
     const arrivee = pickString(req.query.arrivee);
     const date = pickString(req.query.date);
     const requestedPlaces = Number(req.query.places);
-    const places = Number.isInteger(requestedPlaces) && requestedPlaces > 0 ? requestedPlaces : '';
+    const places = Number.isInteger(requestedPlaces) && requestedPlaces > 0 && requestedPlaces <= 5
+      ? requestedPlaces
+      : '';
 
-    const filter = {};
+    const filter = { status: { $nin: ['draft', 'cancelled'] } };
     if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
     if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
     if (places) {
@@ -266,6 +268,17 @@ app.get('/trajets/:id', async (req, res) => {
     const isDriver = Boolean(userId && driverId === userId);
     const isBooked = Boolean(userId && passengerIds.includes(userId));
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
+    const isDraft = foundTrip.status === 'draft';
+
+    if (isDraft && !isDriver) {
+      return tripNotFound(res);
+    }
+
+    const notice = req.query.published
+      ? 'Votre trajet est publié.'
+      : req.query.booked
+        ? 'Votre place est réservée.'
+        : '';
 
     return res.render('trajet', {
       stylesheet: 'trajet/',
@@ -273,8 +286,9 @@ app.get('/trajets/:id', async (req, res) => {
       trip: foundTrip,
       isDriver,
       isBooked,
+      isDraft,
       remaining,
-      notice: req.query.booked ? 'Votre place est réservée.' : '',
+      notice,
       cancelled: req.query.cancelled ? 'Votre réservation a été annulée.' : '',
       error: req.query.error || '',
     });
@@ -299,6 +313,7 @@ app.post('/trajets/:id/reserver', async (req, res) => {
     const updatedTrip = await trip.findOneAndUpdate(
       {
         _id: req.params.id,
+        status: { $nin: ['draft', 'cancelled'] },
         driver: { $ne: req.session.userId },
         passengers: { $ne: req.session.userId },
         $expr: { $lt: [{ $ifNull: ['$places_taken', 0] }, '$places'] },
@@ -317,6 +332,9 @@ app.post('/trajets/:id/reserver', async (req, res) => {
     const foundTrip = await trip.findById(req.params.id).lean();
     if (!foundTrip) {
       return tripNotFound(res);
+    }
+    if (foundTrip.status === 'draft' || foundTrip.status === 'cancelled') {
+      return res.redirect(`${tripUrl}?error=unavailable`);
     }
     if (foundTrip.driver && String(foundTrip.driver) === String(req.session.userId)) {
       return res.redirect(`${tripUrl}?error=driver`);
@@ -403,7 +421,7 @@ app.get('/mes-trajets', async (req, res) => {
 
   try {
     const [published, booked] = await Promise.all([
-      trip.find({ driver: req.session.userId })
+      trip.find({ driver: req.session.userId, status: { $nin: ['draft', 'cancelled'] } })
         .populate('passengers', 'name')
         .sort({ createdAt: -1 })
         .lean(),
@@ -446,9 +464,36 @@ async function getSessionTrip(req) {
   }
   const existingTrip = await trip.findById(tripId);
   if (!existingTrip) {
+    delete req.session.tripId;
     return { error: 'Trip not found' };
   }
+  if (String(existingTrip.driver || '') !== String(req.session.userId || '')) {
+    delete req.session.tripId;
+    return { error: 'This trip does not belong to you' };
+  }
+  if (existingTrip.status !== 'draft') {
+    delete req.session.tripId;
+    return { error: 'This trip is no longer a draft' };
+  }
   return { existingTrip };
+}
+
+// Helper: load the draft for a wizard page without failing hard
+async function loadDraft(req) {
+  const { existingTrip } = await getSessionTrip(req);
+  return existingTrip || null;
+}
+
+function getMissingStep(existingTrip) {
+  if (!existingTrip.depart) return '/publier/page1';
+  if (!existingTrip.depart0) return '/publier/page2';
+  if (!existingTrip.arrivee) return '/publier/page3';
+  if (!existingTrip.arrivee0) return '/publier/page4';
+  if (!existingTrip.dateData) return '/publier/calendaire';
+  if (!existingTrip.time) return '/publier/heure';
+  if (!existingTrip.places) return '/publier/people';
+  if (!existingTrip.price) return '/publier/prix';
+  return null;
 }
 
 function tripNotFound(res) {
@@ -483,13 +528,32 @@ app.post('/depart', requirePublishUser, async (req, res) => {
     if (!depart) {
       return res.status(400).send({ message: 'Missing depart' });
     }
-    const newtrip = new trip({
-      depart,
-      driver: req.session.userId || null,
-    });
 
-    // Save the new trip to the database
-    const savedTrip = await newtrip.save();
+    // Reuse the current draft when the user restarts the wizard so abandoned
+    // drafts do not pile up in the database.
+    const currentDraft = await loadDraft(req);
+    let savedTrip;
+    if (currentDraft) {
+      currentDraft.depart = depart;
+      currentDraft.depart0 = '';
+      currentDraft.arrivee = '';
+      currentDraft.arrivee0 = '';
+      currentDraft.dateData = '';
+      currentDraft.time = '';
+      currentDraft.price = '';
+      currentDraft.places = 1;
+      currentDraft.places_taken = 0;
+      currentDraft.description = '';
+      currentDraft.passengers = [];
+      currentDraft.publishedAt = null;
+      savedTrip = await currentDraft.save();
+    } else {
+      const newtrip = new trip({
+        depart,
+        driver: req.session.userId || null,
+      });
+      savedTrip = await newtrip.save();
+    }
 
     // Store the ID of the saved trip in the session
     req.session.tripId = savedTrip._id;
@@ -636,8 +700,8 @@ app.post('/places', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const rawPlaces = req.body.content ?? req.body.places;
     const places = Number(rawPlaces);
-    if (!Number.isInteger(places) || places < 1 || places > 8) {
-      return res.status(400).send({ message: 'Places must be an integer between 1 and 8' });
+    if (!Number.isInteger(places) || places < 1 || places > 5) {
+      return res.status(400).send({ message: 'Places must be an integer between 1 and 5' });
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
@@ -697,42 +761,91 @@ app.post('/description', requireUser, requireDraftTrip, async (req, res) => {
 });
 
 
+// Final wizard step: validate the draft, save the description and publish it
+app.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) => {
+  try {
+    const { existingTrip, error } = await getSessionTrip(req);
+    if (error) {
+      return res.redirect('/publier/page1');
+    }
+
+    const description = pickString(req.body.description);
+    if (description.length > 1000) {
+      return res.redirect('/publier/description?error=description');
+    }
+    existingTrip.description = description;
+
+    const missingStep = getMissingStep(existingTrip);
+    if (missingStep) {
+      await existingTrip.save();
+      return res.redirect(`${missingStep}?error=incomplete`);
+    }
+
+    existingTrip.status = 'published';
+    existingTrip.publishedAt = new Date();
+    await existingTrip.save();
+
+    delete req.session.tripId;
+    return res.redirect(`/trajets/${existingTrip._id}?published=1`);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).render('404', { stylesheet: '404/', title: 'Erreur' });
+  }
+});
+
 //'Publier' pages routing
 
-app.get('/publier/page1', requireUser, (req, res) => {
-  res.render('publier/page1');
+app.get('/publier/page1', requireUser, async (req, res) => {
+  const draft = await loadDraft(req);
+  res.render('publier/page1', { trip: draft });
 });
 
-app.get('/publier/page2', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/page2');
+app.get('/publier/page2', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/page2', { trip: draft });
 });
 
-app.get('/publier/page3', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/page3');
+app.get('/publier/page3', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/page3', { trip: draft });
 });
 
-app.get('/publier/page4', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/page4');
+app.get('/publier/page4', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/page4', { trip: draft });
 });
 
-app.get('/publier/calendaire', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/calendaire');
+app.get('/publier/calendaire', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/calendaire', { trip: draft });
 });
 
-app.get('/publier/heure', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/heure');
+app.get('/publier/heure', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/heure', { trip: draft });
 });
 
-app.get('/publier/people', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/people');
+app.get('/publier/people', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/people', { trip: draft });
 });
 
-app.get('/publier/prix', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/prix');
+app.get('/publier/prix', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/prix', { trip: draft });
 });
 
-app.get('/publier/description', requireUser, requireDraftTrip, (req, res) => {
-  res.render('publier/description');
+app.get('/publier/description', requireUser, requireDraftTrip, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) return res.redirect('/publier/page1');
+  return res.render('publier/description', { trip: draft });
 });
 
 

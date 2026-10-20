@@ -1,30 +1,40 @@
 <style>
+  .navbar ul > li { display: flex; align-items: center; }
   .menu .logout-form { margin: 0; padding: 0; width: 100%; }
   .menu button.option { border: 0; padding: 0; font-family: inherit; }
+  .menu-toggle { border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; }
 </style>
 
 <nav class="navbar">
   <ul>
-    <a class="logo" href="/">
-      <p>Fi Tri9i</p>
-      <img src="/home/pics/car.svg" class="logo_img">
-    </a>
+    <li>
+      <a class="logo" href="/">
+        <p>Fi Tri9i</p>
+        <img src="/home/pics/car.svg" class="logo_img" alt="">
+      </a>
+    </li>
 
-    <a href="/trajets" class="pub">
-      <img src="/home/pics/rech.svg" class="plus">
-      <li class="Publiertrajet">Recherche</li>
-    </a>
+    <li>
+      <a href="/trajets" class="pub">
+        <img src="/home/pics/rech.svg" class="plus" alt="">
+        <span class="Publiertrajet">Recherche</span>
+      </a>
+    </li>
 
-    <a href="/publier/page1" class="pub">
-      <img src="/home/pics/plus.svg" class="plus">
-      <li class="Publiertrajet">Publier trajet</li>
-    </a>
+    <li>
+      <a href="/publier/page1" class="pub">
+        <img src="/home/pics/plus.svg" class="plus" alt="">
+        <span class="Publiertrajet">Publier trajet</span>
+      </a>
+    </li>
 
-    <div class="auth">
+    <li class="auth">
       <p class="user-name" id="user-name"><%= currentUser ? currentUser.name : 'Invité' %></p>
-      <img src="/home/pics/pfp.svg" class="pfp">
-      <img src="/home/pics/arrow.svg" class="arrow" id="arrow">
-    </div>
+      <img src="/home/pics/pfp.svg" class="pfp" alt="">
+      <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu" aria-label="Ouvrir le menu">
+        <img src="/home/pics/arrow.svg" class="arrow" id="arrow" alt="">
+      </button>
+    </li>
   </ul>
 
   <div class="menu" id="menu">

@@ -1,18 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wrong Password</title>
+  <title>Fi Tri9i | Mot de passe incorrect</title>
+  <link rel="stylesheet" href="/shared/navbar.css">
   <link rel="stylesheet" href="/login/wrongpass.css">
+  <link rel="stylesheet" href="/shared/auth.css">
 </head>
 <body>
+  <%- include('../partials/navbar.ejs') %>
+
   <div class="wrapper">
-    <h2>Wrong Password</h2>
-    <p>The password you entered is incorrect. Please try again.</p>
+    <h2>Mot de passe incorrect</h2>
+    <p>Le mot de passe saisi est incorrect. Veuillez réessayer.</p>
     <div class="buttons">
-      <a href="/login" class="button">Go Back to Login</a>
+      <a href="/login" class="button">Retour à la connexion</a>
     </div>
   </div>
+
+  <script src="/shared/navbar.js"></script>
 </body>
 </html>

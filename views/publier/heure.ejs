@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,7 @@
       <img src="/publier/heure/pics/img.svg" class="img">
       <div class="row1">
         <img src="/publier/heure/pics/arr.svg" id="arr" class="arr">
-        <input class="prix" maxlength="6" type="text" value="08 : 00" id="clock" name="timeData">
+        <input class="prix" maxlength="6" type="text" value="<%= trip && trip.time ? trip.time : '08 : 00' %>" id="clock" name="timeData">
         <div class="time-menu" id="prix" >
           <div class="time-option">06 : 10</div>
           <div class="time-option">06 : 20</div>
@@ -177,5 +177,6 @@
      });
   </script>
 <script src="/publier/heure/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

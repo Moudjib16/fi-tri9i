@@ -82,6 +82,7 @@ test('about page renders the guest navbar and calls to action', async () => {
 test('time step exposes every selectable departure time', async () => {
   const html = await renderFile(view('publier/heure.ejs'), {
     currentUser: null,
+    trip: null,
   });
 
   const options = html.match(/class="time-option"/g) || [];

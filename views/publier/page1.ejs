@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,9 +29,9 @@
       </div>
    
 
-    <div class="wilaya">Quelle est la Wilaya de départ ?</div>
+    <div class="wilaya">Quelle est la wilaya de départ ?</div>
     
-    <input type="text" name="depart" id="commencer" placeholder="  ex : Adrar" required>
+    <input type="text" name="depart" id="commencer" placeholder="  ex : Adrar" value="<%= trip && trip.depart ? trip.depart : '' %>" required>
     <button id="suiv" type="submit">Suivant</button>
     <img src="/publier/page1/pics/Group (1).png" alt="" id="hi" height="400px">
     </form>
@@ -41,5 +41,6 @@
  </div>
 
 <script src="/publier/page1/script.js"></script>
+<script src="/shared/navbar.js"></script>
 </body>
 </html>

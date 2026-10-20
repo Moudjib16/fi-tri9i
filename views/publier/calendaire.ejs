@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -38,13 +38,13 @@
         <button id="btn8" ></button>
         <button id="btn9" ></button>
       </div>
-    <h1>Quand portez-vous ?</h1>
+    <h1>Quand partez-vous ?</h1>
     <div class="container">
     
       <div class="right">
         <div class="today-date">
           <div class="event-day">wed</div>
-          <div class="event-date" id="dateData">12th december 2022</div>
+          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? trip.dateData : '' %>"><%= trip && trip.dateData ? trip.dateData : '' %></div>
         </div>
         <div class="events"></div>
       
@@ -113,5 +113,6 @@
         });
     </script>
     <script src="/publier/calendaire/script.js"></script>
+    <script src="/shared/navbar.js"></script>
   </body>
 </html>

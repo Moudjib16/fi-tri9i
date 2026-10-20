@@ -30,6 +30,12 @@
         <% } %>
       </div>
     <% } %>
+    <% if (typeof isDraft !== 'undefined' && isDraft) { %>
+      <div class="banner">
+        Ce trajet est encore un brouillon : il n'apparaît pas dans la recherche.
+        <a href="/publier/description">Continuer la publication</a>
+      </div>
+    <% } %>
 
     <article class="detail-card">
       <header class="detail-header">

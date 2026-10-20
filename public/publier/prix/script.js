@@ -1,189 +1,62 @@
+const plusButton = document.getElementById('pluss');
+const minusButton = document.getElementById('minuss');
+const priceInput = document.getElementById('prix');
 
-let arrow = document.getElementById('arrow');
-let menu = document.getElementById('menu');
-let visible = false;
+const MIN_PRICE = 100;
+const MAX_PRICE = 4000;
+const STEP = 100;
 
-
-
-arrow.addEventListener('click',function(){
-
-    if( !visible ){
-        visible= !visible;
-        menu.style.display = 'flex';
-        arrow.style.rotate ='180deg';
-    }
-    else
-    {
-        visible= !visible;
-        menu.style.display = 'none';
-        arrow.style.rotate ='0deg';
-    }
-    
-
-})
-
-
-
-
-
-
-
-plusbtn=document.getElementById('pluss');
-minusbtn=document.getElementById('minuss');
-prix=document.getElementById('prix');
-
-
-function adjust_color()
-{    
-if(parseInt(prix.value) <= 900 && parseInt(prix.value)>400)
-{
-    prix.style.color='green';
-    if(prix.style.width=="280px")
-    {
-          prix.style.width="220px";
-    }
-  
-}
-else 
-{
-if(parseInt(prix.value) > 900)
-{
-    prix.style.color='#e05457'; 
-  
-    
-        prix.style.width="280px";
-    
-
-}
-else{
-    prix.style.color='black'; 
-    prix.style.width="220px";
-}
-}
+function currentPrice() {
+  const value = parseInt(priceInput.value, 10);
+  return Number.isNaN(value) ? MIN_PRICE : value;
 }
 
-
-prix.addEventListener('input',function(event){
-
-    adjust_color();
-})
-
-
-plusbtn.addEventListener('click',function(){
-if(parseInt(prix.value) < 4000)
-{
-    prix.value=parseInt(prix.value)+100+'da';
-    adjust_color();
+function renderPrice(value) {
+  const normalized = Math.min(MAX_PRICE, Math.max(MIN_PRICE, value));
+  priceInput.value = `${normalized}da`;
+  if (normalized > 900) {
+    priceInput.style.color = '#e05457';
+    priceInput.style.width = '280px';
+  } else if (normalized > 400) {
+    priceInput.style.color = 'green';
+    priceInput.style.width = '220px';
+  } else {
+    priceInput.style.color = 'black';
+    priceInput.style.width = '220px';
+  }
 }
 
-})
-
-
-minusbtn.addEventListener('click',function(){
-if(parseInt(prix.value) > 100)
-{
-    prix.value=parseInt(prix.value)-100+'da';
-    adjust_color();
+if (priceInput) {
+  priceInput.addEventListener('input', function () {
+    renderPrice(currentPrice());
+  });
 }
 
-     
- })
+if (plusButton) {
+  plusButton.addEventListener('click', function () {
+    renderPrice(currentPrice() + STEP);
+  });
+}
 
+if (minusButton) {
+  minusButton.addEventListener('click', function () {
+    renderPrice(currentPrice() - STEP);
+  });
+}
 
-
-
- // Get a reference to the "precedent" button
 const precedentButton = document.getElementById('precedent');
-
-// "Précédent" goes back without losing form state
 if (precedentButton) {
-  precedentButton.addEventListener('click', function() {
-      window.history.back();
+  precedentButton.addEventListener('click', function () {
+    window.history.back();
   });
 }
-// NOTE: no click handler on #prochaine here — the inline script in
-// prix.ejs saves via fetch('/price') then navigates to /publier/description.
 
-
-
-
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    const btn1 = document.getElementById('btn1');
-    const btn2 = document.getElementById('btn2');
-    const btn3 = document.getElementById('btn3');
-    const btn4 = document.getElementById('btn4');
-    const btn5 = document.getElementById('btn5');
-    const btn6 = document.getElementById('btn6');
-    const btn7 = document.getElementById('btn7');
-    const btn8 = document.getElementById('btn8');
-    const btn9 = document.getElementById('btn9');
-  
-    // Fonction pour réinitialiser la couleur de fond de tous les boutons
-    function resetButtons() {
-      btn1.style.backgroundColor = '#ffffff';
-      btn2.style.backgroundColor = '#ffffff';
-      btn3.style.backgroundColor = '#ffffff';
-      btn4.style.backgroundColor = '#ffffff';
-      btn5.style.backgroundColor = '#ffffff';
-      btn6.style.backgroundColor = '#ffffff';
-      btn7.style.backgroundColor = '#ffffff';
-      btn8.style.backgroundColor = '#ffffff';
-      btn9.style.backgroundColor = '#ffffff';
-    }
-  
-    // Initialiser la couleur de fond du premier bouton
+document.addEventListener('DOMContentLoaded', function () {
+  const btn8 = document.getElementById('btn8');
+  if (btn8) {
     btn8.style.backgroundColor = '#0082AE';
-  
-    btn1.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page1'; 
-    });
-  
-    btn2.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page2'; 
-    });
-  
-    btn3.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page3'; 
-    });
-  
-    btn4.addEventListener('click', function() {
-      resetButtons();
-      this.style.backgroundColor = '#0082AE';
-      window.location.href = '/publier/page4'; 
-    });
-  
-        btn5.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-          window.location.href = '/publier/calendaire'; 
-        });
-      
-        btn6.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-          window.location.href = '/publier/heure'; 
-        });
-      
-        btn7.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-          window.location.href = '/publier/people'; 
-        });
-      
-        btn8.addEventListener('click', function() {
-          resetButtons();
-          this.style.backgroundColor = '#0082AE';
-        });
-      
-  });
-  
-  
+  }
+  if (priceInput) {
+    renderPrice(currentPrice());
+  }
+});

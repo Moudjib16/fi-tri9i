@@ -1,6 +1,16 @@
 const mongoose = require('mongoose');
 
 const Schema = new mongoose.Schema({
+    status: {
+        type: String,
+        enum: ['draft', 'published', 'cancelled', 'completed'],
+        default: 'draft',
+        index: true
+    },
+    publishedAt: {
+        type: Date,
+        default: null
+    },
     depart: {
         type : String,
         required: true,
@@ -36,11 +46,11 @@ const Schema = new mongoose.Schema({
         trim: true,
         default: ''
     },
-    places: {
+        places: {
         type : Number,
         default: 1,
         min: 1,
-        max: 8
+        max: 5
     },
     places_taken: {
         type : Number,
