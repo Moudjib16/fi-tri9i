@@ -25,7 +25,8 @@ log in, and book their seats.
 - Flash confirmations and errors for publishing, deleting, booking and
   cancelling trips
 - About page, session-aware navbar and working footer/shortcut links
-- Dedicated error pages (existing email, user not found, wrong password, 404)
+- Dedicated error pages (existing email, user not found, wrong password, 403,
+  404, 500)
 - Security: helmet with CSP, rate limiting on authentication, httpOnly cookies,
   per-session CSRF tokens on every POST, and session regeneration on login/signup
 

@@ -80,6 +80,12 @@ app.use(session({
 app.use(bodyParser.json({ limit: '32kb' }));
 app.use(flashMiddleware);
 
+// Views can render safely before the session user is loaded.
+app.use((req, res, next) => {
+  res.locals.currentUser = null;
+  next();
+});
+
 // Per-session CSRF token, required on every state-changing request.
 app.use((req, res, next) => {
   if (!req.session.csrfToken) {
@@ -90,7 +96,13 @@ app.use((req, res, next) => {
   if (req.method === 'POST') {
     const token = (req.body && req.body._csrf) || req.get('x-csrf-token');
     if (!token || token !== req.session.csrfToken) {
-      return res.status(403).send({ message: 'Invalid CSRF token' });
+      return res.status(403).render('error', {
+        stylesheet: '404/',
+        title: 'Accès refusé',
+        status: 403,
+        heading: 'Accès refusé',
+        message: 'Votre session a expiré. Rechargez la page et réessayez.',
+      });
     }
   }
   return next();
@@ -143,7 +155,16 @@ app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
-  res.status(err.status || 500).send({ message: 'Internal server error' });
+  const status = err.status || 500;
+  return res.status(status).render('error', {
+    stylesheet: '404/',
+    title: status === 403 ? 'Accès refusé' : 'Erreur serveur',
+    status,
+    heading: status === 403 ? 'Accès refusé' : 'Une erreur est survenue',
+    message: status === 403
+      ? "Vous n'avez pas les droits nécessaires pour effectuer cette action."
+      : 'Une erreur inattendue est survenue. Réessayez dans quelques instants.',
+  });
 });
 
 // server start

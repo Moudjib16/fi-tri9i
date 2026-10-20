@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs') %>
+<link rel="stylesheet" href="/shared/navbar.css">
+<link rel="stylesheet" href="/shared/auth.css">
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <div class="wrapper">
+    <h2><%= status %> - <%= heading %></h2>
+    <p><%= message %></p>
+    <a href="/" class="button">Retour à l'accueil</a>
+  </div>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

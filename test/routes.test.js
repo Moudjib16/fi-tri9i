@@ -351,6 +351,7 @@ test('public pages render and guest actions redirect to login', async () => {
     redirect: 'manual',
   });
   assert.equal(noTokenReserve.status, 403);
+  assert.match(await noTokenReserve.text(), /Accès refusé/);
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',
