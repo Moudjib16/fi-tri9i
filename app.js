@@ -20,6 +20,7 @@ const reviewsRouter = require('./routes/reviews');
 const accountRouter = require('./routes/account');
 const favoritesRouter = require('./routes/favorites');
 const reportsRouter = require('./routes/reports');
+const adminRouter = require('./routes/admin');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const publishRouter = require('./routes/publish');
@@ -124,8 +125,13 @@ app.use(async (req, res, next) => {
     return next();
   }
   try {
-    const currentUser = await user.findById(req.session.userId).select('name email userType').lean();
-    if (currentUser) {
+    const currentUser = await user.findById(req.session.userId)
+      .select('name email userType isAdmin suspended')
+      .lean();
+    if (currentUser && currentUser.suspended) {
+      // Suspended accounts are treated as signed out everywhere.
+      delete req.session.userId;
+    } else if (currentUser) {
       res.locals.currentUser = currentUser;
       try {
         res.locals.unreadNotifications = await Notification.countDocuments({
@@ -173,6 +179,7 @@ app.use(reviewsRouter);
 app.use(accountRouter);
 app.use(favoritesRouter);
 app.use(reportsRouter);
+app.use(adminRouter);
 app.use(authRouter);
 app.use(tripsRouter);
 app.use(publishRouter);

@@ -316,3 +316,48 @@ test('report form renders the reason list and the reported target', async () => 
   assert.match(html, /Conduite trop rapide/);
   assert.match(html, /action="\/trajets\/64f000000000000000000001\/signaler"/);
 });
+
+test('admin dashboard renders reports, published trips and accounts', async () => {
+  const html = await renderFile(view('admin.ejs'), {
+    stylesheet: 'admin/',
+    title: 'Administration',
+    currentUser: { name: 'Admin', isAdmin: true },
+    reports: [{
+      report: {
+        _id: '64f000000000000000000800',
+        status: 'open',
+        reason: 'unsafe',
+        message: 'Conduite rapide',
+        createdAt: new Date('2031-03-01T10:00:00Z'),
+      },
+      targetLabel: 'Alger → Bejaia',
+      targetUrl: '/trajets/64f000000000000000000001',
+      reasonLabel: 'Conduite dangereuse',
+    }],
+    publishedTrips: [{
+      _id: '64f000000000000000000001',
+      depart: 'Alger',
+      arrivee: 'Bejaia',
+      dateData: '12 December 2026',
+      time: '08 : 00',
+      driver: { name: 'Karim' },
+    }],
+    accounts: [{
+      _id: '64f000000000000000000002',
+      name: 'Sara',
+      email: 'sara@test.dz',
+      userType: 1,
+      isAdmin: false,
+      suspended: false,
+    }],
+  });
+
+  assert.match(html, /Administration/);
+  assert.match(html, /Signalements ouverts \(1\)/);
+  assert.match(html, /Conduite dangereuse/);
+  assert.match(html, /action="\/admin\/signaux\/64f000000000000000000800"/);
+  assert.match(html, /Annuler le trajet/);
+  assert.match(html, /sara@test\.dz/);
+  assert.match(html, /Suspendre/);
+  assert.match(html, /Nommer admin/);
+});

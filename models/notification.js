@@ -15,11 +15,19 @@ const Schema = new mongoose.Schema({
   trip: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'trip',
-    required: true,
+    required: false,
+    default: null,
   },
   type: {
     type: String,
-    enum: ['booking', 'reservation_cancelled', 'trip_updated', 'trip_cancelled', 'message'],
+    enum: [
+      'booking',
+      'reservation_cancelled',
+      'trip_updated',
+      'trip_cancelled',
+      'message',
+      'report_resolved',
+    ],
     required: true,
   },
   body: {

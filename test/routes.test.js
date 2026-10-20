@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt');
 const tripId = '64f000000000000000000001';
 const passengerId = '64f000000000000000000002';
 const driverId = '64f000000000000000000003';
+const adminId = '64f000000000000000000004';
 
 const state = {
   users: [],
@@ -274,6 +275,32 @@ const fakeUser = {
   findOne({ email }) {
     return state.users.find((candidate) => candidate.email === email) || null;
   },
+  find(filter = {}) {
+    let items = state.users.filter((candidate) => Object.entries(filter).every(
+      ([key, value]) => String(candidate[key]) === String(value)
+    ));
+    const query = {
+      select() {
+        return query;
+      },
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      limit(count) {
+        items = items.slice(0, count);
+        return query;
+      },
+      lean: async () => items.map((candidate) => {
+        const { password, ...safeUser } = candidate;
+        return safeUser;
+      }),
+    };
+    return query;
+  },
 };
 
 const fakeMessage = {
@@ -533,6 +560,27 @@ const fakeReport = {
       lean: async () => (found ? { ...found } : null),
     };
   },
+  findById(id) {
+    const found = state.reports.find((report) => String(report._id) === String(id)) || null;
+    const doc = found
+      ? {
+        ...found,
+        save: async () => {
+          const index = state.reports.findIndex((report) => String(report._id) === String(doc._id));
+          const { save, ...data } = doc;
+          state.reports[index] = { ...state.reports[index], ...data };
+          return state.reports[index];
+        },
+      }
+      : null;
+    const query = {
+      lean: async () => (found ? { ...found } : null),
+      then(resolve) {
+        resolve(doc);
+      },
+    };
+    return query;
+  },
   find(filter = {}) {
     let items = state.reports.filter((report) => Object.entries(filter).every(
       ([key, value]) => String(report[key]) === String(value)
@@ -543,6 +591,10 @@ const fakeReport = {
         items.sort((left, right) => (
           (new Date(left.createdAt) - new Date(right.createdAt)) * direction
         ));
+        return query;
+      },
+      limit(count) {
+        items = items.slice(0, count);
         return query;
       },
       lean: async () => items.map((report) => ({ ...report })),
@@ -588,6 +640,14 @@ test.before(async () => {
     email: 'karim@test.dz',
     password: await bcrypt.hash('secret1', 10),
     userType: 2,
+  });
+  state.users.push({
+    _id: adminId,
+    name: 'Admin',
+    email: 'admin@test.dz',
+    password: await bcrypt.hash('secret1', 10),
+    userType: 2,
+    isAdmin: true,
   });
 
   server = app.listen(0);
@@ -1552,5 +1612,123 @@ test('users can report a trip or a driver and follow their reports', async () =>
   assert.match(mine.html, /Conduite dangereuse/);
   assert.match(mine.html, /Karim/);
 
+  state.reports.length = 0;
+});
+
+test('administrators can moderate reports, trips and accounts', async () => {
+  state.reports.length = 0;
+  const modTripId = '64f000000000000000000701';
+  state.trips.push({
+    _id: modTripId,
+    status: 'published',
+    depart: 'Sétif',
+    depart0: 'El Eulma',
+    arrivee: 'Bordj Bou Arréridj',
+    arrivee0: 'BBA',
+    dateData: '5 March 2033',
+    departureAt: new Date('2033-03-05T08:00:00Z'),
+    time: '08 : 00',
+    price: '800da',
+    priceDZD: 800,
+    places: 3,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet à modérer',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const guest = await fetch(`${baseUrl}/admin`, { redirect: 'manual' });
+  assert.equal(guest.status, 302);
+  assert.equal(guest.headers.get('location'), '/login?next=%2Fadmin');
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const forbidden = await openPage('/admin', passenger.cookie);
+  assert.equal(forbidden.response.status, 403);
+  assert.match(forbidden.html, /réservée à l/);
+
+  const reportForm = await openPage(`/trajets/${modTripId}/signaler`, passenger.cookie);
+  const created = await fetch(`${baseUrl}/trajets/${modTripId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({
+      _csrf: reportForm.token,
+      reason: 'unsafe',
+      message: 'Conduite trop rapide.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(created.status, 302);
+  assert.equal(state.reports.length, 1);
+
+  const admin = await login('admin@test.dz', 'secret1');
+  assert.equal(admin.response.status, 302);
+
+  const dashboard = await openPage('/admin', admin.cookie);
+  assert.equal(dashboard.response.status, 200);
+  assert.match(dashboard.html, /Administration/);
+  assert.match(dashboard.html, /Signalements ouverts \(1\)/);
+  assert.match(dashboard.html, /Conduite dangereuse/);
+  assert.match(dashboard.html, /Sétif/);
+  assert.match(dashboard.html, new RegExp(`/admin/signaux/${state.reports[0]._id}`));
+
+  const notificationsBefore = state.notifications.length;
+  const resolved = await fetch(`${baseUrl}/admin/signaux/${state.reports[0]._id}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({
+      _csrf: dashboard.token,
+      action: 'resolve',
+      note: 'Trajet vérifié, avertissement envoyé.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(resolved.status, 302);
+  assert.equal(resolved.headers.get('location'), '/admin');
+  assert.equal(state.reports[0].status, 'resolved');
+  assert.equal(state.reports[0].adminNote, 'Trajet vérifié, avertissement envoyé.');
+  assert.equal(state.notifications.length, notificationsBefore + 1);
+  assert.equal(state.notifications[state.notifications.length - 1].type, 'report_resolved');
+
+  const myReports = await openPage('/mes-signalements', passenger.cookie);
+  assert.match(myReports.html, /Traité/);
+
+  const cancelled = await fetch(`${baseUrl}/admin/trajets/${modTripId}/annuler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({ _csrf: dashboard.token }),
+    redirect: 'manual',
+  });
+  assert.equal(cancelled.status, 302);
+  assert.equal(
+    state.trips.find((candidate) => candidate._id === modTripId).status,
+    'cancelled'
+  );
+
+  const suspend = await fetch(`${baseUrl}/admin/utilisateurs/${driverId}/suspension`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({ _csrf: dashboard.token }),
+    redirect: 'manual',
+  });
+  assert.equal(suspend.status, 302);
+  assert.equal(state.users.find((candidate) => candidate._id === driverId).suspended, true);
+
+  const suspendedLogin = await login('karim@test.dz', 'secret1');
+  assert.equal(suspendedLogin.response.status, 403);
+  assert.match(await suspendedLogin.response.text(), /Compte suspendu/);
+
+  const self = await fetch(`${baseUrl}/admin/utilisateurs/${adminId}/suspension`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({ _csrf: dashboard.token }),
+    redirect: 'manual',
+  });
+  assert.equal(self.status, 302);
+  assert.notEqual(state.users.find((candidate) => candidate._id === adminId).suspended, true);
+
+  state.users.find((candidate) => candidate._id === driverId).suspended = false;
+
+  const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
+  state.trips.splice(tripIndex, 1);
   state.reports.length = 0;
 });

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Administration' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="site-main admin-page">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">Modération</p>
+        <h1>Administration</h1>
+        <p>Traitez les signalements, annulez les trajets litigieux et gérez les comptes.</p>
+      </div>
+      <a class="btn secondary" href="/trajets">Voir les trajets</a>
+    </header>
+
+    <section class="dashboard-stats" aria-label="Résumé de la modération">
+      <div class="stat-card">
+        <strong><%= reports.length %></strong>
+        <span>signalement<%= reports.length === 1 ? '' : 's' %> ouvert<%= reports.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= publishedTrips.length %></strong>
+        <span>trajet<%= publishedTrips.length === 1 ? '' : 's' %> publié<%= publishedTrips.length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= accounts.filter(function (account) { return account.suspended; }).length %></strong>
+        <span>compte<%= accounts.filter(function (account) { return account.suspended; }).length === 1 ? '' : 's' %> suspendu<%= accounts.filter(function (account) { return account.suspended; }).length === 1 ? '' : 's' %></span>
+      </div>
+      <div class="stat-card">
+        <strong><%= accounts.filter(function (account) { return account.isAdmin; }).length %></strong>
+        <span>administrateur<%= accounts.filter(function (account) { return account.isAdmin; }).length === 1 ? '' : 's' %></span>
+      </div>
+    </section>
+
+    <section class="my-section">
+      <div class="results-head">
+        <h2>Signalements ouverts (<%= reports.length %>)</h2>
+      </div>
+
+      <% if (!reports.length) { %>
+        <div class="empty-state">
+          <h3>Aucun signalement en attente.</h3>
+          <p>La communauté est calme, continuez à surveiller les trajets.</p>
+        </div>
+      <% } else { %>
+        <div class="admin-list">
+          <% reports.forEach(function (item) { %>
+            <%
+              const reportedAt = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' })
+                .format(new Date(item.report.createdAt));
+            %>
+            <article class="admin-card">
+              <div class="admin-card-head">
+                <span class="report-status report-open">À traiter</span>
+                <time datetime="<%= new Date(item.report.createdAt).toISOString() %>"><%= reportedAt %></time>
+              </div>
+              <h3><a href="<%= item.targetUrl %>"><%= item.targetLabel %></a></h3>
+              <p class="report-reason"><%= item.reasonLabel %></p>
+              <% if (item.report.message) { %>
+                <p class="report-message"><%= item.report.message %></p>
+              <% } %>
+
+              <form class="admin-form" action="/admin/signaux/<%= item.report._id %>" method="post">
+                <%- include('./partials/csrf-input.ejs') %>
+                <input type="text" name="note" maxlength="500" placeholder="Note de modération (facultatif)">
+                <div class="admin-actions">
+                  <button type="submit" name="action" value="resolve" class="btn small">Traiter</button>
+                  <button type="submit" name="action" value="dismiss" class="btn small ghost">Classer</button>
+                </div>
+              </form>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="my-section">
+      <div class="results-head">
+        <h2>Trajets publiés (<%= publishedTrips.length %>)</h2>
+      </div>
+
+      <% if (!publishedTrips.length) { %>
+        <div class="empty-state">
+          <h3>Aucun trajet publié.</h3>
+          <p>Les trajets en cours de publication apparaîtront ici.</p>
+        </div>
+      <% } else { %>
+        <div class="admin-list">
+          <% publishedTrips.forEach(function (t) { %>
+            <article class="admin-card admin-row">
+              <div>
+                <strong><%= t.depart %> → <%= t.arrivee || 'Destination à préciser' %></strong>
+                <span class="admin-meta">
+                  <%= t.dateData || 'Date à préciser' %> · <%= t.time || 'Heure à préciser' %>
+                  · <%= t.driver && t.driver.name ? t.driver.name : 'Conducteur' %>
+                </span>
+              </div>
+              <form action="/admin/trajets/<%= t._id %>/annuler" method="post" data-confirm="Annuler ce trajet ?">
+                <%- include('./partials/csrf-input.ejs') %>
+                <button type="submit" class="btn small danger">Annuler le trajet</button>
+              </form>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="my-section">
+      <div class="results-head">
+        <h2>Comptes (<%= accounts.length %>)</h2>
+      </div>
+
+      <div class="admin-list">
+        <% accounts.forEach(function (account) { %>
+          <article class="admin-card admin-row">
+            <div>
+              <strong><%= account.name %></strong>
+              <span class="admin-meta">
+                <%= account.email %> · <%= account.userType === 2 ? 'Conducteur' : 'Passager' %>
+              </span>
+              <% if (account.isAdmin) { %>
+                <span class="pill">Administrateur</span>
+              <% } %>
+              <% if (account.suspended) { %>
+                <span class="pill admin-pill-danger">Suspendu</span>
+              <% } %>
+            </div>
+            <div class="admin-actions">
+              <form action="/admin/utilisateurs/<%= account._id %>/suspension" method="post">
+                <%- include('./partials/csrf-input.ejs') %>
+                <button type="submit" class="btn small ghost">
+                  <%= account.suspended ? 'Réactiver' : 'Suspendre' %>
+                </button>
+              </form>
+              <form action="/admin/utilisateurs/<%= account._id %>/role" method="post">
+                <%- include('./partials/csrf-input.ejs') %>
+                <button type="submit" class="btn small ghost">
+                  <%= account.isAdmin ? 'Retirer admin' : 'Nommer admin' %>
+                </button>
+              </form>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    </section>
+  </main>
+
+  <%- include('./partials/footer.ejs') %>
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

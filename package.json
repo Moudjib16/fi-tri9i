@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "create-admin": "node scripts/create-admin.js"
   },
   "engines": {
     "node": ">=18"

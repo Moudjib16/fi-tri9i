@@ -23,6 +23,14 @@ const Schema = new mongoose.Schema({
         type: Number,
         required : true,
         enum: [1, 2]
+    },
+    isAdmin:{
+        type: Boolean,
+        default: false
+    },
+    suspended:{
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

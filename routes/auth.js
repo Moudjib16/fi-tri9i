@@ -75,6 +75,9 @@ router.post('/login', async (req, res) => {
     }
     const passwordMatch = await bcrypt.compare(password, check.password);
     if (passwordMatch) {
+      if (check.suspended) {
+        return res.status(403).render('login/suspended');
+      }
       const nextUrl = safeRedirect(req.body.next) || '/';
       await regenerateSession(req);
       req.session.userId = check._id;

@@ -21,9 +21,11 @@
       <div class="notification-list">
         <% notifications.forEach(function (notification) { %>
           <%
-            const href = notification.type === 'message'
-              ? `/trajets/${notification.trip}/messages`
-              : `/trajets/${notification.trip}`;
+            const href = notification.type === 'report_resolved'
+              ? '/mes-signalements'
+              : (notification.type === 'message'
+                ? `/trajets/${notification.trip}/messages`
+                : `/trajets/${notification.trip}`);
             const created = new Date(notification.createdAt);
           %>
           <a class="notification-item<%= notification.readAt ? '' : ' is-unread' %>" href="<%= href %>">

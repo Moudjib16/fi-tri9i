@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('../partials/head.ejs', { title: 'Compte suspendu' }) %>
+<body>
+  <%- include('../partials/navbar.ejs') %>
+
+  <main class="status-page">
+    <div class="status-card">
+      <span class="status-code">!</span>
+      <h1>Compte suspendu</h1>
+      <p>
+        Ce compte a été suspendu par l'équipe de modération. Si vous pensez qu'il s'agit
+        d'une erreur, contactez-nous.
+      </p>
+      <div class="status-actions">
+        <a class="btn secondary" href="/">Retour à l'accueil</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

@@ -23,6 +23,9 @@
       <% if (signedIn) { %>
         <a class="nav-link" href="/mes-trajets">Mes trajets</a>
         <a class="nav-link" href="/mes-favoris">Favoris</a>
+        <% if (currentUser.isAdmin) { %>
+          <a class="nav-link" href="/admin">Administration</a>
+        <% } %>
         <a class="nav-link nav-notifications" href="/notifications">
           Notifications
           <% if (unreadCount > 0) { %>
@@ -65,6 +68,12 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"></path><path d="M12 9v5"></path><path d="M12 17.5h.01"></path></svg>
               Mes signalements
             </a>
+            <% if (currentUser.isAdmin) { %>
+              <a href="/admin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6l-8-3Z"></path></svg>
+                Administration
+              </a>
+            <% } %>
             <a href="/compte">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
               Mon compte

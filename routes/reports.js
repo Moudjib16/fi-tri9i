@@ -5,6 +5,7 @@ const user = require('../models/signup');
 const Report = require('../models/report');
 const { pickString } = require('../lib/validation');
 const { REPORT_REASONS, reportReasonLabel } = require('../lib/reports');
+const { describeReports } = require('../lib/reportTargets');
 const { setFlash } = require('../lib/flash');
 const { tripNotFound } = require('../lib/http');
 
@@ -195,32 +196,11 @@ router.get('/mes-signalements', async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    const items = [];
-    for (const report of reports) {
-      let targetLabel = 'Contenu indisponible';
-      let targetUrl = '/trajets';
-
-      if (report.targetType === 'trip') {
-        const savedTrip = await trip.findById(report.targetId).lean();
-        if (savedTrip) {
-          targetLabel = `${savedTrip.depart} → ${savedTrip.arrivee || 'Destination à préciser'}`;
-          targetUrl = `/trajets/${savedTrip._id}`;
-        }
-      } else {
-        const target = await user.findById(report.targetId).select('name').lean();
-        if (target) {
-          targetLabel = target.name;
-          targetUrl = `/conducteurs/${target._id}`;
-        }
-      }
-
-      items.push({
-        report,
-        targetLabel,
-        targetUrl,
-        reasonLabel: reasonLabel(report.reason),
-      });
-    }
+    const described = await describeReports(reports);
+    const items = described.map((item) => ({
+      ...item,
+      reasonLabel: reasonLabel(item.report.reason),
+    }));
 
     return res.render('mes-signalements', {
       stylesheet: 'mes-signalements/',

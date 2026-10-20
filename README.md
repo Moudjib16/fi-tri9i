@@ -31,6 +31,8 @@ log in, and book their seats.
   "Mes favoris"
 - Reporting: flag a trip or a driver and follow the moderation status in
   "Mes signalements"
+- Moderation dashboard for administrators: treat reports, cancel trips,
+  suspend accounts and manage admin roles
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and
@@ -62,6 +64,7 @@ npm install
 npm start       # http://localhost:3000
 npm run dev     # with auto-reload (nodemon)
 npm test        # validation, views and booking-flow tests
+npm run create-admin -- admin@exemple.com   # grant the moderation role
 ```
 
 ## Configuration (.env)
@@ -92,21 +95,25 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 7. Save a trip with "Ajouter aux favoris", then open `/mes-favoris`
 8. Check MongoDB: `db.users.find()`, `db.trips.find()` and
    `db.sessions.find()` on the `MyApp` database
+9. Run `npm run create-admin -- <email>` to grant the moderation role, then open
+   `/admin` to triage reports
 
 ## Project structure
 
 ```text
 app.js            # Express setup, middleware and router mounting
-routes/           # pages, account, auth, drivers, favourites, messages, notifications, reports, reviews, trips and publish routers
+routes/           # pages, account, admin, auth, drivers, favourites, messages, notifications, reports, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/reports.js    # Shared report reasons and labels
+lib/reportTargets.js # Resolves the trip or profile targeted by a report
 lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
+scripts/          # maintenance scripts (create-admin)
 test/             # node:test suites (validation, views, booking flow)
 ```
 
