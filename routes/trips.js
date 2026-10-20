@@ -240,6 +240,10 @@ router.post('/trajets/:id/annuler', async (req, res) => {
         _id: req.params.id,
         passengers: req.session.userId,
         places_taken: { $gt: 0 },
+        $or: [
+          { departureAt: { $gt: new Date() } },
+          { departureAt: null },
+        ],
       },
       {
         $pull: { passengers: req.session.userId },

@@ -87,6 +87,8 @@
           <% } %>
         <% } else if (typeof isCancelled !== 'undefined' && isCancelled) { %>
           <span class="status-badge muted-badge">Annulé par le conducteur</span>
+        <% } else if (isBooked && typeof hasDeparted !== 'undefined' && hasDeparted) { %>
+          <span class="status-badge muted-badge">Trajet passé</span>
         <% } else if (isBooked) { %>
           <form action="/trajets/<%= trip._id %>/annuler" method="post">
             <%- include('./partials/csrf-input.ejs') %>

@@ -16,7 +16,8 @@ log in, and book their seats.
   (1–5) and price (1–100000 DA); departures are stored as a sortable `Date`
 - Trip search by departure, arrival, date and available seats, with sorting,
   pagination and automatic hiding of full or already-departed trips
-- Trip details with seat reservation and cancellation
+- Trip details with seat reservation and cancellation before departure; past
+  reservations are read-only
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and

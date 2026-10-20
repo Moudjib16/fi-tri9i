@@ -186,9 +186,12 @@
       <% } else { %>
         <div class="trip-grid">
           <% booked.forEach(function (t) { %>
+            <% const tripPast = Boolean(t.departureAt && new Date(t.departureAt) <= new Date()); %>
             <article class="trip-card<%= t.status === 'cancelled' ? ' cancelled-card' : '' %>">
               <% if (t.status === 'cancelled') { %>
                 <span class="draft-badge cancelled-badge">Annulé par le conducteur</span>
+              <% } else if (tripPast) { %>
+                <span class="draft-badge">Trajet passé</span>
               <% } %>
               <div class="trip-route">
                 <span><%= t.depart %></span>
@@ -216,7 +219,7 @@
               </dl>
 
               <div class="trip-card-footer">
-                <% if (t.status !== 'cancelled') { %>
+                <% if (t.status !== 'cancelled' && !tripPast) { %>
                   <form action="/trajets/<%= t._id %>/annuler" method="post">
                     <%- include('./partials/csrf-input.ejs') %>
                     <button type="submit" class="cancel-link">Annuler</button>

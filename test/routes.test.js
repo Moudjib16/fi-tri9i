@@ -609,3 +609,47 @@ test('driver can cancel a trip and passengers see it', async () => {
   assert.match(cancelledDetail, /Annulé par le conducteur/);
   assert.doesNotMatch(cancelledDetail, /Réserver une place/);
 });
+
+test('passengers cannot cancel a past reservation', async () => {
+  const pastTripId = '64f000000000000000000098';
+  state.trips.push({
+    _id: pastTripId,
+    status: 'published',
+    depart: 'Oran',
+    depart0: 'Centre',
+    arrivee: 'Tlemcen',
+    arrivee0: 'Centre',
+    dateData: '1 January 2020',
+    departureAt: new Date('2020-01-01T08:00:00Z'),
+    time: '08 : 00',
+    price: '900da',
+    priceDZD: 900,
+    places: 2,
+    places_taken: 1,
+    passengers: [passengerId],
+    description: 'Trajet passé',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const detail = await openPage(`/trajets/${pastTripId}`, passenger.cookie);
+  assert.match(detail.html, /Trajet passé/);
+  assert.doesNotMatch(detail.html, /Annuler ma réservation/);
+
+  const cancel = await fetch(`${baseUrl}/trajets/${pastTripId}/annuler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: detail.token }),
+    redirect: 'manual',
+  });
+  assert.equal(cancel.status, 302);
+  assert.equal(cancel.headers.get('location'), `/trajets/${pastTripId}`);
+
+  const pastTrip = state.trips.find((candidate) => candidate._id === pastTripId);
+  assert.deepEqual(pastTrip.passengers, [passengerId]);
+  assert.equal(pastTrip.places_taken, 1);
+
+  const mine = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie: passenger.cookie } })).text();
+  assert.match(mine, /Trajet passé/);
+  assert.doesNotMatch(mine, new RegExp(`/trajets/${pastTripId}/annuler"`));
+});
