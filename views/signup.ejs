@@ -14,6 +14,7 @@
   <div class="wrapper">
     <h2>Inscription</h2>
     <form action="/signup" method="post">
+      <%- include('./partials/csrf-input.ejs') %>
       <div class="input-box">
         <input type="text" name="name" placeholder="Votre nom" autocomplete="name" required>
       </div>

@@ -52,6 +52,7 @@
       </a>
       <div class="line"></div>
       <form class="logout-form" action="/logout" method="post">
+        <%- include('./csrf-input.ejs') %>
         <button type="submit" class="option">
           <img src="/home/pics/menu-icons/log-out.png" class="icon">
           <p class="text">Déconnexion</p>

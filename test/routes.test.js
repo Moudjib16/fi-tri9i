@@ -239,6 +239,40 @@ test.before(async () => {
 
 test.after(() => new Promise((resolve) => server.close(resolve)));
 
+function sessionCookie(response) {
+  return (response.headers.get('set-cookie') || '').split(';')[0];
+}
+
+function csrfToken(html) {
+  const match = html.match(/name="_csrf" value="([^"]+)"/);
+  return match ? match[1] : '';
+}
+
+async function openPage(pathname, cookie = '') {
+  const response = await fetch(`${baseUrl}${pathname}`, {
+    headers: cookie ? { cookie } : {},
+    redirect: 'manual',
+  });
+  const html = await response.text();
+  return {
+    response,
+    html,
+    cookie: sessionCookie(response) || cookie,
+    token: csrfToken(html),
+  };
+}
+
+async function login(email, password) {
+  const page = await openPage('/login');
+  const response = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ email, password, _csrf: page.token }),
+    redirect: 'manual',
+  });
+  return { response, cookie: sessionCookie(response) || page.cookie };
+}
+
 test('public pages render and guest actions redirect to login', async () => {
   const home = await fetch(`${baseUrl}/`);
   assert.equal(home.status, 200);
@@ -254,12 +288,24 @@ test('public pages render and guest actions redirect to login', async () => {
   assert.match(listingHtml, /Alger/);
   assert.match(listingHtml, /Voir le trajet/);
 
-  const detail = await fetch(`${baseUrl}/trajets/${tripId}`);
-  assert.equal(detail.status, 200);
-  assert.match(await detail.text(), /Se connecter pour réserver/);
+  const detail = await openPage(`/trajets/${tripId}`);
+  assert.equal(detail.response.status, 200);
+  assert.match(detail.html, /Se connecter pour réserver/);
+
+  const loginPage = await openPage('/login');
+  assert.ok(loginPage.token);
+
+  const noTokenReserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
+    method: 'POST',
+    headers: { cookie: loginPage.cookie },
+    redirect: 'manual',
+  });
+  assert.equal(noTokenReserve.status, 403);
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: loginPage.cookie },
+    body: new URLSearchParams({ _csrf: loginPage.token }),
     redirect: 'manual',
   });
   assert.equal(reserve.status, 302);
@@ -275,8 +321,8 @@ test('public pages render and guest actions redirect to login', async () => {
 
   const depart = await fetch(`${baseUrl}/depart`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ depart: 'Alger' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: loginPage.cookie },
+    body: new URLSearchParams({ depart: 'Alger', _csrf: loginPage.token }),
     redirect: 'manual',
   });
   assert.equal(depart.status, 302);
@@ -284,15 +330,10 @@ test('public pages render and guest actions redirect to login', async () => {
 });
 
 test('a logged-in passenger can reserve and cancel a seat', async () => {
-  const login = await fetch(`${baseUrl}/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ email: 'sara@test.dz', password: 'secret1' }),
-    redirect: 'manual',
-  });
-  assert.equal(login.status, 302);
-  const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
-  assert.match(cookie, /^connect\.sid=/);
+  const session = await login('sara@test.dz', 'secret1');
+  assert.equal(session.response.status, 302);
+  assert.match(session.cookie, /^connect\.sid=/);
+  const { cookie } = session;
 
   const publish = await fetch(`${baseUrl}/publier/page1`, { headers: { cookie } });
   assert.equal(publish.status, 200);
@@ -304,9 +345,13 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
   assert.equal(stepWithoutDraft.status, 302);
   assert.equal(stepWithoutDraft.headers.get('location'), '/publier/page1');
 
+  const detailPage = await openPage(`/trajets/${tripId}`, cookie);
+  assert.ok(detailPage.token);
+
   const forbiddenDelete = await fetch(`${baseUrl}/trajets/${tripId}/supprimer`, {
     method: 'POST',
-    headers: { cookie },
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: detailPage.token }),
     redirect: 'manual',
   });
   assert.equal(forbiddenDelete.status, 302);
@@ -314,7 +359,8 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',
-    headers: { cookie },
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: detailPage.token }),
     redirect: 'manual',
   });
   assert.equal(reserve.status, 302);
@@ -329,7 +375,8 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
 
   const cancel = await fetch(`${baseUrl}/trajets/${tripId}/annuler`, {
     method: 'POST',
-    headers: { cookie },
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: detailPage.token }),
     redirect: 'manual',
   });
   assert.equal(cancel.status, 302);
@@ -410,13 +457,8 @@ test('drafts stay private and out of listings', async () => {
   const guestDetail = await fetch(`${baseUrl}/trajets/${draftId}`, { redirect: 'manual' });
   assert.equal(guestDetail.status, 404);
 
-  const login = await fetch(`${baseUrl}/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ email: 'sara@test.dz', password: 'secret1' }),
-    redirect: 'manual',
-  });
-  const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+  const session = await login('sara@test.dz', 'secret1');
+  const { cookie } = session;
 
   const mine = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
   assert.doesNotMatch(mine, /Draftville/);

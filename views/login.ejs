@@ -14,6 +14,7 @@
   <div class="wrapper">
     <h2>Connexion</h2>
     <form action="/login" method="post">
+      <%- include('./partials/csrf-input.ejs') %>
       <input type="hidden" name="next" value="<%= typeof next !== 'undefined' ? next : '' %>">
       <div class="input-box">
         <input type="email" name="email" placeholder="Votre email" autocomplete="email" required>

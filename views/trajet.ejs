@@ -88,10 +88,12 @@
         <% if (isDriver) { %>
           <span class="status-badge">Votre trajet</span>
           <form action="/trajets/<%= trip._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce trajet ?');">
+            <%- include('./partials/csrf-input.ejs') %>
             <button type="submit" class="btn danger">Supprimer le trajet</button>
           </form>
         <% } else if (isBooked) { %>
           <form action="/trajets/<%= trip._id %>/annuler" method="post">
+            <%- include('./partials/csrf-input.ejs') %>
             <button type="submit" class="btn secondary">Annuler ma réservation</button>
           </form>
         <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
@@ -102,6 +104,7 @@
           <a class="btn" href="/login?next=<%= encodeURIComponent('/trajets/' + trip._id) %>">Se connecter pour réserver</a>
         <% } else { %>
           <form action="/trajets/<%= trip._id %>/reserver" method="post">
+            <%- include('./partials/csrf-input.ejs') %>
             <button type="submit" class="btn">Réserver une place</button>
           </form>
         <% } %>

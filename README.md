@@ -19,7 +19,8 @@ log in, and book their seats.
 - "My trips" dashboard: published rides and reservations in one place
 - About page, session-aware navbar and working footer/shortcut links
 - Dedicated error pages (existing email, user not found, wrong password, 404)
-- Security: helmet with CSP, rate limiting on authentication, httpOnly cookies
+- Security: helmet with CSP, rate limiting on authentication, httpOnly cookies,
+  per-session CSRF tokens on every POST, and session regeneration on login/signup
 
 ## Tech stack
 

@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="/publier/people/style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap">
   <title >Fi Tri9i</title>
+  <%- include('../partials/csrf-meta.ejs') %>
 </head>
 <body>
 
@@ -57,9 +58,10 @@
          try {
              const response = await fetch('/places', {
                  method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/json',
-                 },
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+             },
                  body: JSON.stringify({ content }),
              });
              if (response.ok) {

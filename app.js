@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const user = require('./models/signup');
@@ -85,6 +86,22 @@ app.use(session({
 }));
 app.use(bodyParser.json({ limit: '32kb' }));
 
+// Per-session CSRF token, required on every state-changing request.
+app.use((req, res, next) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  res.locals.csrfToken = req.session.csrfToken;
+
+  if (req.method === 'POST') {
+    const token = (req.body && req.body._csrf) || req.get('x-csrf-token');
+    if (!token || token !== req.session.csrfToken) {
+      return res.status(403).send({ message: 'Invalid CSRF token' });
+    }
+  }
+  return next();
+});
+
 // Expose the logged-in user to every rendered view
 app.use(async (req, res, next) => {
   res.locals.currentUser = null;
@@ -124,6 +141,18 @@ app.get('/', (req, res) => {
 
 
 
+function regenerateSession(req) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
 //signup logic 
 app.post('/signup', async (req, res) => {
   try {
@@ -153,8 +182,14 @@ app.post('/signup', async (req, res) => {
     const userdata = new user({ name, email, password: hashPassword, userType });
     const result = await userdata.save();
     console.log('Saved to database:', result._id);
+    await regenerateSession(req);
     req.session.userId = result._id;
-    return res.redirect('/');
+    return req.session.save((err) => {
+      if (err) {
+        return res.status(500).send({ message: 'Error saving session' });
+      }
+      return res.redirect('/');
+    });
   } catch (err) {
     console.log(err);
     if (err && err.code === 11000) {
@@ -181,8 +216,15 @@ app.post('/login', async (req,res) =>{
     }
     const passwordMatch = await bcrypt.compare(password, check.password);
     if(passwordMatch){
+      const nextUrl = safeRedirect(req.body.next) || '/';
+      await regenerateSession(req);
       req.session.userId = check._id;
-      return res.redirect(safeRedirect(req.body.next) || '/');
+      return req.session.save((err) => {
+        if (err) {
+          return res.status(500).send('wrong details');
+        }
+        return res.redirect(nextUrl);
+      });
     }
     else{
       return res.status(401).render('login/wrongpass');
@@ -200,11 +242,6 @@ app.post('/logout', (req, res) => {
   });
 });
 
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/');
-  });
-});
 app.get('/home', (req, res) => {
     res.redirect('/');
   });

@@ -33,6 +33,7 @@
       </p>
     <% } %>
     <form action="/publier/publier" method="post">
+      <%- include('../partials/csrf-input.ejs') %>
       <textarea maxlength="1000" class="in" placeholder="Bonjour ! je vais voir ma famille. J'ai beaucoup de place dans le coffre." id="description" name="description"><%= trip && trip.description ? trip.description : '' %></textarea>
       <div class="row1">
         <button class="precedent" id="precedent" type="button">précédent</button>
