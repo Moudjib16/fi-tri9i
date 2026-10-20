@@ -12,6 +12,20 @@ const { setFlash } = require('../lib/flash');
 
 const router = express.Router();
 
+const TRIP_ERROR_MESSAGES = {
+  full: 'Ce trajet est complet.',
+  already: 'Vous avez déjà réservé ce trajet.',
+  driver: 'Vous ne pouvez pas réserver votre propre trajet.',
+  past: 'Ce trajet est déjà parti.',
+  forbidden: 'Vous ne pouvez pas supprimer ce trajet.',
+  unavailable: 'Opération impossible pour le moment.',
+};
+
+function redirectWithTripError(req, res, tripUrl, code = 'unavailable') {
+  setFlash(req, 'error', TRIP_ERROR_MESSAGES[code] || TRIP_ERROR_MESSAGES.unavailable);
+  return res.redirect(tripUrl);
+}
+
 // Trip search / listing
 router.get('/trajets', async (req, res) => {
   try {
@@ -129,12 +143,6 @@ router.get('/trajets/:id', async (req, res) => {
       return tripNotFound(res);
     }
 
-    const notice = req.query.published
-      ? 'Votre trajet est publié.'
-      : req.query.booked
-        ? 'Votre place est réservée.'
-        : '';
-
     return res.render('trajet', {
       stylesheet: 'trajet/',
       title: 'Détail du trajet',
@@ -144,9 +152,6 @@ router.get('/trajets/:id', async (req, res) => {
       isDraft,
       hasDeparted,
       remaining,
-      notice,
-      cancelled: req.query.cancelled ? 'Votre réservation a été annulée.' : '',
-      error: req.query.error || '',
     });
   } catch (err) {
     console.error(err);
@@ -186,7 +191,8 @@ router.post('/trajets/:id/reserver', async (req, res) => {
     );
 
     if (updatedTrip) {
-      return res.redirect(`${tripUrl}?booked=1`);
+      setFlash(req, 'success', 'Votre place est réservée.');
+      return res.redirect(tripUrl);
     }
 
     const foundTrip = await trip.findById(req.params.id).lean();
@@ -194,24 +200,24 @@ router.post('/trajets/:id/reserver', async (req, res) => {
       return tripNotFound(res);
     }
     if (foundTrip.status === 'draft' || foundTrip.status === 'cancelled') {
-      return res.redirect(`${tripUrl}?error=unavailable`);
+      return redirectWithTripError(req, res, tripUrl);
     }
     if (foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt))) {
-      return res.redirect(`${tripUrl}?error=past`);
+      return redirectWithTripError(req, res, tripUrl, 'past');
     }
     if (foundTrip.driver && String(foundTrip.driver._id || foundTrip.driver) === String(req.session.userId)) {
-      return res.redirect(`${tripUrl}?error=driver`);
+      return redirectWithTripError(req, res, tripUrl, 'driver');
     }
     if ((foundTrip.passengers || []).map(String).includes(String(req.session.userId))) {
-      return res.redirect(`${tripUrl}?error=already`);
+      return redirectWithTripError(req, res, tripUrl, 'already');
     }
     if ((foundTrip.places_taken || 0) >= (foundTrip.places || 0)) {
-      return res.redirect(`${tripUrl}?error=full`);
+      return redirectWithTripError(req, res, tripUrl, 'full');
     }
-    return res.redirect(`${tripUrl}?error=unavailable`);
+    return redirectWithTripError(req, res, tripUrl);
   } catch (err) {
     console.error(err);
-    return res.redirect(`${tripUrl}?error=unavailable`);
+    return redirectWithTripError(req, res, tripUrl);
   }
 });
 
@@ -240,10 +246,14 @@ router.post('/trajets/:id/annuler', async (req, res) => {
       { new: true }
     );
 
-    return res.redirect(updatedTrip ? `${tripUrl}?cancelled=1` : `${tripUrl}?error=unavailable`);
+    if (updatedTrip) {
+      setFlash(req, 'success', 'Votre réservation a été annulée.');
+      return res.redirect(tripUrl);
+    }
+    return redirectWithTripError(req, res, tripUrl);
   } catch (err) {
     console.error(err);
-    return res.redirect(`${tripUrl}?error=unavailable`);
+    return redirectWithTripError(req, res, tripUrl);
   }
 });
 
@@ -263,7 +273,7 @@ router.post('/trajets/:id/supprimer', async (req, res) => {
     });
 
     if (!deletedTrip) {
-      return res.redirect(`/trajets/${req.params.id}?error=forbidden`);
+      return redirectWithTripError(req, res, `/trajets/${req.params.id}`, 'forbidden');
     }
 
     if (String(req.session.tripId || '') === String(req.params.id)) {
@@ -273,7 +283,7 @@ router.post('/trajets/:id/supprimer', async (req, res) => {
     return res.redirect('/mes-trajets');
   } catch (err) {
     console.error(err);
-    return res.redirect(`/trajets/${req.params.id}?error=unavailable`);
+    return redirectWithTripError(req, res, `/trajets/${req.params.id}`);
   }
 });
 

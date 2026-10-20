@@ -18,7 +18,8 @@ log in, and book their seats.
   pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation
 - "My trips" dashboard: drafts, published rides and reservations in one place
-- Flash confirmations for publishing and deleting trips
+- Flash confirmations and errors for publishing, deleting, booking and
+  cancelling trips
 - About page, session-aware navbar and working footer/shortcut links
 - Dedicated error pages (existing email, user not found, wrong password, 404)
 - Security: helmet with CSP, rate limiting on authentication, httpOnly cookies,

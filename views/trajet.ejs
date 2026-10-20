@@ -14,23 +14,6 @@
   <main class="page detail-page">
     <a class="back-link" href="/trajets">&larr; Retour aux trajets</a>
 
-    <% if (notice) { %>
-      <div class="banner success"><%= notice %></div>
-    <% } %>
-    <% if (cancelled) { %>
-      <div class="banner success"><%= cancelled %></div>
-    <% } %>
-    <% if (error) { %>
-      <div class="banner error">
-        <% if (error === 'full') { %>Ce trajet est complet.
-        <% } else if (error === 'already') { %>Vous avez déjà réservé ce trajet.
-        <% } else if (error === 'driver') { %>Vous ne pouvez pas réserver votre propre trajet.
-        <% } else if (error === 'forbidden') { %>Vous ne pouvez pas supprimer ce trajet.
-        <% } else if (error === 'past') { %>Ce trajet est déjà parti.
-        <% } else { %>Opération impossible pour le moment.
-        <% } %>
-      </div>
-    <% } %>
     <% if (typeof isDraft !== 'undefined' && isDraft) { %>
       <div class="banner">
         Ce trajet est encore un brouillon : il n'apparaît pas dans la recherche.

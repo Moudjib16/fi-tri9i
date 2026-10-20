@@ -59,9 +59,6 @@ test('trip detail shows a booking action for guests', async () => {
     remaining: 3,
     isDriver: false,
     isBooked: false,
-    notice: '',
-    cancelled: '',
-    error: '',
   });
 
   assert.match(html, /Se connecter pour réserver/);

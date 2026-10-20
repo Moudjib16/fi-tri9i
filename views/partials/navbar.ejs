@@ -79,7 +79,7 @@
 </nav>
 
 <% if (typeof flash !== 'undefined' && (flash.success || flash.error)) { %>
-  <div class="flash-banner <%= flash.error ? 'error' : 'success' %>" role="status">
+  <div class="flash-banner <%= flash.error ? 'error' : 'success' %>" role="<%= flash.error ? 'alert' : 'status' %>">
     <%= flash.error || flash.success %>
   </div>
 <% } %>

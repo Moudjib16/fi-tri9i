@@ -385,7 +385,10 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
     redirect: 'manual',
   });
   assert.equal(forbiddenDelete.status, 302);
-  assert.equal(forbiddenDelete.headers.get('location'), `/trajets/${tripId}?error=forbidden`);
+  assert.equal(forbiddenDelete.headers.get('location'), `/trajets/${tripId}`);
+
+  const forbiddenHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
+  assert.match(forbiddenHtml, /Vous ne pouvez pas supprimer ce trajet/);
 
   const reserve = await fetch(`${baseUrl}/trajets/${tripId}/reserver`, {
     method: 'POST',
@@ -394,9 +397,10 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
     redirect: 'manual',
   });
   assert.equal(reserve.status, 302);
-  assert.equal(reserve.headers.get('location'), `/trajets/${tripId}?booked=1`);
+  assert.equal(reserve.headers.get('location'), `/trajets/${tripId}`);
 
   const bookedHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
+  assert.match(bookedHtml, /Votre place est réservée/);
   assert.match(bookedHtml, /Annuler ma réservation/);
   assert.match(bookedHtml, /1 \/ 2/);
 
@@ -410,9 +414,10 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
     redirect: 'manual',
   });
   assert.equal(cancel.status, 302);
-  assert.equal(cancel.headers.get('location'), `/trajets/${tripId}?cancelled=1`);
+  assert.equal(cancel.headers.get('location'), `/trajets/${tripId}`);
 
   const cancelledHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
+  assert.match(cancelledHtml, /Votre réservation a été annulée/);
   assert.match(cancelledHtml, /Réserver une place/);
 });
 
