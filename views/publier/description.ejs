@@ -25,6 +25,13 @@
       <button id="btn9" ></button>
     </div>
     <h1 class="title">Quelque chose à ajouter sur votre trajet ?</h1>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
+        <% if (error === 'description') { %>La description est trop longue.
+        <% } else { %>Certaines étapes sont incomplètes. Vérifiez la date, l'heure et le prix.
+        <% } %>
+      </p>
+    <% } %>
     <form action="/publier/publier" method="post">
       <textarea maxlength="1000" class="in" placeholder="Bonjour ! je vais voir ma famille. J'ai beaucoup de place dans le coffre." id="description" name="description"><%= trip && trip.description ? trip.description : '' %></textarea>
       <div class="row1">

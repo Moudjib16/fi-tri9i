@@ -13,7 +13,16 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const bodyParser = require('body-parser');
-const { pickString, safeRedirect, escapeRegex, dateToDisplay } = require('./lib/validation');
+const {
+  pickString,
+  safeRedirect,
+  escapeRegex,
+  parseDateInput,
+  parseTimeInput,
+  parsePriceInput,
+  combineDepartureAt,
+  isPastDate,
+} = require('./lib/validation');
 
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET || 'fi-tri9i-dev-secret';
@@ -216,6 +225,8 @@ app.get('/trajets', async (req, res) => {
       : '';
 
     const filter = { status: { $nin: ['draft', 'cancelled'] } };
+    const conditions = [];
+
     if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
     if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
     if (places) {
@@ -226,15 +237,34 @@ app.get('/trajets', async (req, res) => {
         ],
       };
     }
-    if (date) {
-      const displayDate = dateToDisplay(date);
-      if (displayDate) filter.dateData = displayDate;
+
+    const parsedDate = date ? parseDateInput(date) : null;
+    if (parsedDate) {
+      const start = parsedDate.date;
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      conditions.push({
+        $or: [
+          { departureAt: { $gte: start, $lt: end } },
+          { departureAt: null, dateData: parsedDate.display },
+        ],
+      });
+    } else {
+      // Hide trips that already left; drafts without typed dates stay visible.
+      conditions.push({
+        $or: [
+          { departureAt: { $gte: new Date() } },
+          { departureAt: null },
+        ],
+      });
+    }
+    if (conditions.length) {
+      filter.$and = conditions;
     }
 
     const trips = await trip
       .find(filter)
       .populate('driver', 'name')
-      .sort({ createdAt: -1 })
+      .sort({ departureAt: 1, createdAt: -1 })
       .limit(50)
       .lean();
 
@@ -269,6 +299,7 @@ app.get('/trajets/:id', async (req, res) => {
     const isBooked = Boolean(userId && passengerIds.includes(userId));
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
     const isDraft = foundTrip.status === 'draft';
+    const hasDeparted = Boolean(foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt)));
 
     if (isDraft && !isDriver) {
       return tripNotFound(res);
@@ -287,6 +318,7 @@ app.get('/trajets/:id', async (req, res) => {
       isDriver,
       isBooked,
       isDraft,
+      hasDeparted,
       remaining,
       notice,
       cancelled: req.query.cancelled ? 'Votre réservation a été annulée.' : '',
@@ -317,6 +349,10 @@ app.post('/trajets/:id/reserver', async (req, res) => {
         driver: { $ne: req.session.userId },
         passengers: { $ne: req.session.userId },
         $expr: { $lt: [{ $ifNull: ['$places_taken', 0] }, '$places'] },
+        $or: [
+          { departureAt: { $gt: new Date() } },
+          { departureAt: null },
+        ],
       },
       {
         $push: { passengers: req.session.userId },
@@ -335,6 +371,9 @@ app.post('/trajets/:id/reserver', async (req, res) => {
     }
     if (foundTrip.status === 'draft' || foundTrip.status === 'cancelled') {
       return res.redirect(`${tripUrl}?error=unavailable`);
+    }
+    if (foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt))) {
+      return res.redirect(`${tripUrl}?error=past`);
     }
     if (foundTrip.driver && String(foundTrip.driver) === String(req.session.userId)) {
       return res.redirect(`${tripUrl}?error=driver`);
@@ -484,6 +523,13 @@ async function loadDraft(req) {
   return existingTrip || null;
 }
 
+// Keep the sortable Date in sync with the two display fields.
+function syncDepartureAt(existingTrip) {
+  const departureAt = combineDepartureAt(existingTrip.dateData, existingTrip.time);
+  existingTrip.departureAt = departureAt;
+  return departureAt;
+}
+
 function getMissingStep(existingTrip) {
   if (!existingTrip.depart) return '/publier/page1';
   if (!existingTrip.depart0) return '/publier/page2';
@@ -539,8 +585,10 @@ app.post('/depart', requirePublishUser, async (req, res) => {
       currentDraft.arrivee = '';
       currentDraft.arrivee0 = '';
       currentDraft.dateData = '';
+      currentDraft.departureAt = null;
       currentDraft.time = '';
       currentDraft.price = '';
+      currentDraft.priceDZD = null;
       currentDraft.places = 1;
       currentDraft.places_taken = 0;
       currentDraft.description = '';
@@ -652,9 +700,12 @@ app.post('/arrivee0', requireUser, requireDraftTrip, async (req, res) => {
 
 app.post('/date', requireUser, requireDraftTrip, async (req, res) => {
   try {
-    const dateData = pickString(req.body.content ?? req.body.dateData ?? req.body.date);
-    if (!dateData) {
-      return res.status(400).send({ message: 'Missing date' });
+    const parsedDate = parseDateInput(req.body.content ?? req.body.dateData ?? req.body.date);
+    if (!parsedDate) {
+      return res.status(400).send({ message: 'Date invalide' });
+    }
+    if (isPastDate(parsedDate.date)) {
+      return res.status(400).send({ message: 'La date est déjà passée' });
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
@@ -662,36 +713,34 @@ app.post('/date', requireUser, requireDraftTrip, async (req, res) => {
       return res.status(404).send({ message: error });
     }
 
-    // Update the 'dateData' property of the existing document
-    existingTrip.dateData = dateData;
+    existingTrip.dateData = parsedDate.display;
+    syncDepartureAt(existingTrip);
 
-    // Save the updated document
     await existingTrip.save();
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    // Send an error response if updating fails
     return res.status(500).send({ message: 'Error updating date' });
   }
 });
 
 app.post('/time', requireUser, requireDraftTrip, async (req, res) => {
   try {
-    const time = pickString(req.body.content ?? req.body.time);
-    if (!time) {
-      return res.status(400).send({ message: 'Missing time' });
+    const parsedTime = parseTimeInput(req.body.content ?? req.body.time);
+    if (!parsedTime) {
+      return res.status(400).send({ message: 'Heure invalide' });
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
       return res.status(404).send({ message: error });
     }
-    existingTrip.time = time;
+    existingTrip.time = parsedTime.display;
+    syncDepartureAt(existingTrip);
     await existingTrip.save();
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    // Send an error response if updating fails
     return res.status(500).send({ message: 'Error updating time' });
   }
 });
@@ -720,21 +769,21 @@ app.post('/places', requireUser, requireDraftTrip, async (req, res) => {
 
 app.post('/price', requireUser, requireDraftTrip, async (req, res) => {
   try {
-    const price = pickString(req.body.content ?? req.body.price);
-    if (!price) {
-      return res.status(400).send({ message: 'Missing price' });
+    const parsedPrice = parsePriceInput(req.body.content ?? req.body.price);
+    if (!parsedPrice) {
+      return res.status(400).send({ message: 'Prix invalide (1 à 100000 DA)' });
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
       return res.status(404).send({ message: error });
     }
-    existingTrip.price = price;
+    existingTrip.price = parsedPrice.display;
+    existingTrip.priceDZD = parsedPrice.amount;
     await existingTrip.save();
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    // Send an error response if updating fails
     return res.status(500).send({ message: 'Error updating price' });
   }
 });
@@ -781,6 +830,28 @@ app.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) => 
       return res.redirect(`${missingStep}?error=incomplete`);
     }
 
+    // Older drafts may only have the display strings, so rebuild the typed
+    // fields before publishing instead of trusting unvalidated input.
+    const departureAt = syncDepartureAt(existingTrip);
+    if (!departureAt) {
+      await existingTrip.save();
+      return res.redirect('/publier/calendaire?error=incomplete');
+    }
+    if (isPastDate(departureAt)) {
+      await existingTrip.save();
+      return res.redirect('/publier/calendaire?error=past');
+    }
+
+    if (!existingTrip.priceDZD) {
+      const parsedPrice = parsePriceInput(existingTrip.price);
+      if (!parsedPrice) {
+        await existingTrip.save();
+        return res.redirect('/publier/prix?error=incomplete');
+      }
+      existingTrip.price = parsedPrice.display;
+      existingTrip.priceDZD = parsedPrice.amount;
+    }
+
     existingTrip.status = 'published';
     existingTrip.publishedAt = new Date();
     await existingTrip.save();
@@ -821,13 +892,13 @@ app.get('/publier/page4', requireUser, requireDraftTrip, async (req, res) => {
 app.get('/publier/calendaire', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/calendaire', { trip: draft });
+  return res.render('publier/calendaire', { trip: draft, error: req.query.error || '' });
 });
 
 app.get('/publier/heure', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/heure', { trip: draft });
+  return res.render('publier/heure', { trip: draft, error: req.query.error || '' });
 });
 
 app.get('/publier/people', requireUser, requireDraftTrip, async (req, res) => {
@@ -839,13 +910,13 @@ app.get('/publier/people', requireUser, requireDraftTrip, async (req, res) => {
 app.get('/publier/prix', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/prix', { trip: draft });
+  return res.render('publier/prix', { trip: draft, error: req.query.error || '' });
 });
 
 app.get('/publier/description', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/description', { trip: draft });
+  return res.render('publier/description', { trip: draft, error: req.query.error || '' });
 });
 
 

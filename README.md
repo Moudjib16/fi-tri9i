@@ -11,6 +11,8 @@ log in, and book their seats.
   arrival wilaya and commune, date, time, seat count, price, description
 - Drafts are private: a trip only appears in search after the final "publier"
   step validates that every required step is complete
+- Server-side validation for dates (future only), times (`HH:MM`), seat count
+  (1–5) and price (1–100000 DA); departures are stored as a sortable `Date`
 - Trip search by departure, arrival, date and available seats
 - Trip details with seat reservation and cancellation
 - "My trips" dashboard: published rides and reservations in one place

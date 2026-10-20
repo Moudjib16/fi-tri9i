@@ -26,6 +26,7 @@
         <% } else if (error === 'already') { %>Vous avez déjà réservé ce trajet.
         <% } else if (error === 'driver') { %>Vous ne pouvez pas réserver votre propre trajet.
         <% } else if (error === 'forbidden') { %>Vous ne pouvez pas supprimer ce trajet.
+        <% } else if (error === 'past') { %>Ce trajet est déjà parti.
         <% } else { %>Opération impossible pour le moment.
         <% } %>
       </div>
@@ -93,6 +94,8 @@
           <form action="/trajets/<%= trip._id %>/annuler" method="post">
             <button type="submit" class="btn secondary">Annuler ma réservation</button>
           </form>
+        <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
+          <span class="status-badge muted-badge">Trajet passé</span>
         <% } else if (remaining <= 0) { %>
           <span class="status-badge muted-badge">Trajet complet</span>
         <% } else if (!currentUser) { %>

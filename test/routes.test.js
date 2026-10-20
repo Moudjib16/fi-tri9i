@@ -15,13 +15,16 @@ const state = {
   trips: [
     {
       _id: tripId,
+      status: 'published',
       depart: 'Alger',
       depart0: 'Bab Ezzouar',
       arrivee: 'Bejaia',
       arrivee0: 'Amizour',
-      dateData: '12 December 2026',
+      dateData: '12 December 2030',
+      departureAt: new Date('2030-12-12T08:00:00Z'),
       time: '08 : 00',
       price: '1200da',
+      priceDZD: 1200,
       places: 2,
       places_taken: 0,
       passengers: [],
@@ -49,6 +52,28 @@ function tripChain(result) {
 
 function matchesTrip(candidate, filter) {
   return Object.entries(filter).every(([key, value]) => {
+    if (key === '$and') {
+      return value.every((clause) => matchesTrip(candidate, clause));
+    }
+    if (key === '$or') {
+      return value.some((clause) => matchesTrip(candidate, clause));
+    }
+    if (key === 'departureAt') {
+      const departure = candidate.departureAt ? new Date(candidate.departureAt) : null;
+      if (value === null) {
+        return departure === null;
+      }
+      if (!departure) {
+        return false;
+      }
+      if (value.$gte !== undefined && departure < new Date(value.$gte)) return false;
+      if (value.$lt !== undefined && departure >= new Date(value.$lt)) return false;
+      if (value.$gt !== undefined && departure <= new Date(value.$gt)) return false;
+      return true;
+    }
+    if (key === 'dateData') {
+      return candidate.dateData === value;
+    }
     if (key === 'places') {
       return (candidate.places || 0) >= value.$gte;
     }
@@ -98,6 +123,21 @@ const fakeTrip = {
     }
     if (filter.status && filter.status.$nin && filter.status.$nin.includes(found.status)) {
       return null;
+    }
+    if (filter.$or) {
+      const allowed = filter.$or.some((clause) => {
+        const departure = found.departureAt ? new Date(found.departureAt) : null;
+        if (clause.departureAt === null) {
+          return departure === null;
+        }
+        if (clause.departureAt && clause.departureAt.$gt !== undefined) {
+          return Boolean(departure && departure > new Date(clause.departureAt.$gt));
+        }
+        return false;
+      });
+      if (!allowed) {
+        return null;
+      }
     }
     if (filter.driver && filter.driver.$ne !== undefined) {
       const driver = found.driver ? String(found.driver._id || found.driver) : null;
@@ -299,9 +339,11 @@ test('drafts stay private and out of listings', async () => {
     depart0: 'Centre',
     arrivee: 'Bejaia',
     arrivee0: 'Amizour',
-    dateData: '12 December 2026',
+    dateData: '12 December 2030',
+    departureAt: new Date('2030-12-12T08:00:00Z'),
     time: '08 : 00',
     price: '1200da',
+    priceDZD: 1200,
     places: 2,
     places_taken: 0,
     passengers: [],

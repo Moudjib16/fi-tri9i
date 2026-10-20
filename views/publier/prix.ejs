@@ -25,6 +25,11 @@
       <button id="btn9" ></button>
     </div>
     <h1 class="title">Fixez votre prix par place</h1>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
+        Indiquez un prix valide entre 1 et 100000 DA.
+      </p>
+    <% } %>
     <div class="row">
       <img src="/publier/prix/pics/img.svg" class="img">
       <div class="row1">

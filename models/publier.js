@@ -36,6 +36,11 @@ const Schema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    departureAt: {
+        type: Date,
+        default: null,
+        index: true
+    },
     time: {
         type : String,
         trim: true,
@@ -45,6 +50,12 @@ const Schema = new mongoose.Schema({
         type : String,
         trim: true,
         default: ''
+    },
+    priceDZD: {
+        type: Number,
+        default: null,
+        min: 1,
+        max: 100000
     },
         places: {
         type : Number,

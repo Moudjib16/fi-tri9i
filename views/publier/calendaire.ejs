@@ -39,6 +39,13 @@
         <button id="btn9" ></button>
       </div>
     <h1>Quand partez-vous ?</h1>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="form-error" style="color: #b00020; text-align: center; margin-bottom: 12px;">
+        <% if (error === 'past') { %>Cette date est déjà passée. Choisissez une date à venir.
+        <% } else { %>Choisissez une date valide pour continuer.
+        <% } %>
+      </p>
+    <% } %>
     <div class="container">
     
       <div class="right">
