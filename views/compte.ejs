@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Mon compte' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="site-main account-page">
+    <a class="back-link" href="/">&larr; Retour à l'accueil</a>
+
+    <% const role = currentUser.userType === 2 ? 'Conducteur' : 'Passager'; %>
+    <% const initial = currentUser.name ? currentUser.name.trim().charAt(0) : '?'; %>
+
+    <header class="account-hero">
+      <span class="avatar account-avatar" aria-hidden="true"><%= initial %></span>
+      <div class="account-identity">
+        <p class="eyebrow">Mon compte</p>
+        <h1><%= currentUser.name %></h1>
+        <p><%= currentUser.email %></p>
+      </div>
+      <span class="account-role"><%= role %></span>
+    </header>
+
+    <section class="wizard-card account-card">
+      <p class="eyebrow">Sécurité</p>
+      <h2>Changer de mot de passe</h2>
+      <p class="wizard-help">
+        Votre nouveau mot de passe doit contenir au moins 6 caractères.
+        Vous resterez connecté après la modification.
+      </p>
+
+      <form class="wizard-form account-form" action="/compte/mot-de-passe" method="post">
+        <%- include('./partials/csrf-input.ejs') %>
+
+        <label class="field">
+          <span>Mot de passe actuel</span>
+          <input type="password" name="currentPassword" autocomplete="current-password" required>
+        </label>
+        <% if (errors.currentPassword) { %>
+          <p class="form-error" role="alert"><%= errors.currentPassword %></p>
+        <% } %>
+
+        <label class="field">
+          <span>Nouveau mot de passe</span>
+          <input type="password" name="password" autocomplete="new-password" minlength="6" maxlength="72" required>
+        </label>
+        <% if (errors.password) { %>
+          <p class="form-error" role="alert"><%= errors.password %></p>
+        <% } %>
+
+        <label class="field">
+          <span>Confirmer le nouveau mot de passe</span>
+          <input type="password" name="confirm-password" autocomplete="new-password" minlength="6" maxlength="72" required>
+        </label>
+        <% if (errors.confirmPassword) { %>
+          <p class="form-error" role="alert"><%= errors.confirmPassword %></p>
+        <% } %>
+
+        <div class="wizard-actions">
+          <a class="btn ghost" href="/">Annuler</a>
+          <button class="btn" type="submit">Mettre à jour</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js" defer></script>
+</body>
+</html>

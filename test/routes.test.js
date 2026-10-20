@@ -238,11 +238,34 @@ Object.assign(fakeTrip, {
 
 const fakeUser = {
   findById(id) {
+    const found = state.users.find((candidate) => String(candidate._id) === String(id)) || null;
+    const account = found
+      ? {
+        ...found,
+        save: async () => {
+          const index = state.users.findIndex(
+            (candidate) => String(candidate._id) === String(account._id)
+          );
+          const { save, ...data } = account;
+          state.users[index] = { ...state.users[index], ...data };
+          return state.users[index];
+        },
+      }
+      : null;
     const query = {
       select() {
         return query;
       },
-      lean: async () => state.users.find((candidate) => String(candidate._id) === String(id)) || null,
+      lean: async () => {
+        if (!found) {
+          return null;
+        }
+        const { password, ...safeUser } = found;
+        return safeUser;
+      },
+      then(resolve) {
+        resolve(account);
+      },
     };
     return query;
   },
@@ -1143,4 +1166,70 @@ test('passengers can review completed trips and profiles show ratings', async ()
   assert.doesNotMatch(detail, /Laisser un avis/);
 
   state.reviews.length = 0;
+});
+
+test('users can change their password from the account page', async () => {
+  const guest = await fetch(`${baseUrl}/compte`, { redirect: 'manual' });
+  assert.equal(guest.status, 302);
+  assert.equal(guest.headers.get('location'), '/login?next=%2Fcompte');
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  assert.equal(passenger.response.status, 302);
+
+  const page = await openPage('/compte', passenger.cookie);
+  assert.equal(page.response.status, 200);
+  assert.match(page.html, /Changer de mot de passe/);
+  assert.match(page.html, /sara@test\.dz/);
+  assert.match(page.html, /Passager/);
+  assert.ok(page.token);
+
+  const postPassword = (fields) => fetch(`${baseUrl}/compte/mot-de-passe`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: page.token, ...fields }),
+    redirect: 'manual',
+  });
+
+  const wrongCurrent = await postPassword({
+    currentPassword: 'mauvais-secret',
+    password: 'nouveauSecret1',
+    'confirm-password': 'nouveauSecret1',
+  });
+  assert.equal(wrongCurrent.status, 401);
+  assert.match(await wrongCurrent.text(), /mot de passe actuel est incorrect/);
+
+  const mismatch = await postPassword({
+    currentPassword: 'secret1',
+    password: 'nouveauSecret1',
+    'confirm-password': 'autreSecret1',
+  });
+  assert.equal(mismatch.status, 400);
+  assert.match(await mismatch.text(), /ne correspondent pas/);
+
+  const original = state.users.find((candidate) => candidate._id === passengerId).password;
+
+  const changed = await postPassword({
+    currentPassword: 'secret1',
+    password: 'nouveauSecret1',
+    'confirm-password': 'nouveauSecret1',
+  });
+  assert.equal(changed.status, 302);
+  assert.equal(changed.headers.get('location'), '/compte');
+
+  const updated = state.users.find((candidate) => candidate._id === passengerId);
+  assert.notEqual(updated.password, 'nouveauSecret1');
+  assert.equal(await bcrypt.compare('nouveauSecret1', updated.password), true);
+
+  const changedCookie = sessionCookie(changed) || passenger.cookie;
+  const confirmation = await openPage('/compte', changedCookie);
+  assert.equal(confirmation.response.status, 200);
+  assert.match(confirmation.html, /Votre mot de passe a été mis à jour/);
+
+  const oldLogin = await login('sara@test.dz', 'secret1');
+  assert.equal(oldLogin.response.status, 401);
+
+  const newLogin = await login('sara@test.dz', 'nouveauSecret1');
+  assert.equal(newLogin.response.status, 302);
+
+  updated.password = original;
 });

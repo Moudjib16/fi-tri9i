@@ -248,3 +248,29 @@ test('my trips renders published and reserved sections', async () => {
   assert.match(html, /Sara/);
   assert.match(html, /Karim/);
 });
+
+test('account page renders profile details and password errors', async () => {
+  const html = await renderFile(view('compte.ejs'), {
+    title: 'Mon compte',
+    currentUser: {
+      _id: '64f000000000000000000002',
+      name: 'Sara',
+      email: 'sara@test.dz',
+      userType: 1,
+    },
+    errors: {
+      currentPassword: 'Mot de passe actuel incorrect.',
+      password: 'Le nouveau mot de passe est trop court.',
+    },
+  });
+
+  assert.match(html, /Mon compte/);
+  assert.match(html, /Sara/);
+  assert.match(html, /sara@test\.dz/);
+  assert.match(html, /Passager/);
+  assert.match(html, /action="\/compte\/mot-de-passe"/);
+  assert.match(html, /name="currentPassword"/);
+  assert.match(html, /name="confirm-password"/);
+  assert.match(html, /Mot de passe actuel incorrect\./);
+  assert.match(html, /Le nouveau mot de passe est trop court\./);
+});

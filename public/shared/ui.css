@@ -1823,6 +1823,67 @@ a.driver-card:hover strong {
   font-size: 0.85rem;
 }
 
+.account-page {
+  max-width: 760px;
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 22px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-avatar {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.account-identity {
+  min-width: 0;
+}
+
+.account-identity h1 {
+  margin: 2px 0;
+  font-size: 1.6rem;
+  overflow-wrap: anywhere;
+}
+
+.account-identity p:last-child {
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.account-role {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.account-card h2 {
+  margin: 4px 0 10px;
+}
+
+.account-form {
+  margin-top: 20px;
+}
+
 /* Dashboard */
 .dashboard-header {
   display: flex;
@@ -3056,6 +3117,15 @@ a.driver-card:hover strong {
 
   .wizard-card {
     padding: 24px 18px;
+  }
+
+  .account-hero {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .account-role {
+    margin-left: 0;
   }
 
   .form-grid {

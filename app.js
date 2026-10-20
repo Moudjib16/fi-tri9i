@@ -17,6 +17,7 @@ const driversRouter = require('./routes/drivers');
 const messagesRouter = require('./routes/messages');
 const notificationsRouter = require('./routes/notifications');
 const reviewsRouter = require('./routes/reviews');
+const accountRouter = require('./routes/account');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const publishRouter = require('./routes/publish');
@@ -152,12 +153,22 @@ const authLimiter = rateLimit({
 app.use('/login', authLimiter);
 app.use('/signup', authLimiter);
 
+const accountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again later.' },
+});
+app.use('/compte/mot-de-passe', accountLimiter);
+
 // Routes
 app.use(pagesRouter);
 app.use(driversRouter);
 app.use(messagesRouter);
 app.use(notificationsRouter);
 app.use(reviewsRouter);
+app.use(accountRouter);
 app.use(authRouter);
 app.use(tripsRouter);
 app.use(publishRouter);

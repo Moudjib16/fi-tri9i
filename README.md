@@ -26,6 +26,7 @@ log in, and book their seats.
   with unread counts in the navbar
 - One review per passenger after a completed trip; driver profiles show the
   average rating and recent comments
+- Account page with secure password changes and current profile details
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and
@@ -91,7 +92,7 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 
 ```text
 app.js            # Express setup, middleware and router mounting
-routes/           # pages, auth, drivers, messages, notifications, reviews, trips and publish routers
+routes/           # pages, account, auth, drivers, messages, notifications, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/session.js    # Session regeneration and route guards
