@@ -26,6 +26,7 @@
       <button id="btn9" ></button>
     </div>
     <h1 class="title">Combien de places proposez-vous ?</h1>
+    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
    
    
       <div class="row1">
@@ -53,7 +54,15 @@
 
 
   <script>
+    const errorBox = document.getElementById('wizard-error');
+
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+    }
+
     document.getElementById('prochaine').addEventListener('click', async () => {
+         errorBox.hidden = true;
          const content = document.getElementById('prix').value;
          try {
              const response = await fetch('/places', {
@@ -67,11 +76,11 @@
              if (response.ok) {
                  window.location.href = '/publier/prix';
              } else {
-                 alert('Nombre de places invalide (1 à 5).');
+                 showError('Nombre de places invalide (1 à 5).');
              }
          } catch (error) {
              console.error('Error:', error);
-             alert('Erreur réseau, réessayez.');
+             showError('Erreur réseau, réessayez.');
          }
      });
   </script>

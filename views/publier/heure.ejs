@@ -31,6 +31,7 @@
         Choisissez une heure valide pour continuer.
       </p>
     <% } %>
+    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
     <div class="row">
       <img src="/publier/heure/pics/img.svg" class="img">
       <div class="row1">
@@ -161,7 +162,15 @@
 
 
   <script>
+    const errorBox = document.getElementById('wizard-error');
+
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+    }
+
     document.getElementById('prochaine').addEventListener('click', async () => {
+         errorBox.hidden = true;
          const content = document.getElementById('clock').value;
          try {
              const response = await fetch('/time', {
@@ -175,11 +184,11 @@
              if (response.ok) {
                  window.location.href = '/publier/people';
              } else {
-                 alert('Heure invalide, réessayez.');
+                 showError('Heure invalide, réessayez.');
              }
          } catch (error) {
              console.error('Error:', error);
-             alert('Erreur réseau, réessayez.');
+             showError('Erreur réseau, réessayez.');
          }
      });
   </script>

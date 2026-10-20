@@ -89,6 +89,21 @@ test('time step exposes every selectable departure time', async () => {
   assert.doesNotMatch(html, /id="time-option"/);
 });
 
+test('wizard steps use inline errors instead of browser alerts', async () => {
+  const steps = ['calendaire', 'heure', 'people', 'prix'];
+
+  for (const step of steps) {
+    const html = await renderFile(view(`publier/${step}.ejs`), {
+      currentUser: null,
+      trip: null,
+    });
+
+    assert.match(html, /id="wizard-error"/);
+    assert.match(html, /role="alert"/);
+    assert.doesNotMatch(html, /alert\(/);
+  }
+});
+
 test('my trips renders published and reserved sections', async () => {
   const html = await renderFile(view('mes-trajets.ejs'), {
     stylesheet: 'mes-trajets/',

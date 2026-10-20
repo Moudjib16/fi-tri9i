@@ -47,6 +47,7 @@
         <% } %>
       </p>
     <% } %>
+    <p id="wizard-error" class="form-error" role="alert" style="color: #b00020; text-align: center; margin-bottom: 12px;" hidden></p>
     <div class="container">
     
       <div class="right">
@@ -99,7 +100,15 @@
 
     </main>
     <script>
-       document.getElementById('prochaine').addEventListener('click', async () => {
+        const errorBox = document.getElementById('wizard-error');
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.hidden = false;
+        }
+
+        document.getElementById('prochaine').addEventListener('click', async () => {
+            errorBox.hidden = true;
             const content = document.getElementById('dateData').innerHTML;
             try {
                 const response = await fetch('/date', {
@@ -113,11 +122,11 @@
                 if (response.ok) {
                     window.location.href = '/publier/heure';
                 } else {
-                    alert('Date invalide, réessayez.');
+                    showError('Date invalide, réessayez.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Erreur réseau, réessayez.');
+                showError('Erreur réseau, réessayez.');
             }
         });
     </script>
