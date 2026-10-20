@@ -1324,6 +1324,15 @@ textarea:focus-visible {
   color: var(--ink);
 }
 
+.trip-driver a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.trip-driver a:hover {
+  color: var(--brand);
+}
+
 .trip-link {
   display: inline-flex;
   align-items: center;
@@ -1643,6 +1652,79 @@ textarea:focus-visible {
 .driver-card span {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+a.driver-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.driver-card:hover strong {
+  color: var(--brand);
+}
+
+/* Driver profile */
+.profile-page {
+  padding-top: 38px;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--brand-soft) 100%);
+}
+
+.profile-avatar {
+  width: 78px;
+  height: 78px;
+  font-family: var(--display);
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.profile-heading {
+  min-width: 0;
+}
+
+.profile-heading h1 {
+  margin: 0 0 5px;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.profile-heading p:last-child {
+  margin: 0;
+  color: var(--muted);
+}
+
+.profile-stats {
+  display: flex;
+  gap: 24px;
+  margin-left: auto;
+  text-align: right;
+}
+
+.profile-stats strong {
+  display: block;
+  color: var(--brand-deep);
+  font-family: var(--display);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.profile-stats span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-trips {
+  margin-top: 34px;
 }
 
 /* Dashboard */
@@ -2571,9 +2653,15 @@ textarea:focus-visible {
 
   .section-head,
   .page-hero,
-  .dashboard-header {
+  .dashboard-header,
+  .profile-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .profile-stats {
+    margin-left: 0;
+    text-align: left;
   }
 
   .page-hero {

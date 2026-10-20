@@ -18,6 +18,7 @@ log in, and book their seats.
   pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation before departure; past
   reservations are read-only
+- Public driver profiles with upcoming trips and links from trip cards
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and
@@ -83,7 +84,7 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 
 ```text
 app.js            # Express setup, middleware and router mounting
-routes/           # pages, auth, trips and publish routers
+routes/           # pages, auth, drivers, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/session.js    # Session regeneration and route guards

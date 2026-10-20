@@ -59,52 +59,7 @@
       <% } else { %>
         <div class="trip-grid">
           <% trips.forEach(function (t) { %>
-            <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
-            <% const driverName = t.driver && t.driver.name ? t.driver.name : 'Anonyme'; %>
-            <article class="trip-card">
-              <div class="trip-route">
-                <span><%= t.depart %></span>
-                <span class="route-arrow">&rarr;</span>
-                <span><%= t.arrivee || 'Destination à préciser' %></span>
-              </div>
-
-              <% if (t.depart0 || t.arrivee0) { %>
-                <p class="trip-communes">
-                  <%= t.depart0 || '' %><% if (t.depart0 && t.arrivee0) { %> &middot; <% } %><%= t.arrivee0 || '' %>
-                </p>
-              <% } %>
-
-              <dl class="trip-meta">
-                <div>
-                  <dt>Date</dt>
-                  <dd><%= t.dateData || 'À préciser' %></dd>
-                </div>
-                <div>
-                  <dt>Heure</dt>
-                  <dd><%= t.time || 'À préciser' %></dd>
-                </div>
-                <div>
-                  <dt>Prix</dt>
-                  <dd><%= t.price || 'À préciser' %></dd>
-                </div>
-                <div>
-                  <dt>Places</dt>
-                  <dd><%= remaining %> / <%= t.places %></dd>
-                </div>
-              </dl>
-
-              <% if (t.description) { %>
-                <p class="trip-description"><%= t.description %></p>
-              <% } %>
-
-              <div class="trip-card-footer">
-                <p class="trip-driver">
-                  <span class="avatar" aria-hidden="true"><%= driverName.trim().charAt(0) %></span>
-                  <strong><%= driverName %></strong>
-                </p>
-                <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
-              </div>
-            </article>
+            <%- include('./partials/trip-card.ejs', { t }) %>
           <% }); %>
         </div>
 

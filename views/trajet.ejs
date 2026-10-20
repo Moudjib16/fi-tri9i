@@ -52,13 +52,22 @@
         <section class="detail-section">
           <h2>Conducteur</h2>
           <% const driverName = trip.driver && trip.driver.name ? trip.driver.name : 'Anonyme'; %>
-          <div class="driver-card">
+          <% const driverId = trip.driver && trip.driver._id ? trip.driver._id : null; %>
+          <% if (driverId) { %>
+            <a class="driver-card" href="/conducteurs/<%= driverId %>">
+          <% } else { %>
+            <div class="driver-card">
+          <% } %>
             <span class="avatar" aria-hidden="true"><%= driverName.trim().charAt(0) %></span>
             <div>
               <strong><%= driverName %></strong>
-              <span>Conducteur sur Fi Tri9i</span>
+              <span>Conducteur sur Fi Tri9i<% if (driverId) { %> &middot; Voir le profil<% } %></span>
             </div>
-          </div>
+          <% if (driverId) { %>
+            </a>
+          <% } else { %>
+            </div>
+          <% } %>
         </section>
 
         <% if (trip.description) { %>

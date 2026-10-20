@@ -384,6 +384,19 @@ test('public pages render and guest actions redirect to login', async () => {
   assert.equal(depart.headers.get('location'), '/login?next=%2Fpublier%2Fpage1');
 });
 
+test('driver profile lists upcoming trips without exposing contact details', async () => {
+  const response = await fetch(`${baseUrl}/conducteurs/${driverId}`);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Karim/);
+  assert.match(html, /Trajets à venir/);
+  assert.match(html, new RegExp(`/trajets/${tripId}`));
+  assert.doesNotMatch(html, /karim@test\.dz/);
+
+  const missing = await fetch(`${baseUrl}/conducteurs/64f000000000000000000404`);
+  assert.equal(missing.status, 404);
+});
+
 test('a logged-in passenger can reserve and cancel a seat', async () => {
   const session = await login('sara@test.dz', 'secret1');
   assert.equal(session.response.status, 302);
