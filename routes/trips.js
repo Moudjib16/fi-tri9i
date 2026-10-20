@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const trip = require('../models/publier');
+const Review = require('../models/review');
 const {
   pickString,
   escapeRegex,
@@ -317,6 +318,16 @@ router.get('/trajets/:id', async (req, res) => {
       return tripNotFound(res);
     }
 
+    const canReview = Boolean(isBooked && hasDeparted && !isCancelled);
+    let hasReviewed = false;
+    if (canReview) {
+      const existingReview = await Review.findOne({
+        trip: foundTrip._id,
+        author: userId,
+      }).lean();
+      hasReviewed = Boolean(existingReview);
+    }
+
     return res.render('trajet', {
       stylesheet: 'trajet/',
       title: 'Détail du trajet',
@@ -327,6 +338,8 @@ router.get('/trajets/:id', async (req, res) => {
       isCancelled,
       hasDeparted,
       remaining,
+      canReview: canReview && !hasReviewed,
+      hasReviewed,
     });
   } catch (err) {
     console.error(err);

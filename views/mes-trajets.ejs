@@ -250,6 +250,9 @@
                   <span></span>
                 <% } %>
                 <span class="trip-card-links">
+                  <% if (tripPast && t.status !== 'cancelled') { %>
+                    <a class="trip-link" href="/trajets/<%= t._id %>/avis">Avis</a>
+                  <% } %>
                   <a class="trip-link" href="/trajets/<%= t._id %>/messages">Messages</a>
                   <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
                 </span>

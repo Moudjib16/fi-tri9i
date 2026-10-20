@@ -14,6 +14,7 @@ const state = {
   users: [],
   messages: [],
   notifications: [],
+  reviews: [],
   trips: [
     {
       _id: tripId,
@@ -357,6 +358,63 @@ const fakeNotification = {
   },
 };
 
+const fakeReview = {
+  async create(data) {
+    const duplicate = state.reviews.some(
+      (review) => String(review.trip) === String(data.trip)
+        && String(review.author) === String(data.author)
+    );
+    if (duplicate) {
+      const error = new Error('Duplicate review');
+      error.code = 11000;
+      throw error;
+    }
+    const review = {
+      _id: `64f${String(900 + state.reviews.length).padStart(21, '0')}`,
+      ...data,
+      createdAt: new Date(`2031-01-01T09:00:${String(state.reviews.length).padStart(2, '0')}Z`),
+    };
+    state.reviews.push(review);
+    return review;
+  },
+  findOne(filter = {}) {
+    const found = state.reviews.find(
+      (review) => (!filter.trip || String(review.trip) === String(filter.trip))
+        && (!filter.author || String(review.author) === String(filter.author))
+    );
+    return {
+      lean: async () => (found ? { ...found } : null),
+    };
+  },
+  find(filter = {}) {
+    let items = state.reviews.filter(
+      (review) => !filter.driver || String(review.driver) === String(filter.driver)
+    );
+    const query = {
+      populate() {
+        return query;
+      },
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      lean: async () => items.map((review) => {
+        const author = state.users.find(
+          (candidate) => String(candidate._id) === String(review.author)
+        );
+        return {
+          ...review,
+          author: author ? { _id: author._id, name: author.name } : review.author,
+        };
+      }),
+    };
+    return query;
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -371,6 +429,7 @@ installMock('../models/publier', fakeTrip);
 installMock('../models/signup', fakeUser);
 installMock('../models/message', fakeMessage);
 installMock('../models/notification', fakeNotification);
+installMock('../models/review', fakeReview);
 
 const app = require('../app');
 
@@ -1024,4 +1083,64 @@ test('passengers cannot cancel a past reservation', async () => {
   const mine = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie: passenger.cookie } })).text();
   assert.match(mine, /Trajet passé/);
   assert.doesNotMatch(mine, new RegExp(`/trajets/${pastTripId}/annuler"`));
+});
+
+test('passengers can review completed trips and profiles show ratings', async () => {
+  state.reviews.length = 0;
+  const pastTripId = '64f000000000000000000098';
+
+  const guest = await fetch(`${baseUrl}/trajets/${pastTripId}/avis`, { redirect: 'manual' });
+  assert.equal(guest.status, 302);
+  assert.equal(
+    guest.headers.get('location'),
+    `/login?next=${encodeURIComponent(`/trajets/${pastTripId}/avis`)}`
+  );
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const form = await openPage(`/trajets/${pastTripId}/avis`, passenger.cookie);
+  assert.equal(form.response.status, 200);
+  assert.match(form.html, /Comment s'est passé votre trajet/);
+  assert.match(form.html, /name="rating"/);
+  assert.ok(form.token);
+
+  const publish = await fetch(`${baseUrl}/trajets/${pastTripId}/avis`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({
+      _csrf: form.token,
+      rating: '5',
+      comment: 'Trajet impeccable, conducteur ponctuel.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(publish.status, 302);
+  assert.equal(publish.headers.get('location'), `/conducteurs/${driverId}`);
+  assert.equal(state.reviews.length, 1);
+  assert.equal(state.reviews[0].driver, driverId);
+  assert.equal(state.reviews[0].author, passengerId);
+  assert.equal(state.reviews[0].rating, 5);
+
+  const duplicate = await fetch(`${baseUrl}/trajets/${pastTripId}/avis`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: form.token, rating: '4', comment: 'Deuxième avis' }),
+    redirect: 'manual',
+  });
+  assert.equal(duplicate.status, 302);
+  assert.equal(duplicate.headers.get('location'), `/conducteurs/${driverId}`);
+  assert.equal(state.reviews.length, 1);
+
+  const profile = await (await fetch(`${baseUrl}/conducteurs/${driverId}`)).text();
+  assert.match(profile, /Avis des passagers/);
+  assert.match(profile, /5\.0/);
+  assert.match(profile, /Trajet impeccable, conducteur ponctuel\./);
+  assert.match(profile, /Sara/);
+
+  const detail = await (await fetch(`${baseUrl}/trajets/${pastTripId}`, {
+    headers: { cookie: passenger.cookie },
+  })).text();
+  assert.match(detail, /Avis donné/);
+  assert.doesNotMatch(detail, /Laisser un avis/);
+
+  state.reviews.length = 0;
 });

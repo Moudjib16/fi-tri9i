@@ -24,6 +24,10 @@
           <strong><%= upcomingTrips.length %></strong>
           <span>trajet<%= upcomingTrips.length === 1 ? '' : 's' %> à venir</span>
         </div>
+        <div>
+          <strong><%= ratingCount ? ratingAverage.toFixed(1) : '—' %></strong>
+          <span><%= ratingCount %> avis</span>
+        </div>
       </div>
     </header>
 
@@ -43,6 +47,51 @@
         <div class="trip-grid">
           <% upcomingTrips.forEach(function (t) { %>
             <%- include('./partials/trip-card.ejs', { t }) %>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="results profile-reviews">
+      <div class="results-head">
+        <h2>Avis des passagers</h2>
+        <% if (ratingCount) { %>
+          <span class="pill"><%= ratingCount %> avis</span>
+        <% } %>
+      </div>
+
+      <% if (!reviews.length) { %>
+        <div class="empty-state">
+          <h3>Aucun avis pour le moment.</h3>
+          <p>Les passagers pourront donner leur avis après un trajet.</p>
+        </div>
+      <% } else { %>
+        <div class="review-list">
+          <% reviews.forEach(function (review) { %>
+            <%
+              const authorName = review.author && review.author.name
+                ? review.author.name
+                : 'Passager';
+              const reviewDate = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' })
+                .format(new Date(review.createdAt));
+            %>
+            <article class="review-card">
+              <div class="review-head">
+                <span class="avatar" aria-hidden="true"><%= authorName.trim().charAt(0) %></span>
+                <div class="review-author">
+                  <strong><%= authorName %></strong>
+                  <time datetime="<%= new Date(review.createdAt).toISOString() %>"><%= reviewDate %></time>
+                </div>
+                <span class="review-stars" aria-label="<%= review.rating %> sur 5">
+                  <span><%= '★'.repeat(review.rating) %></span><span class="review-stars-empty"><%= '★'.repeat(5 - review.rating) %></span>
+                </span>
+              </div>
+              <% if (review.comment) { %>
+                <p><%= review.comment %></p>
+              <% } else { %>
+                <p class="review-empty">Aucun commentaire.</p>
+              <% } %>
+            </article>
           <% }); %>
         </div>
       <% } %>

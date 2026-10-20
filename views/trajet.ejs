@@ -154,6 +154,12 @@
             <% if ((isDriver || isBooked) && !(typeof isDraft !== 'undefined' && isDraft)) { %>
               <a class="btn ghost block" href="/trajets/<%= trip._id %>/messages">Messages du trajet</a>
             <% } %>
+
+            <% if (typeof canReview !== 'undefined' && canReview) { %>
+              <a class="btn secondary block" href="/trajets/<%= trip._id %>/avis">Laisser un avis</a>
+            <% } else if (typeof hasReviewed !== 'undefined' && hasReviewed) { %>
+              <span class="status-badge muted-badge">Avis donné</span>
+            <% } %>
           </div>
 
           <p class="booking-note">Aucun paiement en ligne. Vous réglez directement le conducteur le jour du départ.</p>

@@ -142,6 +142,50 @@ test('notifications page renders unread activity and trip links', async () => {
   assert.match(html, /nav-badge/);
 });
 
+test('review form renders rating choices and a public notice', async () => {
+  const html = await renderFile(view('avis.ejs'), {
+    title: 'Laisser un avis',
+    currentUser: { name: 'Rami' },
+    trip: sampleTrip,
+    driverName: 'Rami',
+    values: { rating: '4', comment: 'Très bien' },
+    error: 'Erreur de test',
+  });
+
+  assert.match(html, /Comment s'est passé votre trajet/);
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/avis"/);
+  assert.match(html, /value="4" selected/);
+  assert.match(html, /Très bien/);
+  assert.match(html, /Votre avis sera public/);
+  assert.match(html, /Erreur de test/);
+});
+
+test('driver profile shows average rating and recent reviews', async () => {
+  const html = await renderFile(view('conducteur.ejs'), {
+    title: 'Rami — Conducteur',
+    currentUser: { name: 'Sara' },
+    driver: { _id: '64f000000000000000000002', name: 'Rami', createdAt: new Date('2025-01-01') },
+    upcomingTrips: [sampleTrip],
+    ratingCount: 2,
+    ratingAverage: 4.5,
+    reviews: [
+      {
+        _id: '64f000000000000000000030',
+        rating: 5,
+        comment: 'Trajet impeccable.',
+        createdAt: new Date('2031-01-01T12:00:00Z'),
+        author: { _id: '64f000000000000000000001', name: 'Sara' },
+      },
+    ],
+  });
+
+  assert.match(html, /4\.5/);
+  assert.match(html, /2 avis/);
+  assert.match(html, /Avis des passagers/);
+  assert.match(html, /Trajet impeccable\./);
+  assert.match(html, /Sara/);
+});
+
 test('about page renders the guest navbar and calls to action', async () => {
   const html = await renderFile(view('a-propos.ejs'), {
     stylesheet: 'a-propos/',
