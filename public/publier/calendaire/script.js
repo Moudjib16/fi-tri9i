@@ -132,8 +132,8 @@ if (gotoButton && dateInput) {
       initCalendar();
       return;
     }
-    if (typeof showError === 'function') {
-      showError('Format attendu : mm/yyyy.');
+    if (window.wizard) {
+      window.wizard.showError('Format attendu : mm/yyyy.');
     }
   });
 }
@@ -149,3 +149,22 @@ if (initialValue) {
 }
 
 initCalendar();
+
+const precedentButton = document.getElementById('precedent');
+if (precedentButton) {
+  precedentButton.addEventListener('click', function () {
+    window.location.href = '/publier/page4';
+  });
+}
+
+if (window.wizard) {
+  window.wizard.initStep({
+    buttonId: 'prochaine',
+    getContent: function () {
+      return eventDate ? eventDate.textContent : '';
+    },
+    url: '/date',
+    next: '/publier/heure',
+    invalidMessage: 'Date invalide, réessayez.',
+  });
+}

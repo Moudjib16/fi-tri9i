@@ -100,6 +100,8 @@ test('wizard steps use inline errors instead of browser alerts', async () => {
 
     assert.match(html, /id="wizard-error"/);
     assert.match(html, /role="alert"/);
+    assert.match(html, /src="\/shared\/wizard\.js"/);
+    assert.doesNotMatch(html, /<script>/);
     assert.doesNotMatch(html, /alert\(/);
   }
 });

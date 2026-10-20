@@ -53,3 +53,13 @@ if (precedentButton) {
     window.history.back();
   });
 }
+
+if (window.wizard) {
+  window.wizard.initStep({
+    buttonId: 'prochaine',
+    inputId: 'clock',
+    url: '/time',
+    next: '/publier/people',
+    invalidMessage: 'Heure invalide, réessayez.',
+  });
+}

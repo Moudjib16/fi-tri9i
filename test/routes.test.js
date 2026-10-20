@@ -328,6 +328,10 @@ test('public pages render and guest actions redirect to login', async () => {
   assert.equal(home.status, 200);
   assert.match(await home.text(), /Fi Tri9i/);
 
+  const csp = home.headers.get('content-security-policy') || '';
+  assert.match(csp, /script-src 'self'/);
+  assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
+
   const about = await fetch(`${baseUrl}/a-propos`);
   assert.equal(about.status, 200);
   assert.match(await about.text(), /Rechercher un trajet/);

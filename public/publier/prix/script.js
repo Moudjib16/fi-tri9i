@@ -42,6 +42,16 @@ if (precedentButton) {
   });
 }
 
+if (window.wizard) {
+  window.wizard.initStep({
+    buttonId: 'prochaine',
+    inputId: 'prix',
+    url: '/price',
+    next: '/publier/description',
+    invalidMessage: 'Prix invalide, réessayez.',
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   if (priceInput) {
     renderPrice(currentPrice());

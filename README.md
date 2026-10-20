@@ -27,8 +27,9 @@ log in, and book their seats.
 - About page, session-aware navbar and working footer/shortcut links
 - Dedicated error pages (existing email, user not found, wrong password, 403,
   404, 500)
-- Security: helmet with CSP, rate limiting on authentication, httpOnly cookies,
-  per-session CSRF tokens on every POST, and session regeneration on login/signup
+- Security: helmet with a strict CSP, rate limiting on authentication, httpOnly
+  cookies, per-session CSRF tokens on every POST, and session regeneration on
+  login/signup
 
 ## Tech stack
 
@@ -98,4 +99,3 @@ test/             # node:test suites (validation, views, booking flow)
 
 - Trip editing and driver profiles
 - Messaging, payments, email verification, password reset
-- Replace `'unsafe-inline'` in the CSP by moving inline page scripts to files

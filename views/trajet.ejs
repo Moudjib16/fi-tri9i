@@ -104,7 +104,7 @@
             <% if (isDriver) { %>
               <span class="status-badge">Votre trajet</span>
               <% if (typeof isDraft !== 'undefined' && isDraft) { %>
-                <form action="/trajets/<%= trip._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce brouillon ?');">
+                <form action="/trajets/<%= trip._id %>/supprimer" method="post" data-confirm="Supprimer ce brouillon ?">
                   <%- include('./partials/csrf-input.ejs') %>
                   <button type="submit" class="btn danger block">Supprimer le brouillon</button>
                 </form>
@@ -113,7 +113,7 @@
               <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
                 <span class="status-badge muted-badge">Trajet passé</span>
               <% } else { %>
-                <form action="/trajets/<%= trip._id %>/annuler-trajet" method="post" onsubmit="return confirm('Annuler ce trajet ? Les passagers devront chercher une autre place.');">
+                <form action="/trajets/<%= trip._id %>/annuler-trajet" method="post" data-confirm="Annuler ce trajet ? Les passagers devront chercher une autre place.">
                   <%- include('./partials/csrf-input.ejs') %>
                   <button type="submit" class="btn danger block">Annuler le trajet</button>
                 </form>

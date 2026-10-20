@@ -32,37 +32,7 @@
     </section>
   </main>
 
-  <script>
-    const errorBox = document.getElementById('wizard-error');
-
-    function showError(message) {
-      errorBox.textContent = message;
-      errorBox.hidden = false;
-    }
-
-    document.getElementById('prochaine').addEventListener('click', async () => {
-      errorBox.hidden = true;
-      const content = document.getElementById('prix').value;
-      try {
-        const response = await fetch('/price', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-          },
-          body: JSON.stringify({ content }),
-        });
-        if (response.ok) {
-          window.location.href = '/publier/description';
-        } else {
-          showError('Prix invalide, réessayez.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showError('Erreur réseau, réessayez.');
-      }
-    });
-  </script>
+  <script src="/shared/wizard.js"></script>
   <script src="/publier/prix/script.js"></script>
   <script src="/shared/navbar.js"></script>
 </body>

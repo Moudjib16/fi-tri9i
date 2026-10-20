@@ -68,6 +68,16 @@ if (precedentButton) {
   });
 }
 
+if (window.wizard) {
+  window.wizard.initStep({
+    buttonId: 'prochaine',
+    inputId: 'prix',
+    url: '/places',
+    next: '/publier/prix',
+    invalidMessage: 'Nombre de places invalide (1 à 5).',
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   if (placesInput) {
     updateSeatColor();

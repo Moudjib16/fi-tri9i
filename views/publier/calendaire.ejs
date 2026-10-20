@@ -61,41 +61,7 @@
     </section>
   </main>
 
-  <script>
-    const errorBox = document.getElementById('wizard-error');
-
-    document.getElementById('precedent').addEventListener('click', function () {
-      window.location.href = '/publier/page4';
-    });
-
-    function showError(message) {
-      errorBox.textContent = message;
-      errorBox.hidden = false;
-    }
-
-    document.getElementById('prochaine').addEventListener('click', async () => {
-      errorBox.hidden = true;
-      const content = document.getElementById('dateData').innerHTML;
-      try {
-        const response = await fetch('/date', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-          },
-          body: JSON.stringify({ content }),
-        });
-        if (response.ok) {
-          window.location.href = '/publier/heure';
-        } else {
-          showError('Date invalide, réessayez.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showError('Erreur réseau, réessayez.');
-      }
-    });
-  </script>
+  <script src="/shared/wizard.js"></script>
   <script src="/publier/calendaire/script.js"></script>
   <script src="/shared/navbar.js"></script>
 </body>
