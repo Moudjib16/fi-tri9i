@@ -53,6 +53,19 @@ function tripChain(result) {
     },
     lean: async () => items,
   };
+
+  // findById() is used both as a chain (trip detail) and as a document
+  // (publish wizard), so plain trip objects get the document methods too.
+  if (result && !Array.isArray(result)) {
+    result.save = async () => result;
+    result.populate = () => query;
+    result.sort = () => query;
+    result.skip = () => query;
+    result.limit = () => query;
+    result.lean = async () => result;
+    return result;
+  }
+
   return query;
 }
 
@@ -80,6 +93,10 @@ function matchesTrip(candidate, filter) {
     if (key === 'dateData') {
       return candidate.dateData === value;
     }
+    if (key === 'driver') {
+      const driver = candidate.driver && candidate.driver._id ? candidate.driver._id : candidate.driver;
+      return String(driver) === String(value);
+    }
     if (key === 'places') {
       return (candidate.places || 0) >= value.$gte;
     }
@@ -104,7 +121,19 @@ function matchesTrip(candidate, filter) {
   });
 }
 
-const fakeTrip = {
+function fakeTrip(data = {}) {
+  Object.assign(this, data);
+  this._id = data._id || `64f${String(state.trips.length + 100).padStart(21, '0')}`;
+  this.status = data.status || 'draft';
+  this.save = async () => {
+    if (!state.trips.includes(this)) {
+      state.trips.push(this);
+    }
+    return this;
+  };
+}
+
+Object.assign(fakeTrip, {
   find(filter = {}) {
     return tripChain(state.trips.filter((candidate) => matchesTrip(candidate, filter)));
   },
@@ -119,7 +148,8 @@ const fakeTrip = {
     if (index === -1) {
       return null;
     }
-    const driver = state.trips[index].driver ? String(state.trips[index].driver._id) : null;
+    const rawDriver = state.trips[index].driver;
+    const driver = rawDriver ? String(rawDriver._id || rawDriver) : null;
     if (filter.driver && driver !== String(filter.driver)) {
       return null;
     }
@@ -188,7 +218,7 @@ const fakeTrip = {
     }
     return found;
   },
-};
+});
 
 const fakeUser = {
   findById(id) {
@@ -448,7 +478,7 @@ test('drafts stay private and out of listings', async () => {
     places_taken: 0,
     passengers: [],
     description: '',
-    driver: { _id: passengerId, name: 'Sara' },
+    driver: passengerId,
   });
 
   const listing = await (await fetch(`${baseUrl}/trajets`)).text();
@@ -461,9 +491,42 @@ test('drafts stay private and out of listings', async () => {
   const { cookie } = session;
 
   const mine = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
-  assert.doesNotMatch(mine, /Draftville/);
+  assert.match(mine, /Brouillons \(1\)/);
+  assert.match(mine, /Draftville/);
+  assert.match(mine, /Reprendre/);
+
+  const page = await openPage('/publier/page1', cookie);
+  const start = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'Alger', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(start.status, 302);
+
+  const resume = await fetch(`${baseUrl}/publier/continuer`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(resume.status, 302);
+  assert.equal(resume.headers.get('location'), '/publier/page2');
 
   const ownerDetail = await fetch(`${baseUrl}/trajets/${draftId}`, { headers: { cookie } });
   assert.equal(ownerDetail.status, 200);
   assert.match(await ownerDetail.text(), /brouillon/);
+
+  const remove = await fetch(`${baseUrl}/trajets/${draftId}/supprimer`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(remove.status, 302);
+  assert.equal(remove.headers.get('location'), '/mes-trajets');
+
+  const afterDelete = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
+  assert.match(afterDelete, /Le trajet a été supprimé/);
+
+  const afterFlash = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
+  assert.doesNotMatch(afterFlash, /Le trajet a été supprimé/);
 });

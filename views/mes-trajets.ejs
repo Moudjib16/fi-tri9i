@@ -20,6 +20,55 @@
       <a class="publish-link" href="/publier/page1">Publier un trajet</a>
     </header>
 
+    <% const draftTrips = typeof drafts !== 'undefined' ? drafts : []; %>
+    <% if (draftTrips.length) { %>
+      <section class="my-section">
+        <div class="results-head">
+          <h2>Brouillons (<%= draftTrips.length %>)</h2>
+        </div>
+
+        <div class="trip-grid">
+          <% draftTrips.forEach(function (t) { %>
+            <article class="trip-card draft-card">
+              <span class="draft-badge">Brouillon privé</span>
+              <div class="trip-route">
+                <span><%= t.depart || 'Départ à définir' %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à définir' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Places</dt>
+                  <dd><%= t.places || 1 %></dd>
+                </div>
+              </dl>
+
+              <div class="trip-card-footer draft-actions">
+                <form action="/trajets/<%= t._id %>/supprimer" method="post" onsubmit="return confirm('Supprimer ce brouillon ?');">
+                  <%- include('./partials/csrf-input.ejs') %>
+                  <button type="submit" class="cancel-link">Supprimer</button>
+                </form>
+                <a class="trip-link" href="/publier/continuer">Reprendre</a>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </section>
+    <% } %>
+
     <section class="my-section">
       <div class="results-head">
         <h2>Trajets publiés (<%= published.length %>)</h2>

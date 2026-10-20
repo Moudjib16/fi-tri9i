@@ -99,8 +99,12 @@ test('my trips renders published and reserved sections', async () => {
     currentUser: { name: 'Rami' },
     published: [{ ...sampleTrip, passengers: [{ name: 'Sara' }] }],
     booked: [{ ...sampleTrip, driver: { name: 'Karim' } }],
+    drafts: [{ ...sampleTrip, depart: 'Draftville', arrivee: '', status: 'draft' }],
   });
 
+  assert.match(html, /Brouillons \(1\)/);
+  assert.match(html, /Draftville/);
+  assert.match(html, /Reprendre/);
   assert.match(html, /Trajets publiés \(1\)/);
   assert.match(html, /Mes réservations \(1\)/);
   assert.match(html, /Sara/);

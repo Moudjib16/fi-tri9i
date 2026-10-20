@@ -14,6 +14,12 @@
 
 
   <main class="content">
+    <% if (trip) { %>
+      <p class="draft-resume" style="text-align: center; margin: 0 0 16px; color: #046076; font-weight: 600;">
+        Vous avez un brouillon en cours.
+        <a href="/publier/continuer" style="color: #0082ae; text-decoration: underline;">Reprendre là où vous en étiez</a>
+      </p>
+    <% } %>
     <form action="/depart" method="post">
       <%- include('../partials/csrf-input.ejs') %>
   

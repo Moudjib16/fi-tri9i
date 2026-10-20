@@ -10,13 +10,15 @@ log in, and book their seats.
 - 9-step publishing wizard (login required): departure wilaya and commune,
   arrival wilaya and commune, date, time, seat count, price, description
 - Drafts are private: a trip only appears in search after the final "publier"
-  step validates that every required step is complete
+  step validates that every required step is complete; owners can resume or
+  delete drafts from "Mes trajets"
 - Server-side validation for dates (future only), times (`HH:MM`), seat count
   (1–5) and price (1–100000 DA); departures are stored as a sortable `Date`
 - Trip search by departure, arrival, date and available seats, with sorting,
   pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation
-- "My trips" dashboard: published rides and reservations in one place
+- "My trips" dashboard: drafts, published rides and reservations in one place
+- Flash confirmations for publishing and deleting trips
 - About page, session-aware navbar and working footer/shortcut links
 - Dedicated error pages (existing email, user not found, wrong password, 404)
 - Security: helmet with CSP, rate limiting on authentication, httpOnly cookies,
@@ -64,8 +66,8 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 4. Log in and click "Réserver une place"; cancel from the trip page or
    `/mes-trajets`
 5. `/publier/page1` → … → `/publier/description` — complete the wizard and click
-   "publier" (login required; incomplete drafts stay private and are not listed
-   in search or "Mes trajets")
+   "publier" (login required; incomplete drafts stay private, appear under
+   "Brouillons" in `/mes-trajets`, and can be resumed there)
 6. `/mes-trajets` — see published trips and reservations
 7. Check MongoDB: `db.users.find()`, `db.trips.find()` and
    `db.sessions.find()` on the `MyApp` database
@@ -78,6 +80,7 @@ routes/           # pages, auth, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/session.js    # Session regeneration and route guards
+lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers
 models/           # User and Trip schemas
 views/            # EJS templates (home, trajets, trajet, publier/*, partials)

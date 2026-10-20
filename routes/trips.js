@@ -8,6 +8,7 @@ const {
   isPastDate,
 } = require('../lib/validation');
 const { tripNotFound } = require('../lib/http');
+const { setFlash } = require('../lib/flash');
 
 const router = express.Router();
 
@@ -115,7 +116,9 @@ router.get('/trajets/:id', async (req, res) => {
 
     const userId = req.session.userId ? String(req.session.userId) : null;
     const passengerIds = (foundTrip.passengers || []).map(String);
-    const driverId = foundTrip.driver ? String(foundTrip.driver._id) : null;
+    const driverId = foundTrip.driver
+      ? String(foundTrip.driver._id || foundTrip.driver)
+      : null;
     const isDriver = Boolean(userId && driverId === userId);
     const isBooked = Boolean(userId && passengerIds.includes(userId));
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
@@ -196,7 +199,7 @@ router.post('/trajets/:id/reserver', async (req, res) => {
     if (foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt))) {
       return res.redirect(`${tripUrl}?error=past`);
     }
-    if (foundTrip.driver && String(foundTrip.driver) === String(req.session.userId)) {
+    if (foundTrip.driver && String(foundTrip.driver._id || foundTrip.driver) === String(req.session.userId)) {
       return res.redirect(`${tripUrl}?error=driver`);
     }
     if ((foundTrip.passengers || []).map(String).includes(String(req.session.userId))) {
@@ -266,7 +269,8 @@ router.post('/trajets/:id/supprimer', async (req, res) => {
     if (String(req.session.tripId || '') === String(req.params.id)) {
       delete req.session.tripId;
     }
-    return res.redirect('/mes-trajets?deleted=1');
+    setFlash(req, 'success', 'Le trajet a été supprimé.');
+    return res.redirect('/mes-trajets');
   } catch (err) {
     console.error(err);
     return res.redirect(`/trajets/${req.params.id}?error=unavailable`);
@@ -280,7 +284,7 @@ router.get('/mes-trajets', async (req, res) => {
   }
 
   try {
-    const [published, booked] = await Promise.all([
+    const [published, booked, drafts] = await Promise.all([
       trip.find({ driver: req.session.userId, status: { $nin: ['draft', 'cancelled'] } })
         .populate('passengers', 'name')
         .sort({ createdAt: -1 })
@@ -289,6 +293,9 @@ router.get('/mes-trajets', async (req, res) => {
         .populate('driver', 'name')
         .sort({ createdAt: -1 })
         .lean(),
+      trip.find({ driver: req.session.userId, status: 'draft' })
+        .sort({ updatedAt: -1 })
+        .lean(),
     ]);
 
     return res.render('mes-trajets', {
@@ -296,6 +303,7 @@ router.get('/mes-trajets', async (req, res) => {
       title: 'Mes trajets',
       published,
       booked,
+      drafts,
     });
   } catch (err) {
     console.error(err);

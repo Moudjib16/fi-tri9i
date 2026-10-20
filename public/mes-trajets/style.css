@@ -51,6 +51,27 @@
   text-decoration: underline;
 }
 
+.draft-card {
+  border-style: dashed;
+}
+
+.draft-badge {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.draft-actions {
+  align-items: center;
+}
+
 @media (max-width: 640px) {
   .my-header {
     align-items: flex-start;

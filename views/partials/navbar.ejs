@@ -3,6 +3,9 @@
   .menu .logout-form { margin: 0; padding: 0; width: 100%; }
   .menu button.option { border: 0; padding: 0; font-family: inherit; }
   .menu-toggle { border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; }
+  .flash-banner { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 60; width: min(1120px, calc(100% - 32px)); padding: 12px 18px; border-radius: 12px; font-weight: 600; text-align: center; box-shadow: 0 10px 30px rgba(4, 96, 118, 0.16); }
+  .flash-banner.success { background: #e6f7ee; color: #0b6b3a; border: 1px solid #b7e4c9; }
+  .flash-banner.error { background: #fdecec; color: #9b1c1c; border: 1px solid #f5c2c2; }
 </style>
 
 <nav class="navbar">
@@ -74,3 +77,9 @@
     <% } %>
   </div>
 </nav>
+
+<% if (typeof flash !== 'undefined' && (flash.success || flash.error)) { %>
+  <div class="flash-banner <%= flash.error ? 'error' : 'success' %>" role="status">
+    <%= flash.error || flash.success %>
+  </div>
+<% } %>

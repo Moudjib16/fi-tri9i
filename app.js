@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const connectDB = require('./db/db');
 const user = require('./models/signup');
+const { flashMiddleware } = require('./lib/flash');
 const pagesRouter = require('./routes/pages');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
@@ -77,6 +78,7 @@ app.use(session({
   },
 }));
 app.use(bodyParser.json({ limit: '32kb' }));
+app.use(flashMiddleware);
 
 // Per-session CSRF token, required on every state-changing request.
 app.use((req, res, next) => {

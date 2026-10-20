@@ -9,6 +9,7 @@ const {
   isPastDate,
 } = require('../lib/validation');
 const { requireUser, requirePublishUser, requireDraftTrip } = require('../lib/session');
+const { setFlash } = require('../lib/flash');
 
 const router = express.Router();
 
@@ -334,7 +335,8 @@ router.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) 
     await existingTrip.save();
 
     delete req.session.tripId;
-    return res.redirect(`/trajets/${existingTrip._id}?published=1`);
+    setFlash(req, 'success', 'Votre trajet est publié.');
+    return res.redirect(`/trajets/${existingTrip._id}`);
   } catch (err) {
     console.error(err);
     return res.status(500).render('404', { stylesheet: '404/', title: 'Erreur' });
@@ -342,6 +344,14 @@ router.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) 
 });
 
 // 'Publier' pages routing
+router.get('/publier/continuer', requireUser, async (req, res) => {
+  const draft = await loadDraft(req);
+  if (!draft) {
+    return res.redirect('/publier/page1');
+  }
+  return res.redirect(getMissingStep(draft) || '/publier/description');
+});
+
 router.get('/publier/page1', requireUser, async (req, res) => {
   const draft = await loadDraft(req);
   res.render('publier/page1', { trip: draft });
