@@ -150,6 +150,10 @@
                 <button type="submit" class="btn block">Réserver une place</button>
               </form>
             <% } %>
+
+            <% if ((isDriver || isBooked) && !(typeof isDraft !== 'undefined' && isDraft)) { %>
+              <a class="btn ghost block" href="/trajets/<%= trip._id %>/messages">Messages du trajet</a>
+            <% } %>
           </div>
 
           <p class="booking-note">Aucun paiement en ligne. Vous réglez directement le conducteur le jour du départ.</p>

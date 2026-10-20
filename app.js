@@ -13,6 +13,7 @@ const user = require('./models/signup');
 const { flashMiddleware } = require('./lib/flash');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
+const messagesRouter = require('./routes/messages');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const publishRouter = require('./routes/publish');
@@ -142,6 +143,7 @@ app.use('/signup', authLimiter);
 // Routes
 app.use(pagesRouter);
 app.use(driversRouter);
+app.use(messagesRouter);
 app.use(authRouter);
 app.use(tripsRouter);
 app.use(publishRouter);

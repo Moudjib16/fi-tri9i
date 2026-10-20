@@ -12,6 +12,7 @@ const driverId = '64f000000000000000000003';
 
 const state = {
   users: [],
+  messages: [],
   trips: [
     {
       _id: tripId,
@@ -248,6 +249,49 @@ const fakeUser = {
   },
 };
 
+const fakeMessage = {
+  async create(data) {
+    const message = {
+      _id: `64f${String(500 + state.messages.length).padStart(21, '0')}`,
+      ...data,
+      createdAt: new Date(`2031-01-01T12:${String(state.messages.length).padStart(2, '0')}:00Z`),
+    };
+    state.messages.push(message);
+    return message;
+  },
+  find(filter = {}) {
+    let items = state.messages.filter(
+      (candidate) => String(candidate.trip) === String(filter.trip)
+    );
+    const query = {
+      populate() {
+        return query;
+      },
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      limit(count) {
+        items = items.slice(0, count);
+        return query;
+      },
+      lean: async () => items.map((message) => {
+        const sender = state.users.find(
+          (candidate) => String(candidate._id) === String(message.sender)
+        );
+        return {
+          ...message,
+          sender: sender ? { _id: sender._id, name: sender.name } : message.sender,
+        };
+      }),
+    };
+    return query;
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -260,6 +304,7 @@ function installMock(relativePath, exports) {
 
 installMock('../models/publier', fakeTrip);
 installMock('../models/signup', fakeUser);
+installMock('../models/message', fakeMessage);
 
 const app = require('../app');
 
@@ -485,6 +530,96 @@ test('driver can edit a published trip and seats cannot drop below reservations'
   const editIndex = state.trips.findIndex((candidate) => candidate._id === editTripId);
   assert.notEqual(editIndex, -1);
   state.trips.splice(editIndex, 1);
+});
+
+test('trip participants can exchange private messages', async () => {
+  const chatTripId = '64f000000000000000000404';
+  state.trips.push({
+    _id: chatTripId,
+    status: 'published',
+    depart: 'Setif',
+    depart0: 'El Eulma',
+    arrivee: 'Alger',
+    arrivee0: 'Bab Ezzouar',
+    dateData: '10 July 2031',
+    departureAt: new Date('2031-07-10T08:00:00Z'),
+    time: '08 : 00',
+    price: '1000da',
+    priceDZD: 1000,
+    places: 3,
+    places_taken: 1,
+    passengers: [passengerId],
+    description: 'Trajet avec messages',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const guest = await fetch(`${baseUrl}/trajets/${chatTripId}/messages`, { redirect: 'manual' });
+  assert.equal(guest.status, 302);
+  assert.equal(
+    guest.headers.get('location'),
+    `/login?next=${encodeURIComponent(`/trajets/${chatTripId}/messages`)}`
+  );
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const passengerThread = await openPage(`/trajets/${chatTripId}/messages`, passenger.cookie);
+  assert.equal(passengerThread.response.status, 200);
+  assert.match(passengerThread.html, /Messages du trajet/);
+  assert.match(passengerThread.html, /en tant que passager/);
+
+  const emptyMessage = await fetch(`${baseUrl}/trajets/${chatTripId}/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: passengerThread.token, message: '   ' }),
+    redirect: 'manual',
+  });
+  assert.equal(emptyMessage.status, 400);
+  assert.match(await emptyMessage.text(), /Écrivez un message/);
+  assert.equal(state.messages.length, 0);
+
+  const sent = await fetch(`${baseUrl}/trajets/${chatTripId}/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({
+      _csrf: passengerThread.token,
+      message: 'Bonjour, je serai à l’arrêt à 8 h.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(sent.status, 302);
+  assert.equal(sent.headers.get('location'), `/trajets/${chatTripId}/messages`);
+  assert.equal(state.messages.length, 1);
+  assert.equal(state.messages[0].sender, passengerId);
+
+  const driver = await login('karim@test.dz', 'secret1');
+  const driverThread = await openPage(`/trajets/${chatTripId}/messages`, driver.cookie);
+  assert.equal(driverThread.response.status, 200);
+  assert.match(driverThread.html, /en tant que conducteur/);
+  assert.match(driverThread.html, /Bonjour, je serai à l’arrêt à 8 h\./);
+  assert.match(driverThread.html, /Sara/);
+
+  const reply = await fetch(`${baseUrl}/trajets/${chatTripId}/messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: driver.cookie },
+    body: new URLSearchParams({
+      _csrf: driverThread.token,
+      message: 'Parfait, à demain.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(reply.status, 302);
+  assert.equal(state.messages.length, 2);
+
+  const updatedThread = await openPage(`/trajets/${chatTripId}/messages`, passenger.cookie);
+  assert.match(updatedThread.html, /Parfait, à demain\./);
+  assert.match(updatedThread.html, /Karim/);
+
+  const outsiderThread = await openPage(`/trajets/${tripId}/messages`, passenger.cookie);
+  assert.equal(outsiderThread.response.status, 404);
+
+  const tripIndex = state.trips.findIndex((candidate) => candidate._id === chatTripId);
+  assert.notEqual(tripIndex, -1);
+  state.trips.splice(tripIndex, 1);
+  state.messages.length = 0;
 });
 
 test('a logged-in passenger can reserve and cancel a seat', async () => {

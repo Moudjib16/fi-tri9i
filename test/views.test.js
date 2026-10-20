@@ -91,6 +91,33 @@ test('edit form preloads trip values and reserves booked seats', async () => {
   assert.match(html, /Erreur de test/);
 });
 
+test('message thread renders participants and highlights own messages', async () => {
+  const userId = '64f000000000000000000002';
+  const html = await renderFile(view('messages.ejs'), {
+    title: 'Messages du trajet',
+    currentUser: { _id: userId, name: 'Rami' },
+    trip: sampleTrip,
+    isDriver: false,
+    driverName: 'Rami',
+    messages: [
+      {
+        _id: '64f000000000000000000010',
+        body: 'Bonjour, je serai à 8 h.',
+        createdAt: new Date('2031-01-01T12:00:00Z'),
+        sender: { _id: userId, name: 'Rami' },
+      },
+    ],
+    error: '',
+    draft: '',
+  });
+
+  assert.match(html, /Messages du trajet/);
+  assert.match(html, /class="message is-own"/);
+  assert.match(html, /Bonjour, je serai à 8 h\./);
+  assert.match(html, /Seuls le conducteur et les passagers réservés/);
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/messages"/);
+});
+
 test('about page renders the guest navbar and calls to action', async () => {
   const html = await renderFile(view('a-propos.ejs'), {
     stylesheet: 'a-propos/',
