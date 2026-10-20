@@ -1896,6 +1896,106 @@ a.driver-card:hover strong {
   margin-top: 20px;
 }
 
+.report-link {
+  display: block;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: underline;
+}
+
+.report-link:hover {
+  color: var(--danger);
+}
+
+.report-footer {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.report-list {
+  display: grid;
+  gap: 14px;
+}
+
+.report-item {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.report-item-head time {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.report-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.report-open {
+  background: #fff3d6;
+  color: #8a5a00;
+}
+
+.report-resolved {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+}
+
+.report-dismissed {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.report-item h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.report-item h3 a {
+  color: inherit;
+}
+
+.report-reason {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.report-message {
+  margin: 10px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.report-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 /* Dashboard */
 .dashboard-header {
   display: flex;

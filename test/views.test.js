@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const util = require('node:util');
 const ejs = require('ejs');
+const { REPORT_REASONS } = require('../lib/reports');
 
 const renderFile = util.promisify(ejs.renderFile);
 const view = (name) => path.join(__dirname, '..', 'views', name);
@@ -289,4 +290,29 @@ test('favourites page lists saved trips with a remove action', async () => {
   assert.match(html, /action="\/trajets\/64f000000000000000000001\/favori"/);
   assert.match(html, /Retirer des favoris/);
   assert.match(html, /Voir le trajet/);
+});
+
+test('report form renders the reason list and the reported target', async () => {
+  const html = await renderFile(view('signaler.ejs'), {
+    title: 'Signaler',
+    currentUser: { name: 'Sara' },
+    target: {
+      targetType: 'trip',
+      targetId: '64f000000000000000000001',
+      targetLabel: 'Alger → Bejaia',
+      targetDate: '12 December 2026',
+      targetUrl: '/trajets/64f000000000000000000001',
+      formAction: '/trajets/64f000000000000000000001/signaler',
+    },
+    reasons: REPORT_REASONS,
+    values: { reason: 'unsafe', message: 'Conduite trop rapide' },
+    error: '',
+  });
+
+  assert.match(html, /Signaler ce trajet/);
+  assert.match(html, /Alger → Bejaia/);
+  assert.match(html, /Conduite dangereuse/);
+  assert.match(html, /value="unsafe" selected/);
+  assert.match(html, /Conduite trop rapide/);
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/signaler"/);
 });

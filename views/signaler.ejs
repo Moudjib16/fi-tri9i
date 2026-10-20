@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Signaler' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="wizard-shell report-page">
+    <a class="back-link" href="<%= target.targetUrl %>">&larr; Retour</a>
+
+    <section class="wizard-card">
+      <p class="eyebrow">Signalement</p>
+      <h1 class="wizard-title">
+        Signaler <%= target.targetType === 'trip' ? 'ce trajet' : 'ce conducteur' %>
+      </h1>
+      <p class="wizard-help">
+        <strong><%= target.targetLabel %></strong>
+        <% if (target.targetDate) { %>
+          &middot; <%= target.targetDate %>
+        <% } %>
+      </p>
+
+      <% if (error) { %>
+        <p class="form-error" role="alert"><%= error %></p>
+      <% } %>
+
+      <form class="wizard-form" action="<%= target.formAction %>" method="post">
+        <%- include('./partials/csrf-input.ejs') %>
+
+        <label class="field">
+          <span>Motif du signalement</span>
+          <select name="reason" required>
+            <option value="">Choisir un motif</option>
+            <% reasons.forEach(function (reason) { %>
+              <option value="<%= reason.value %>"<%= values.reason === reason.value ? ' selected' : '' %>><%= reason.label %></option>
+            <% }); %>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Détails (facultatif)</span>
+          <textarea name="message" maxlength="500" placeholder="Décrivez ce qui s'est passé..."><%= values.message %></textarea>
+        </label>
+
+        <p class="review-note">
+          Chaque signalement est examiné par la modération. Vous pouvez suivre son avancement
+          dans « Mes signalements ».
+        </p>
+
+        <div class="wizard-actions">
+          <a class="btn ghost" href="<%= target.targetUrl %>">Annuler</a>
+          <button class="btn" type="submit">Envoyer le signalement</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js" defer></script>
+</body>
+</html>

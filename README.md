@@ -29,6 +29,8 @@ log in, and book their seats.
 - Account page with secure password changes and current profile details
 - Favourites: save published trips from a trip page and review them in
   "Mes favoris"
+- Reporting: flag a trip or a driver and follow the moderation status in
+  "Mes signalements"
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and
@@ -95,14 +97,15 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 
 ```text
 app.js            # Express setup, middleware and router mounting
-routes/           # pages, account, auth, drivers, favourites, messages, notifications, reviews, trips and publish routers
+routes/           # pages, account, auth, drivers, favourites, messages, notifications, reports, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
+lib/reports.js    # Shared report reasons and labels
 lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers
-models/           # User, Trip, Message, Notification, Review and Favorite schemas
-views/            # EJS templates (home, trajets, trajet, mes-favoris, publier/*, partials)
+models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
+views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 test/             # node:test suites (validation, views, booking flow)
 ```

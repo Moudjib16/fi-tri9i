@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Mes signalements' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="site-main">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">Mon espace</p>
+        <h1>Mes signalements</h1>
+        <p>Suivez l'examen des contenus que vous avez signalés.</p>
+      </div>
+      <a class="btn" href="/trajets">Rechercher un trajet</a>
+    </header>
+
+    <section class="results">
+      <div class="results-head">
+        <h2><%= items.length %> signalement<%= items.length === 1 ? '' : 's' %></h2>
+      </div>
+
+      <% if (!items.length) { %>
+        <div class="empty-state">
+          <h3>Vous n'avez aucun signalement.</h3>
+          <p>Si un trajet ou un conducteur vous pose problème, signalez-le depuis sa page.</p>
+          <a class="btn" href="/trajets">Rechercher un trajet</a>
+        </div>
+      <% } else { %>
+        <div class="report-list">
+          <% items.forEach(function (item) { %>
+            <%
+              const statusLabels = {
+                open: 'En cours d’examen',
+                resolved: 'Traité',
+                dismissed: 'Classé',
+              };
+              const statusLabel = statusLabels[item.report.status] || 'En cours d’examen';
+              const reportDate = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' })
+                .format(new Date(item.report.createdAt));
+            %>
+            <article class="report-item">
+              <div class="report-item-head">
+                <span class="report-status report-<%= item.report.status %>"><%= statusLabel %></span>
+                <time datetime="<%= new Date(item.report.createdAt).toISOString() %>"><%= reportDate %></time>
+              </div>
+              <h3>
+                <a href="<%= item.targetUrl %>"><%= item.targetLabel %></a>
+              </h3>
+              <p class="report-reason"><%= item.reasonLabel %></p>
+              <% if (item.report.message) { %>
+                <p class="report-message"><%= item.report.message %></p>
+              <% } %>
+              <% if (item.report.adminNote) { %>
+                <p class="report-note">Réponse de la modération : <%= item.report.adminNote %></p>
+              <% } %>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('./partials/footer.ejs') %>
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

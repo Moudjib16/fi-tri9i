@@ -16,6 +16,7 @@ const state = {
   notifications: [],
   reviews: [],
   favorites: [],
+  reports: [],
   trips: [
     {
       _id: tripId,
@@ -511,6 +512,45 @@ const fakeFavorite = {
   },
 };
 
+const fakeReport = {
+  async create(data) {
+    const report = {
+      _id: `64f${String(800 + state.reports.length).padStart(21, '0')}`,
+      ...data,
+      status: data.status || 'open',
+      adminNote: data.adminNote || '',
+      resolvedAt: data.resolvedAt || null,
+      createdAt: new Date(`2031-03-01T10:00:${String(state.reports.length).padStart(2, '0')}Z`),
+    };
+    state.reports.push(report);
+    return report;
+  },
+  findOne(filter = {}) {
+    const found = state.reports.find((report) => Object.entries(filter).every(
+      ([key, value]) => String(report[key]) === String(value)
+    ));
+    return {
+      lean: async () => (found ? { ...found } : null),
+    };
+  },
+  find(filter = {}) {
+    let items = state.reports.filter((report) => Object.entries(filter).every(
+      ([key, value]) => String(report[key]) === String(value)
+    ));
+    const query = {
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      lean: async () => items.map((report) => ({ ...report })),
+    };
+    return query;
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -527,6 +567,7 @@ installMock('../models/message', fakeMessage);
 installMock('../models/notification', fakeNotification);
 installMock('../models/review', fakeReview);
 installMock('../models/favorite', fakeFavorite);
+installMock('../models/report', fakeReport);
 
 const app = require('../app');
 
@@ -1426,4 +1467,90 @@ test('users can save trips to their favourites', async () => {
   state.trips.splice(tripIndex, 1);
   const pastIndex = state.trips.findIndex((candidate) => candidate._id === pastTripId);
   state.trips.splice(pastIndex, 1);
+});
+
+test('users can report a trip or a driver and follow their reports', async () => {
+  state.reports.length = 0;
+
+  const guestPage = await openPage('/login');
+  const guestReport = await fetch(`${baseUrl}/trajets/${tripId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: guestPage.cookie },
+    body: new URLSearchParams({ _csrf: guestPage.token, reason: 'unsafe' }),
+    redirect: 'manual',
+  });
+  assert.equal(guestReport.status, 302);
+  assert.equal(
+    guestReport.headers.get('location'),
+    `/login?next=${encodeURIComponent(`/trajets/${tripId}/signaler`)}`
+  );
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const form = await openPage(`/trajets/${tripId}/signaler`, passenger.cookie);
+  assert.equal(form.response.status, 200);
+  assert.match(form.html, /Signaler ce trajet/);
+  assert.match(form.html, /name="reason"/);
+  assert.ok(form.token);
+
+  const invalid = await fetch(`${baseUrl}/trajets/${tripId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: form.token, reason: 'unknown-reason' }),
+    redirect: 'manual',
+  });
+  assert.equal(invalid.status, 400);
+  assert.match(await invalid.text(), /Choisissez un motif/);
+
+  const submit = await fetch(`${baseUrl}/trajets/${tripId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({
+      _csrf: form.token,
+      reason: 'unsafe',
+      message: 'Conduite trop rapide sur le dernier tronçon.',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(submit.status, 302);
+  assert.equal(submit.headers.get('location'), `/trajets/${tripId}`);
+  assert.equal(state.reports.length, 1);
+  assert.equal(state.reports[0].reporter, passengerId);
+  assert.equal(state.reports[0].targetType, 'trip');
+  assert.equal(state.reports[0].targetId, tripId);
+  assert.equal(state.reports[0].status, 'open');
+
+  const duplicate = await fetch(`${baseUrl}/trajets/${tripId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: form.token, reason: 'unsafe' }),
+    redirect: 'manual',
+  });
+  assert.equal(duplicate.status, 302);
+  assert.equal(state.reports.length, 1);
+
+  const driverForm = await openPage(`/conducteurs/${driverId}/signaler`, passenger.cookie);
+  assert.equal(driverForm.response.status, 200);
+  assert.match(driverForm.html, /Signaler ce conducteur/);
+
+  const driverReport = await fetch(`${baseUrl}/conducteurs/${driverId}/signaler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: driverForm.token, reason: 'harassment' }),
+    redirect: 'manual',
+  });
+  assert.equal(driverReport.status, 302);
+  assert.equal(driverReport.headers.get('location'), `/conducteurs/${driverId}`);
+  assert.equal(state.reports.length, 2);
+  assert.equal(state.reports[1].targetType, 'user');
+  assert.equal(state.reports[1].targetId, driverId);
+
+  const mine = await openPage('/mes-signalements', passenger.cookie);
+  assert.equal(mine.response.status, 200);
+  assert.match(mine.html, /Mes signalements/);
+  assert.match(mine.html, /2 signalements/);
+  assert.match(mine.html, /En cours d/);
+  assert.match(mine.html, /Conduite dangereuse/);
+  assert.match(mine.html, /Karim/);
+
+  state.reports.length = 0;
 });
