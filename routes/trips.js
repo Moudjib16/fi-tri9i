@@ -12,6 +12,7 @@ const {
 } = require('../lib/validation');
 const { tripNotFound } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
+const { notifyUsers } = require('../lib/notifications');
 
 const router = express.Router();
 
@@ -27,6 +28,16 @@ const TRIP_ERROR_MESSAGES = {
 function redirectWithTripError(req, res, tripUrl, code = 'unavailable') {
   setFlash(req, 'error', TRIP_ERROR_MESSAGES[code] || TRIP_ERROR_MESSAGES.unavailable);
   return res.redirect(tripUrl);
+}
+
+function currentUserName(res, fallback) {
+  return res.locals.currentUser && res.locals.currentUser.name
+    ? res.locals.currentUser.name
+    : fallback;
+}
+
+function tripLabel(foundTrip) {
+  return `${foundTrip.depart} → ${foundTrip.arrivee || 'destination à préciser'}`;
 }
 
 function editValuesFromTrip(foundTrip) {
@@ -174,6 +185,12 @@ router.post('/trajets/:id/modifier', async (req, res) => {
     foundTrip.description = values.description;
 
     await foundTrip.save();
+    await notifyUsers(foundTrip.passengers, {
+      actor: req.session.userId,
+      tripId: foundTrip._id,
+      type: 'trip_updated',
+      body: `Le trajet ${tripLabel(foundTrip)} a été modifié par ${currentUserName(res, 'le conducteur')}.`,
+    });
     setFlash(req, 'success', 'Le trajet a été mis à jour.');
     return res.redirect(`/trajets/${foundTrip._id}`);
   } catch (err) {
@@ -349,6 +366,12 @@ router.post('/trajets/:id/reserver', async (req, res) => {
     );
 
     if (updatedTrip) {
+      await notifyUsers([updatedTrip.driver], {
+        actor: req.session.userId,
+        tripId: updatedTrip._id,
+        type: 'booking',
+        body: `${currentUserName(res, 'Un passager')} a réservé une place sur le trajet ${tripLabel(updatedTrip)}.`,
+      });
       setFlash(req, 'success', 'Votre place est réservée.');
       return res.redirect(tripUrl);
     }
@@ -409,6 +432,12 @@ router.post('/trajets/:id/annuler', async (req, res) => {
     );
 
     if (updatedTrip) {
+      await notifyUsers([updatedTrip.driver], {
+        actor: req.session.userId,
+        tripId: updatedTrip._id,
+        type: 'reservation_cancelled',
+        body: `${currentUserName(res, 'Un passager')} a annulé sa réservation sur le trajet ${tripLabel(updatedTrip)}.`,
+      });
       setFlash(req, 'success', 'Votre réservation a été annulée.');
       return res.redirect(tripUrl);
     }
@@ -449,6 +478,12 @@ router.post('/trajets/:id/annuler-trajet', async (req, res) => {
       return redirectWithTripError(req, res, tripUrl);
     }
 
+    await notifyUsers(cancelledTrip.passengers, {
+      actor: req.session.userId,
+      tripId: cancelledTrip._id,
+      type: 'trip_cancelled',
+      body: `Le trajet ${tripLabel(cancelledTrip)} a été annulé par ${currentUserName(res, 'le conducteur')}.`,
+    });
     setFlash(req, 'success', 'Le trajet a été annulé.');
     return res.redirect('/mes-trajets');
   } catch (err) {

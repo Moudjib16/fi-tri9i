@@ -13,6 +13,7 @@ const driverId = '64f000000000000000000003';
 const state = {
   users: [],
   messages: [],
+  notifications: [],
   trips: [
     {
       _id: tripId,
@@ -292,6 +293,70 @@ const fakeMessage = {
   },
 };
 
+const fakeNotification = {
+  async insertMany(documents) {
+    const created = documents.map((document) => {
+      const notification = {
+        _id: `64f${String(700 + state.notifications.length).padStart(21, '0')}`,
+        readAt: null,
+        ...document,
+        createdAt: new Date(`2031-01-01T10:00:${String(state.notifications.length).padStart(2, '0')}Z`),
+      };
+      state.notifications.push(notification);
+      return notification;
+    });
+    return created;
+  },
+  async countDocuments(filter = {}) {
+    return state.notifications.filter((notification) => {
+      if (filter.recipient && String(notification.recipient) !== String(filter.recipient)) {
+        return false;
+      }
+      if (filter.readAt === null && notification.readAt !== null) {
+        return false;
+      }
+      return true;
+    }).length;
+  },
+  find(filter = {}) {
+    let items = state.notifications.filter(
+      (notification) => !filter.recipient
+        || String(notification.recipient) === String(filter.recipient)
+    );
+    const query = {
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      limit(count) {
+        items = items.slice(0, count);
+        return query;
+      },
+      lean: async () => items.map((notification) => ({ ...notification })),
+    };
+    return query;
+  },
+  async updateMany(filter = {}, update = {}) {
+    let modifiedCount = 0;
+    state.notifications.forEach((notification) => {
+      if (filter.recipient && String(notification.recipient) !== String(filter.recipient)) {
+        return;
+      }
+      if (filter.readAt === null && notification.readAt !== null) {
+        return;
+      }
+      if (update.$set && update.$set.readAt) {
+        notification.readAt = update.$set.readAt;
+        modifiedCount += 1;
+      }
+    });
+    return { modifiedCount };
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -305,6 +370,7 @@ function installMock(relativePath, exports) {
 installMock('../models/publier', fakeTrip);
 installMock('../models/signup', fakeUser);
 installMock('../models/message', fakeMessage);
+installMock('../models/notification', fakeNotification);
 
 const app = require('../app');
 
@@ -530,6 +596,7 @@ test('driver can edit a published trip and seats cannot drop below reservations'
   const editIndex = state.trips.findIndex((candidate) => candidate._id === editTripId);
   assert.notEqual(editIndex, -1);
   state.trips.splice(editIndex, 1);
+  state.notifications.length = 0;
 });
 
 test('trip participants can exchange private messages', async () => {
@@ -620,6 +687,68 @@ test('trip participants can exchange private messages', async () => {
   assert.notEqual(tripIndex, -1);
   state.trips.splice(tripIndex, 1);
   state.messages.length = 0;
+  state.notifications.length = 0;
+});
+
+test('booking notifications are visible and marked read on the notifications page', async () => {
+  state.notifications.length = 0;
+  const notifTripId = '64f000000000000000000505';
+  state.trips.push({
+    _id: notifTripId,
+    status: 'published',
+    depart: 'Blida',
+    depart0: 'Boufarik',
+    arrivee: 'Oran',
+    arrivee0: 'Es Senia',
+    dateData: '12 August 2031',
+    departureAt: new Date('2031-08-12T07:00:00Z'),
+    time: '07 : 00',
+    price: '1100da',
+    priceDZD: 1100,
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet avec notification',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const guest = await fetch(`${baseUrl}/notifications`, { redirect: 'manual' });
+  assert.equal(guest.status, 302);
+  assert.equal(guest.headers.get('location'), '/login?next=%2Fnotifications');
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const detail = await openPage(`/trajets/${notifTripId}`, passenger.cookie);
+  const reserve = await fetch(`${baseUrl}/trajets/${notifTripId}/reserver`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: detail.token }),
+    redirect: 'manual',
+  });
+  assert.equal(reserve.status, 302);
+
+  assert.equal(state.notifications.length, 1);
+  assert.equal(state.notifications[0].recipient, driverId);
+  assert.equal(state.notifications[0].type, 'booking');
+  assert.match(state.notifications[0].body, /Sara a réservé une place/);
+
+  const driver = await login('karim@test.dz', 'secret1');
+  const withBadge = await openPage('/trajets', driver.cookie);
+  assert.match(withBadge.html, /nav-badge/);
+  assert.match(withBadge.html, /1 non lue/);
+
+  const notificationPage = await openPage('/notifications', driver.cookie);
+  assert.equal(notificationPage.response.status, 200);
+  assert.match(notificationPage.html, /Sara a réservé une place/);
+  assert.match(notificationPage.html, /notification-item is-unread/);
+  assert.ok(state.notifications[0].readAt instanceof Date);
+
+  const afterRead = await openPage('/notifications', driver.cookie);
+  assert.doesNotMatch(afterRead.html, /notification-item is-unread/);
+
+  const tripIndex = state.trips.findIndex((candidate) => candidate._id === notifTripId);
+  assert.notEqual(tripIndex, -1);
+  state.trips.splice(tripIndex, 1);
+  state.notifications.length = 0;
 });
 
 test('a logged-in passenger can reserve and cancel a seat', async () => {

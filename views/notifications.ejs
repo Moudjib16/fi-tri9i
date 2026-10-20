@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Notifications' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="wizard-shell notifications-page">
+    <header class="notifications-header">
+      <p class="eyebrow">Activité</p>
+      <h1>Notifications</h1>
+      <p>Retrouvez les réservations, annulations, messages et modifications de vos trajets.</p>
+    </header>
+
+    <% if (!notifications.length) { %>
+      <div class="empty-state">
+        <h2>Aucune notification.</h2>
+        <p>Vos prochaines réservations et messages apparaîtront ici.</p>
+        <a class="btn" href="/trajets">Trouver un trajet</a>
+      </div>
+    <% } else { %>
+      <div class="notification-list">
+        <% notifications.forEach(function (notification) { %>
+          <%
+            const href = notification.type === 'message'
+              ? `/trajets/${notification.trip}/messages`
+              : `/trajets/${notification.trip}`;
+            const created = new Date(notification.createdAt);
+          %>
+          <a class="notification-item<%= notification.readAt ? '' : ' is-unread' %>" href="<%= href %>">
+            <span class="notification-dot" aria-hidden="true"></span>
+            <span class="notification-copy">
+              <span class="notification-body"><%= notification.body %></span>
+              <time datetime="<%= created.toISOString() %>"><%= created.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) %></time>
+            </span>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
+  </main>
+
+  <%- include('./partials/footer.ejs') %>
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

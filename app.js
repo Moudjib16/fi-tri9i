@@ -10,10 +10,12 @@ const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const connectDB = require('./db/db');
 const user = require('./models/signup');
+const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
 const messagesRouter = require('./routes/messages');
+const notificationsRouter = require('./routes/notifications');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const publishRouter = require('./routes/publish');
@@ -85,6 +87,7 @@ app.use(flashMiddleware);
 // Views can render safely before the session user is loaded.
 app.use((req, res, next) => {
   res.locals.currentUser = null;
+  res.locals.unreadNotifications = 0;
   next();
 });
 
@@ -120,6 +123,14 @@ app.use(async (req, res, next) => {
     const currentUser = await user.findById(req.session.userId).select('name email userType').lean();
     if (currentUser) {
       res.locals.currentUser = currentUser;
+      try {
+        res.locals.unreadNotifications = await Notification.countDocuments({
+          recipient: currentUser._id,
+          readAt: null,
+        });
+      } catch (err) {
+        console.error('Unable to count notifications:', err.message);
+      }
     } else {
       delete req.session.userId;
     }
@@ -144,6 +155,7 @@ app.use('/signup', authLimiter);
 app.use(pagesRouter);
 app.use(driversRouter);
 app.use(messagesRouter);
+app.use(notificationsRouter);
 app.use(authRouter);
 app.use(tripsRouter);
 app.use(publishRouter);

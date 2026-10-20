@@ -5,6 +5,7 @@ const Message = require('../models/message');
 const { pickString } = require('../lib/validation');
 const { setFlash } = require('../lib/flash');
 const { tripNotFound } = require('../lib/http');
+const { notifyUsers, participantIds } = require('../lib/notifications');
 
 const router = express.Router();
 
@@ -110,6 +111,18 @@ router.post('/trajets/:id/messages', async (req, res) => {
       sender: req.session.userId,
       body: draft,
     });
+
+    const senderName = res.locals.currentUser && res.locals.currentUser.name
+      ? res.locals.currentUser.name
+      : 'Un participant';
+    const tripLabel = `${conversation.trip.depart} → ${conversation.trip.arrivee || 'destination à préciser'}`;
+    await notifyUsers(participantIds(conversation.trip), {
+      actor: req.session.userId,
+      tripId: conversation.trip._id,
+      type: 'message',
+      body: `${senderName} a envoyé un message sur le trajet ${tripLabel}.`,
+    });
+
     setFlash(req, 'success', 'Message envoyé.');
     return res.redirect(`/trajets/${conversation.trip._id}/messages`);
   } catch (err) {

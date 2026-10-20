@@ -1,4 +1,5 @@
 <% const signedIn = typeof currentUser !== 'undefined' && currentUser; %>
+<% const unreadCount = typeof unreadNotifications !== 'undefined' ? unreadNotifications : 0; %>
 <header class="site-header">
   <nav class="nav-shell" aria-label="Navigation principale">
     <a class="brand" href="/" aria-label="Fi Tri9i, accueil">
@@ -21,6 +22,12 @@
       <a class="nav-link" href="/a-propos">À propos</a>
       <% if (signedIn) { %>
         <a class="nav-link" href="/mes-trajets">Mes trajets</a>
+        <a class="nav-link nav-notifications" href="/notifications">
+          Notifications
+          <% if (unreadCount > 0) { %>
+            <span class="nav-badge" aria-label="<%= unreadCount %> non lue<%= unreadCount === 1 ? '' : 's' %>"><%= unreadCount > 9 ? '9+' : unreadCount %></span>
+          <% } %>
+        </a>
       <% } %>
     </div>
 
@@ -40,6 +47,10 @@
             <a href="/mes-trajets">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18V6a2 2 0 0 1 2-2h5l2 3h5a2 2 0 0 1 2 2v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"></path></svg>
               Mes trajets
+            </a>
+            <a href="/notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+              Notifications<% if (unreadCount > 0) { %> <span class="nav-badge"><%= unreadCount > 9 ? '9+' : unreadCount %></span><% } %>
             </a>
             <a href="/publier/page1">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>

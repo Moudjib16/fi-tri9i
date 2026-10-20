@@ -118,6 +118,30 @@ test('message thread renders participants and highlights own messages', async ()
   assert.match(html, /action="\/trajets\/64f000000000000000000001\/messages"/);
 });
 
+test('notifications page renders unread activity and trip links', async () => {
+  const html = await renderFile(view('notifications.ejs'), {
+    title: 'Notifications',
+    currentUser: { _id: '64f000000000000000000002', name: 'Rami' },
+    unreadNotifications: 1,
+    notifications: [
+      {
+        _id: '64f000000000000000000020',
+        trip: sampleTrip._id,
+        type: 'booking',
+        body: 'Sara a réservé une place sur votre trajet.',
+        createdAt: new Date('2031-01-01T12:00:00Z'),
+        readAt: null,
+      },
+    ],
+  });
+
+  assert.match(html, /Notifications/);
+  assert.match(html, /notification-item is-unread/);
+  assert.match(html, /Sara a réservé une place sur votre trajet\./);
+  assert.match(html, /href="\/trajets\/64f000000000000000000001"/);
+  assert.match(html, /nav-badge/);
+});
+
 test('about page renders the guest navbar and calls to action', async () => {
   const html = await renderFile(view('a-propos.ejs'), {
     stylesheet: 'a-propos/',
