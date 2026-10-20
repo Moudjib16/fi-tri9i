@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const trip = require('../models/publier');
 const {
   pickString,
@@ -350,6 +351,30 @@ router.get('/publier/continuer', requireUser, async (req, res) => {
     return res.redirect('/publier/page1');
   }
   return res.redirect(getMissingStep(draft) || '/publier/description');
+});
+
+router.get('/publier/continuer/:id', requireUser, async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.redirect('/mes-trajets');
+  }
+
+  try {
+    const draft = await trip.findById(req.params.id);
+    if (
+      !draft
+      || String(draft.driver || '') !== String(req.session.userId || '')
+      || draft.status !== 'draft'
+    ) {
+      setFlash(req, 'error', "Ce brouillon n'est plus disponible.");
+      return res.redirect('/mes-trajets');
+    }
+
+    req.session.tripId = draft._id;
+    return res.redirect(getMissingStep(draft) || '/publier/description');
+  } catch (err) {
+    console.error(err);
+    return res.redirect('/mes-trajets');
+  }
 });
 
 router.get('/publier/page1', requireUser, async (req, res) => {

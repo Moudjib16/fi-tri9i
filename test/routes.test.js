@@ -511,6 +511,19 @@ test('drafts stay private and out of listings', async () => {
   assert.equal(resume.status, 302);
   assert.equal(resume.headers.get('location'), '/publier/page2');
 
+  const selectDraft = await fetch(`${baseUrl}/publier/continuer/${draftId}`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(selectDraft.status, 302);
+  assert.equal(selectDraft.headers.get('location'), '/publier/description');
+
+  const selectedResume = await fetch(`${baseUrl}/publier/continuer`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(selectedResume.headers.get('location'), '/publier/description');
+
   const ownerDetail = await fetch(`${baseUrl}/trajets/${draftId}`, { headers: { cookie } });
   assert.equal(ownerDetail.status, 200);
   assert.match(await ownerDetail.text(), /brouillon/);

@@ -61,7 +61,7 @@
                   <%- include('./partials/csrf-input.ejs') %>
                   <button type="submit" class="cancel-link">Supprimer</button>
                 </form>
-                <a class="trip-link" href="/publier/continuer">Reprendre</a>
+                <a class="trip-link" href="/publier/continuer/<%= t._id %>">Reprendre</a>
               </div>
             </article>
           <% }); %>

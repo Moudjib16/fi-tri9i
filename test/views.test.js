@@ -105,6 +105,7 @@ test('my trips renders published and reserved sections', async () => {
   assert.match(html, /Brouillons \(1\)/);
   assert.match(html, /Draftville/);
   assert.match(html, /Reprendre/);
+  assert.match(html, /\/publier\/continuer\/64f000000000000000000001/);
   assert.match(html, /Trajets publiés \(1\)/);
   assert.match(html, /Mes réservations \(1\)/);
   assert.match(html, /Sara/);

@@ -34,7 +34,7 @@
     <% if (typeof isDraft !== 'undefined' && isDraft) { %>
       <div class="banner">
         Ce trajet est encore un brouillon : il n'apparaît pas dans la recherche.
-        <a href="/publier/description">Continuer la publication</a>
+        <a href="/publier/continuer/<%= trip._id %>">Continuer la publication</a>
       </div>
     <% } %>
 
