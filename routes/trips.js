@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const trip = require('../models/publier');
 const Review = require('../models/review');
+const Favorite = require('../models/favorite');
 const {
   pickString,
   escapeRegex,
@@ -328,6 +329,15 @@ router.get('/trajets/:id', async (req, res) => {
       hasReviewed = Boolean(existingReview);
     }
 
+    let isFavorite = false;
+    if (userId) {
+      const existingFavorite = await Favorite.findOne({
+        user: userId,
+        trip: foundTrip._id,
+      }).lean();
+      isFavorite = Boolean(existingFavorite);
+    }
+
     return res.render('trajet', {
       stylesheet: 'trajet/',
       title: 'Détail du trajet',
@@ -340,6 +350,7 @@ router.get('/trajets/:id', async (req, res) => {
       remaining,
       canReview: canReview && !hasReviewed,
       hasReviewed,
+      isFavorite,
     });
   } catch (err) {
     console.error(err);
@@ -528,6 +539,7 @@ router.post('/trajets/:id/supprimer', async (req, res) => {
     if (String(req.session.tripId || '') === String(req.params.id)) {
       delete req.session.tripId;
     }
+    await Favorite.deleteMany({ trip: req.params.id });
     setFlash(req, 'success', 'Le trajet a été supprimé.');
     return res.redirect('/mes-trajets');
   } catch (err) {

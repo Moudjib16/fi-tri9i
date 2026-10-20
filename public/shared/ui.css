@@ -234,6 +234,18 @@ textarea:focus-visible {
   box-shadow: none;
 }
 
+.btn.favorite-active {
+  background: var(--brand-soft);
+  border-color: var(--brand-soft);
+  color: var(--brand-dark);
+}
+
+.btn.favorite-active:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
 .btn.danger {
   background: var(--danger);
 }

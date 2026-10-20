@@ -15,6 +15,7 @@ const state = {
   messages: [],
   notifications: [],
   reviews: [],
+  favorites: [],
   trips: [
     {
       _id: tripId,
@@ -438,6 +439,78 @@ const fakeReview = {
   },
 };
 
+const fakeFavorite = {
+  async create(data) {
+    const duplicate = state.favorites.some(
+      (favorite) => String(favorite.user) === String(data.user)
+        && String(favorite.trip) === String(data.trip)
+    );
+    if (duplicate) {
+      const error = new Error('Duplicate favorite');
+      error.code = 11000;
+      throw error;
+    }
+    const favorite = {
+      _id: `64f${String(700 + state.favorites.length).padStart(21, '0')}`,
+      ...data,
+      createdAt: new Date(`2031-02-01T09:00:${String(state.favorites.length).padStart(2, '0')}Z`),
+    };
+    state.favorites.push(favorite);
+    return favorite;
+  },
+  findOne(filter = {}) {
+    const found = state.favorites.find(
+      (favorite) => (!filter.user || String(favorite.user) === String(filter.user))
+        && (!filter.trip || String(favorite.trip) === String(filter.trip))
+    );
+    return {
+      lean: async () => (found ? { ...found } : null),
+    };
+  },
+  find(filter = {}) {
+    let items = state.favorites.filter(
+      (favorite) => !filter.user || String(favorite.user) === String(filter.user)
+    );
+    const query = {
+      populate() {
+        return query;
+      },
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      lean: async () => items.map((favorite) => {
+        const savedTrip = state.trips.find(
+          (candidate) => String(candidate._id) === String(favorite.trip)
+        );
+        return { ...favorite, trip: savedTrip ? { ...savedTrip } : null };
+      }),
+    };
+    return query;
+  },
+  async deleteOne(filter = {}) {
+    const index = state.favorites.findIndex(
+      (favorite) => (!filter.user || String(favorite.user) === String(filter.user))
+        && (!filter.trip || String(favorite.trip) === String(filter.trip))
+    );
+    if (index === -1) {
+      return { deletedCount: 0 };
+    }
+    state.favorites.splice(index, 1);
+    return { deletedCount: 1 };
+  },
+  async deleteMany(filter = {}) {
+    const before = state.favorites.length;
+    state.favorites = state.favorites.filter(
+      (favorite) => filter.trip && String(favorite.trip) !== String(filter.trip)
+    );
+    return { deletedCount: before - state.favorites.length };
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -453,6 +526,7 @@ installMock('../models/signup', fakeUser);
 installMock('../models/message', fakeMessage);
 installMock('../models/notification', fakeNotification);
 installMock('../models/review', fakeReview);
+installMock('../models/favorite', fakeFavorite);
 
 const app = require('../app');
 
@@ -1232,4 +1306,124 @@ test('users can change their password from the account page', async () => {
   assert.equal(newLogin.response.status, 302);
 
   updated.password = original;
+});
+
+test('users can save trips to their favourites', async () => {
+  state.favorites.length = 0;
+  const favTripId = '64f000000000000000000601';
+  state.trips.push({
+    _id: favTripId,
+    status: 'published',
+    depart: 'Oran',
+    depart0: 'Es Senia',
+    arrivee: 'Tlemcen',
+    arrivee0: 'Mansourah',
+    dateData: '20 January 2032',
+    departureAt: new Date('2032-01-20T08:00:00Z'),
+    time: '08 : 00',
+    price: '900da',
+    priceDZD: 900,
+    places: 3,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet favori',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const guestPage = await openPage('/login');
+  const guestSave = await fetch(`${baseUrl}/trajets/${favTripId}/favori`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: guestPage.cookie },
+    body: new URLSearchParams({ _csrf: guestPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(guestSave.status, 302);
+  assert.equal(
+    guestSave.headers.get('location'),
+    `/login?next=${encodeURIComponent(`/trajets/${favTripId}`)}`
+  );
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const detail = await openPage(`/trajets/${favTripId}`, passenger.cookie);
+  assert.match(detail.html, /Ajouter aux favoris/);
+
+  const save = await fetch(`${baseUrl}/trajets/${favTripId}/favori`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: detail.token }),
+    redirect: 'manual',
+  });
+  assert.equal(save.status, 302);
+  assert.equal(save.headers.get('location'), `/trajets/${favTripId}`);
+  assert.equal(state.favorites.length, 1);
+  assert.equal(state.favorites[0].user, passengerId);
+  assert.equal(state.favorites[0].trip, favTripId);
+
+  const saved = await openPage(`/trajets/${favTripId}`, passenger.cookie);
+  assert.match(saved.html, /Retirer des favoris/);
+
+  const list = await openPage('/mes-favoris', passenger.cookie);
+  assert.equal(list.response.status, 200);
+  assert.match(list.html, /Mes favoris/);
+  assert.match(list.html, /Oran/);
+  assert.match(list.html, /Retirer des favoris/);
+  assert.match(list.html, /1 trajet en favori/);
+
+  const driver = await login('karim@test.dz', 'secret1');
+  const driverPage = await openPage(`/trajets/${favTripId}`, driver.cookie);
+  const ownTrip = await fetch(`${baseUrl}/trajets/${favTripId}/favori`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: driver.cookie },
+    body: new URLSearchParams({ _csrf: driverPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(ownTrip.status, 302);
+  assert.equal(state.favorites.length, 1);
+
+  const remove = await fetch(`${baseUrl}/trajets/${favTripId}/favori`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: saved.token, next: '/mes-favoris' }),
+    redirect: 'manual',
+  });
+  assert.equal(remove.status, 302);
+  assert.equal(remove.headers.get('location'), '/mes-favoris');
+  assert.equal(state.favorites.length, 0);
+
+  const empty = await openPage('/mes-favoris', passenger.cookie);
+  assert.match(empty.html, /Vous n'avez aucun favori/);
+
+  const pastTripId = '64f000000000000000000602';
+  state.trips.push({
+    _id: pastTripId,
+    status: 'published',
+    depart: 'Constantine',
+    depart0: 'Ali Mendjeli',
+    arrivee: 'Annaba',
+    arrivee0: 'El Bouni',
+    dateData: '10 January 2021',
+    departureAt: new Date('2021-01-10T08:00:00Z'),
+    time: '08 : 00',
+    price: '700da',
+    priceDZD: 700,
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet passe',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const pastSave = await fetch(`${baseUrl}/trajets/${pastTripId}/favori`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: saved.token }),
+    redirect: 'manual',
+  });
+  assert.equal(pastSave.status, 302);
+  assert.equal(state.favorites.length, 0);
+
+  const tripIndex = state.trips.findIndex((candidate) => candidate._id === favTripId);
+  state.trips.splice(tripIndex, 1);
+  const pastIndex = state.trips.findIndex((candidate) => candidate._id === pastTripId);
+  state.trips.splice(pastIndex, 1);
 });

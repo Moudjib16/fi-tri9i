@@ -160,6 +160,22 @@
             <% } else if (typeof hasReviewed !== 'undefined' && hasReviewed) { %>
               <span class="status-badge muted-badge">Avis donné</span>
             <% } %>
+
+            <% const favoriteActive = typeof isFavorite !== 'undefined' && isFavorite; %>
+            <% const canFavorite = currentUser
+              && !(typeof isDriver !== 'undefined' && isDriver)
+              && !(typeof isDraft !== 'undefined' && isDraft)
+              && !(typeof isCancelled !== 'undefined' && isCancelled)
+              && !(typeof hasDeparted !== 'undefined' && hasDeparted); %>
+            <% if (canFavorite) { %>
+              <form action="/trajets/<%= trip._id %>/favori" method="post">
+                <%- include('./partials/csrf-input.ejs') %>
+                <input type="hidden" name="next" value="/trajets/<%= trip._id %>">
+                <button type="submit" class="btn ghost block<%= favoriteActive ? ' favorite-active' : '' %>">
+                  <%= favoriteActive ? 'Retirer des favoris' : 'Ajouter aux favoris' %>
+                </button>
+              </form>
+            <% } %>
           </div>
 
           <p class="booking-note">Aucun paiement en ligne. Vous réglez directement le conducteur le jour du départ.</p>

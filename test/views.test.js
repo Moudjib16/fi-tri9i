@@ -274,3 +274,19 @@ test('account page renders profile details and password errors', async () => {
   assert.match(html, /Mot de passe actuel incorrect\./);
   assert.match(html, /Le nouveau mot de passe est trop court\./);
 });
+
+test('favourites page lists saved trips with a remove action', async () => {
+  const html = await renderFile(view('mes-favoris.ejs'), {
+    stylesheet: 'mes-favoris/',
+    title: 'Mes favoris',
+    currentUser: { name: 'Sara' },
+    trips: [sampleTrip],
+  });
+
+  assert.match(html, /Mes favoris/);
+  assert.match(html, /1 trajet en favori/);
+  assert.match(html, /Alger/);
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/favori"/);
+  assert.match(html, /Retirer des favoris/);
+  assert.match(html, /Voir le trajet/);
+});

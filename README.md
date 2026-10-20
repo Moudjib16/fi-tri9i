@@ -27,6 +27,8 @@ log in, and book their seats.
 - One review per passenger after a completed trip; driver profiles show the
   average rating and recent comments
 - Account page with secure password changes and current profile details
+- Favourites: save published trips from a trip page and review them in
+  "Mes favoris"
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, published rides, cancelled rides and
@@ -85,21 +87,22 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
    "publier" (login required; incomplete drafts stay private, appear under
    "Brouillons" in `/mes-trajets`, and can be resumed there)
 6. `/mes-trajets` — see published trips and reservations
-7. Check MongoDB: `db.users.find()`, `db.trips.find()` and
+7. Save a trip with "Ajouter aux favoris", then open `/mes-favoris`
+8. Check MongoDB: `db.users.find()`, `db.trips.find()` and
    `db.sessions.find()` on the `MyApp` database
 
 ## Project structure
 
 ```text
 app.js            # Express setup, middleware and router mounting
-routes/           # pages, account, auth, drivers, messages, notifications, reviews, trips and publish routers
+routes/           # pages, account, auth, drivers, favourites, messages, notifications, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers
-models/           # User and Trip schemas
-views/            # EJS templates (home, trajets, trajet, publier/*, partials)
+models/           # User, Trip, Message, Notification, Review and Favorite schemas
+views/            # EJS templates (home, trajets, trajet, mes-favoris, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 test/             # node:test suites (validation, views, booking flow)
 ```

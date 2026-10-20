@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Mes favoris' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="site-main">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">Mon espace</p>
+        <h1>Mes favoris</h1>
+        <p>Les trajets que vous gardez sous la main pour réserver plus tard.</p>
+      </div>
+      <a class="btn" href="/trajets">Rechercher un trajet</a>
+    </header>
+
+    <section class="results">
+      <div class="results-head">
+        <h2><%= trips.length %> trajet<%= trips.length === 1 ? '' : 's' %> en favori<%= trips.length === 1 ? '' : 's' %></h2>
+        <a class="publish-link" href="/trajets">Voir tous les trajets</a>
+      </div>
+
+      <% if (!trips.length) { %>
+        <div class="empty-state">
+          <h3>Vous n'avez aucun favori.</h3>
+          <p>Ajoutez les trajets qui vous intéressent pour les retrouver ici.</p>
+          <a class="btn" href="/trajets">Rechercher un trajet</a>
+        </div>
+      <% } else { %>
+        <div class="trip-grid">
+          <% trips.forEach(function (t) { %>
+            <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
+            <% const driverName = t.driver && t.driver.name ? t.driver.name : 'Anonyme'; %>
+            <% const tripPast = Boolean(t.departureAt && new Date(t.departureAt) <= new Date()); %>
+            <article class="trip-card">
+              <% if (t.status === 'cancelled') { %>
+                <span class="draft-badge cancelled-badge">Annulé par le conducteur</span>
+              <% } else if (tripPast) { %>
+                <span class="draft-badge">Trajet passé</span>
+              <% } %>
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Conducteur</dt>
+                  <dd><%= driverName %></dd>
+                </div>
+                <div>
+                  <dt>Places</dt>
+                  <dd><%= remaining %> / <%= t.places %></dd>
+                </div>
+              </dl>
+
+              <div class="trip-card-footer">
+                <form action="/trajets/<%= t._id %>/favori" method="post">
+                  <%- include('./partials/csrf-input.ejs') %>
+                  <input type="hidden" name="next" value="/mes-favoris">
+                  <button type="submit" class="cancel-link">Retirer des favoris</button>
+                </form>
+                <span class="trip-card-links">
+                  <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
+                </span>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('./partials/footer.ejs') %>
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>
