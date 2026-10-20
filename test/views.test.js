@@ -40,7 +40,8 @@ test('trip listing renders trip cards', async () => {
     title: 'Trajets',
     currentUser: { name: 'Sara' },
     trips: [sampleTrip],
-    filters: { depart: '', arrivee: 'Bejaia', date: '', places: '' },
+    filters: { depart: '', arrivee: 'Bejaia', date: '', places: '', sort: 'soonest' },
+    pagination: { total: 1, page: 1, pages: 1, baseQuery: 'arrivee=Bejaia', pageSize: 10 },
   });
 
   assert.match(html, /Alger/);

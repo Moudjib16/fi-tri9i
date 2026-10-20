@@ -220,23 +220,27 @@ app.get('/trajets', async (req, res) => {
     const arrivee = pickString(req.query.arrivee);
     const date = pickString(req.query.date);
     const requestedPlaces = Number(req.query.places);
-    const places = Number.isInteger(requestedPlaces) && requestedPlaces > 0 && requestedPlaces <= 5
+    const wantedPlaces = Number.isInteger(requestedPlaces) && requestedPlaces > 0 && requestedPlaces <= 5
       ? requestedPlaces
-      : '';
+      : 1;
+    const places = req.query.places ? wantedPlaces : '';
+    const sortKey = ['soonest', 'price', 'recent'].includes(req.query.sort)
+      ? req.query.sort
+      : 'soonest';
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const pageSize = 10;
 
     const filter = { status: { $nin: ['draft', 'cancelled'] } };
     const conditions = [];
 
     if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
     if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
-    if (places) {
-      filter.$expr = {
-        $gte: [
-          { $subtract: ['$places', { $ifNull: ['$places_taken', 0] }] },
-          places,
-        ],
-      };
-    }
+    filter.$expr = {
+      $gte: [
+        { $subtract: ['$places', { $ifNull: ['$places_taken', 0] }] },
+        wantedPlaces,
+      ],
+    };
 
     const parsedDate = date ? parseDateInput(date) : null;
     if (parsedDate) {
@@ -261,18 +265,37 @@ app.get('/trajets', async (req, res) => {
       filter.$and = conditions;
     }
 
+    const total = await trip.countDocuments(filter);
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, pages);
+    const sortOptions = {
+      soonest: { departureAt: 1, createdAt: -1 },
+      price: { priceDZD: 1, departureAt: 1 },
+      recent: { createdAt: -1 },
+    };
+
     const trips = await trip
       .find(filter)
       .populate('driver', 'name')
-      .sort({ departureAt: 1, createdAt: -1 })
-      .limit(50)
+      .sort(sortOptions[sortKey])
+      .skip((currentPage - 1) * pageSize)
+      .limit(pageSize)
       .lean();
+
+    const queryParams = new URLSearchParams();
+    if (depart) queryParams.set('depart', depart);
+    if (arrivee) queryParams.set('arrivee', arrivee);
+    if (date) queryParams.set('date', date);
+    if (places) queryParams.set('places', String(places));
+    if (sortKey !== 'soonest') queryParams.set('sort', sortKey);
+    const baseQuery = queryParams.toString();
 
     return res.render('trajets', {
       stylesheet: 'trajets/',
       title: 'Trajets',
       trips,
-      filters: { depart, arrivee, date, places },
+      filters: { depart, arrivee, date, places, sort: sortKey },
+      pagination: { total, page: currentPage, pages, baseQuery, pageSize },
     });
   } catch (err) {
     console.error(err);

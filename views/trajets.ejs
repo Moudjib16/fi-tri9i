@@ -34,13 +34,21 @@
           <span>Places</span>
           <input type="number" name="places" min="1" max="5" value="<%= filters.places %>" placeholder="1">
         </label>
+        <label>
+          <span>Trier par</span>
+          <select name="sort">
+            <option value="soonest" <%= filters.sort === 'soonest' ? 'selected' : '' %>>Départ le plus proche</option>
+            <option value="price" <%= filters.sort === 'price' ? 'selected' : '' %>>Prix croissant</option>
+            <option value="recent" <%= filters.sort === 'recent' ? 'selected' : '' %>>Publication récente</option>
+          </select>
+        </label>
         <button type="submit">Rechercher</button>
       </form>
     </section>
 
     <section class="results">
       <div class="results-head">
-        <h2><%= trips.length %> trajet<%= trips.length === 1 ? '' : 's' %> trouvé<%= trips.length === 1 ? '' : 's' %></h2>
+        <h2><%= pagination.total %> trajet<%= pagination.total === 1 ? '' : 's' %> trouvé<%= pagination.total === 1 ? '' : 's' %></h2>
         <a class="publish-link" href="/publier/page1">Publier un trajet</a>
       </div>
 
@@ -100,6 +108,23 @@
             </article>
           <% }); %>
         </div>
+
+        <% if (pagination.pages > 1) { %>
+          <% const queryPrefix = pagination.baseQuery ? `${pagination.baseQuery}&` : ''; %>
+          <nav class="pagination" aria-label="Pagination des trajets">
+            <% if (pagination.page > 1) { %>
+              <a href="/trajets?<%= queryPrefix %>page=<%= pagination.page - 1 %>">Précédent</a>
+            <% } else { %>
+              <span class="disabled">Précédent</span>
+            <% } %>
+            <span>Page <%= pagination.page %> / <%= pagination.pages %></span>
+            <% if (pagination.page < pagination.pages) { %>
+              <a href="/trajets?<%= queryPrefix %>page=<%= pagination.page + 1 %>">Suivant</a>
+            <% } else { %>
+              <span class="disabled">Suivant</span>
+            <% } %>
+          </nav>
+        <% } %>
       <% } %>
     </section>
   </main>

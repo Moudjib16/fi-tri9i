@@ -13,11 +13,11 @@ log in, and book their seats.
   step validates that every required step is complete
 - Server-side validation for dates (future only), times (`HH:MM`), seat count
   (1–5) and price (1–100000 DA); departures are stored as a sortable `Date`
-- Trip search by departure, arrival, date and available seats
+- Trip search by departure, arrival, date and available seats, with sorting,
+  pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation
 - "My trips" dashboard: published rides and reservations in one place
 - About page, session-aware navbar and working footer/shortcut links
-- Server-side validation at every step + JSON responses for the AJAX steps
 - Dedicated error pages (existing email, user not found, wrong password, 404)
 - Security: helmet with CSP, rate limiting on authentication, httpOnly cookies
 

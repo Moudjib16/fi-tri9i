@@ -35,6 +35,7 @@ const state = {
 };
 
 function tripChain(result) {
+  let items = result;
   const query = {
     populate() {
       return query;
@@ -42,10 +43,15 @@ function tripChain(result) {
     sort() {
       return query;
     },
-    limit() {
+    limit(count) {
+      items = Array.isArray(items) ? items.slice(0, count) : items;
       return query;
     },
-    lean: async () => result,
+    skip(count) {
+      items = Array.isArray(items) ? items.slice(count) : items;
+      return query;
+    },
+    lean: async () => items,
   };
   return query;
 }
@@ -101,6 +107,9 @@ function matchesTrip(candidate, filter) {
 const fakeTrip = {
   find(filter = {}) {
     return tripChain(state.trips.filter((candidate) => matchesTrip(candidate, filter)));
+  },
+  async countDocuments(filter = {}) {
+    return state.trips.filter((candidate) => matchesTrip(candidate, filter)).length;
   },
   findById(id) {
     return tripChain(state.trips.find((candidate) => String(candidate._id) === String(id)) || null);
@@ -328,6 +337,50 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
 
   const cancelledHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
   assert.match(cancelledHtml, /Réserver une place/);
+});
+
+test('search hides full trips and paginates results', async () => {
+  const base = {
+    status: 'published',
+    depart: 'Paginated',
+    depart0: 'Centre',
+    arrivee: 'Bejaia',
+    arrivee0: 'Amizour',
+    dateData: '12 December 2030',
+    departureAt: new Date('2030-12-12T08:00:00Z'),
+    time: '08 : 00',
+    price: '1200da',
+    priceDZD: 1200,
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: '',
+    driver: { _id: driverId, name: 'Karim' },
+  };
+
+  for (let index = 0; index < 11; index += 1) {
+    state.trips.push({ ...base, _id: `64f0000000000000000001${String(index).padStart(2, '0')}` });
+  }
+  state.trips.push({
+    ...base,
+    _id: '64f000000000000000000299',
+    depart: 'Fullville',
+    places: 1,
+    places_taken: 1,
+  });
+
+  const firstPage = await (await fetch(`${baseUrl}/trajets?depart=Paginated`)).text();
+  assert.match(firstPage, /Page 1 \/ 2/);
+  assert.match(firstPage, /Suivant/);
+  assert.match(firstPage, /11 trajets trouvés/);
+
+  const secondPage = await (await fetch(`${baseUrl}/trajets?depart=Paginated&page=2`)).text();
+  assert.match(secondPage, /Page 2 \/ 2/);
+  assert.match(secondPage, /Précédent/);
+
+  const fullListing = await (await fetch(`${baseUrl}/trajets?depart=Fullville`)).text();
+  assert.match(fullListing, /0 trajets trouvés/);
+  assert.doesNotMatch(fullListing, /Voir le trajet/);
 });
 
 test('drafts stay private and out of listings', async () => {
