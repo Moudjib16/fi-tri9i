@@ -1,6 +1,8 @@
 <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
 <% const driverName = t.driver && t.driver.name ? t.driver.name : 'Anonyme'; %>
 <% const driverId = t.driver && t.driver._id ? t.driver._id : null; %>
+<% const driverRating = Number(t.driverRating) || 0; %>
+<% const driverRatingCount = Number(t.driverRatingCount) || 0; %>
 <article class="trip-card">
   <div class="trip-route">
     <span><%= t.depart %></span>
@@ -44,6 +46,12 @@
         <a href="/conducteurs/<%= driverId %>"><strong><%= driverName %></strong></a>
       <% } else { %>
         <strong><%= driverName %></strong>
+      <% } %>
+      <% if (driverRating > 0) { %>
+        <span class="trip-rating" title="Note moyenne du conducteur">
+          <span aria-hidden="true">&#9733;</span> <%= driverRating.toFixed(1) %><%
+          if (driverRatingCount) { %> (<%= driverRatingCount %>)<% } %>
+        </span>
       <% } %>
     </p>
     <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>

@@ -1350,6 +1350,19 @@ textarea:focus-visible {
   font-size: 0.82rem;
 }
 
+.trip-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border: 1px solid #f0dcae;
+  border-radius: 999px;
+  background: #fdf6e6;
+  color: #8a6100;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .trip-driver .avatar {
   width: 30px;
   height: 30px;

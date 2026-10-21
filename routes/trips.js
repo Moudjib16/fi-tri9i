@@ -33,6 +33,11 @@ function redirectWithTripError(req, res, tripUrl, code = 'unavailable') {
   return res.redirect(tripUrl);
 }
 
+// "08" -> "08:00", the format expected by <input type="time">.
+function formatHour(hour) {
+  return `${String(hour).padStart(2, '0')}:00`;
+}
+
 function currentUserName(res, fallback) {
   return res.locals.currentUser && res.locals.currentUser.name
     ? res.locals.currentUser.name
@@ -214,7 +219,7 @@ router.get('/trajets', async (req, res) => {
       ? requestedPlaces
       : 1;
     const places = req.query.places ? wantedPlaces : '';
-    const sortKey = ['soonest', 'price', 'recent'].includes(req.query.sort)
+    const sortKey = ['soonest', 'price', 'recent', 'rating'].includes(req.query.sort)
       ? req.query.sort
       : 'soonest';
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
@@ -231,6 +236,19 @@ router.get('/trajets', async (req, res) => {
         wantedPlaces,
       ],
     };
+
+    const minPrice = Number.parseInt(req.query.prixMin, 10);
+    const maxPrice = Number.parseInt(req.query.prixMax, 10);
+    const priceFilter = {};
+    if (Number.isInteger(minPrice) && minPrice > 0) {
+      priceFilter.$gte = minPrice;
+    }
+    if (Number.isInteger(maxPrice) && maxPrice > 0) {
+      priceFilter.$lte = maxPrice;
+    }
+    if (Object.keys(priceFilter).length) {
+      filter.priceDZD = priceFilter;
+    }
 
     const parsedDate = date ? parseDateInput(date) : null;
     if (parsedDate) {
@@ -252,6 +270,20 @@ router.get('/trajets', async (req, res) => {
         ],
       });
     }
+
+    const hourFilter = {};
+    const startHour = Number.parseInt(req.query.heureDebut, 10);
+    const endHour = Number.parseInt(req.query.heureFin, 10);
+    if (Number.isInteger(startHour) && startHour >= 0 && startHour <= 23) {
+      hourFilter.$gte = startHour;
+    }
+    if (Number.isInteger(endHour) && endHour >= 0 && endHour <= 23) {
+      hourFilter.$lt = endHour + 1;
+    }
+    if (Object.keys(hourFilter).length) {
+      conditions.push({ departureAt: { $hour: hourFilter } });
+    }
+
     if (conditions.length) {
       filter.$and = conditions;
     }
@@ -263,6 +295,7 @@ router.get('/trajets', async (req, res) => {
       soonest: { departureAt: 1, createdAt: -1 },
       price: { priceDZD: 1, departureAt: 1 },
       recent: { createdAt: -1 },
+      rating: { driverRating: -1, departureAt: 1 },
     };
 
     const trips = await trip
@@ -278,6 +311,10 @@ router.get('/trajets', async (req, res) => {
     if (arrivee) queryParams.set('arrivee', arrivee);
     if (date) queryParams.set('date', date);
     if (places) queryParams.set('places', String(places));
+    if (minPrice > 0) queryParams.set('prixMin', String(minPrice));
+    if (maxPrice > 0) queryParams.set('prixMax', String(maxPrice));
+    if (hourFilter.$gte !== undefined) queryParams.set('heureDebut', formatHour(startHour));
+    if (hourFilter.$lt !== undefined) queryParams.set('heureFin', formatHour(endHour));
     if (sortKey !== 'soonest') queryParams.set('sort', sortKey);
     const baseQuery = queryParams.toString();
 
@@ -285,7 +322,17 @@ router.get('/trajets', async (req, res) => {
       stylesheet: 'trajets/',
       title: 'Trajets',
       trips,
-      filters: { depart, arrivee, date, places, sort: sortKey },
+      filters: {
+        depart,
+        arrivee,
+        date,
+        places,
+        sort: sortKey,
+        prixMin: minPrice > 0 ? String(minPrice) : '',
+        prixMax: maxPrice > 0 ? String(maxPrice) : '',
+        heureDebut: hourFilter.$gte !== undefined ? formatHour(startHour) : '',
+        heureFin: hourFilter.$lt !== undefined ? formatHour(endHour) : '',
+      },
       pagination: { total, page: currentPage, pages, baseQuery, pageSize },
     });
   } catch (err) {

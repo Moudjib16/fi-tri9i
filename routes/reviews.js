@@ -5,6 +5,7 @@ const Review = require('../models/review');
 const { pickString } = require('../lib/validation');
 const { setFlash } = require('../lib/flash');
 const { tripNotFound } = require('../lib/http');
+const { refreshDriverRating } = require('../lib/ratings');
 
 const router = express.Router();
 
@@ -131,6 +132,9 @@ router.post('/trajets/:id/avis', async (req, res) => {
       rating,
       comment: values.comment,
     });
+
+    // Keep the rating stored on the driver trips up to date.
+    await refreshDriverRating(context.driverId);
 
     setFlash(req, 'success', 'Merci, votre avis a été publié.');
     return res.redirect(`/conducteurs/${context.driverId}`);

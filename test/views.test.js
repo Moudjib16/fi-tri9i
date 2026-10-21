@@ -48,7 +48,17 @@ test('trip listing renders trip cards', async () => {
     title: 'Trajets',
     currentUser: { name: 'Sara' },
     trips: [sampleTrip],
-    filters: { depart: '', arrivee: 'Bejaia', date: '', places: '', sort: 'soonest' },
+    filters: {
+      depart: '',
+      arrivee: 'Bejaia',
+      date: '',
+      places: '',
+      sort: 'soonest',
+      prixMin: '',
+      prixMax: '',
+      heureDebut: '',
+      heureFin: '',
+    },
     pagination: { total: 1, page: 1, pages: 1, baseQuery: 'arrivee=Bejaia', pageSize: 10 },
   });
 
@@ -56,6 +66,34 @@ test('trip listing renders trip cards', async () => {
   assert.match(html, /Bejaia/);
   assert.match(html, /Voir le trajet/);
   assert.match(html, /1 trajet trouvé/);
+});
+
+test('trip listing renders the price, time window and rating filters', async () => {
+  const html = await render('trajets.ejs', {
+    stylesheet: 'trajets/',
+    title: 'Trajets',
+    currentUser: { name: 'Sara' },
+    trips: [sampleTrip],
+    filters: {
+      depart: '',
+      arrivee: '',
+      date: '',
+      places: '',
+      sort: 'rating',
+      prixMin: '500',
+      prixMax: '1500',
+      heureDebut: '08:00',
+      heureFin: '18:00',
+    },
+    pagination: { total: 1, page: 1, pages: 1, baseQuery: '', pageSize: 10 },
+  });
+
+  assert.match(html, /name="prixMin" min="1" max="100000" value="500"/);
+  assert.match(html, /name="prixMax" min="1" max="100000" value="1500"/);
+  assert.match(html, /type="time" name="heureDebut" value="08:00"/);
+  assert.match(html, /type="time" name="heureFin" value="18:00"/);
+  assert.match(html, /<option value="rating" selected>/);
+  assert.match(html, /Conducteurs les mieux notés/);
 });
 
 test('trip detail shows a booking action for guests', async () => {

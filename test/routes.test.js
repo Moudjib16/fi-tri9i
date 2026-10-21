@@ -46,7 +46,25 @@ function tripChain(result) {
     populate() {
       return query;
     },
-    sort() {
+    sort(spec = {}) {
+      const entries = Object.entries(spec);
+      items.sort((left, right) => {
+        for (const [key, direction] of entries) {
+          const a = left[key];
+          const b = right[key];
+          if (a === b) {
+            continue;
+          }
+          if (a === undefined || a === null) {
+            return 1;
+          }
+          if (b === undefined || b === null) {
+            return -1;
+          }
+          return (a < b ? -1 : 1) * direction;
+        }
+        return 0;
+      });
       return query;
     },
     limit(count) {
@@ -91,9 +109,21 @@ function matchesTrip(candidate, filter) {
       if (!departure) {
         return false;
       }
+      if (value.$hour !== undefined) {
+        const hour = departure.getUTCHours();
+        if (value.$hour.$gte !== undefined && hour < value.$hour.$gte) return false;
+        if (value.$hour.$lt !== undefined && hour >= value.$hour.$lt) return false;
+        return true;
+      }
       if (value.$gte !== undefined && departure < new Date(value.$gte)) return false;
       if (value.$lt !== undefined && departure >= new Date(value.$lt)) return false;
       if (value.$gt !== undefined && departure <= new Date(value.$gt)) return false;
+      return true;
+    }
+    if (key === 'priceDZD' && value && typeof value === 'object') {
+      const price = candidate.priceDZD || 0;
+      if (value.$gte !== undefined && price < value.$gte) return false;
+      if (value.$lte !== undefined && price > value.$lte) return false;
       return true;
     }
     if (key === 'dateData') {
@@ -151,8 +181,17 @@ Object.assign(fakeTrip, {
   find(filter = {}) {
     return tripChain(state.trips.filter((candidate) => matchesTrip(candidate, filter)));
   },
-  async countDocuments(filter = {}) {
+  async   countDocuments(filter = {}) {
     return state.trips.filter((candidate) => matchesTrip(candidate, filter)).length;
+  },
+  updateMany(filter, update) {
+    const matched = state.trips.filter((candidate) => matchesTrip(candidate, filter));
+    matched.forEach((candidate) => {
+      if (update && update.$set) {
+        Object.assign(candidate, update.$set);
+      }
+    });
+    return { acknowledged: true, modifiedCount: matched.length };
   },
   findById(id) {
     return tripChain(state.trips.find((candidate) => String(candidate._id) === String(id)) || null);
@@ -1385,6 +1424,14 @@ test('passengers can review completed trips and profiles show ratings', async ()
   assert.equal(state.reviews[0].author, passengerId);
   assert.equal(state.reviews[0].rating, 5);
 
+  // The rating is copied on the driver trips so listings can sort by it.
+  const ratedTrips = state.trips.filter((candidate) => String(candidate.driver && candidate.driver._id) === driverId);
+  assert.ok(ratedTrips.length > 0);
+  ratedTrips.forEach((candidate) => {
+    assert.equal(candidate.driverRating, 5);
+    assert.equal(candidate.driverRatingCount, 1);
+  });
+
   const duplicate = await fetch(`${baseUrl}/trajets/${pastTripId}/avis`, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
@@ -1557,6 +1604,86 @@ test('users can edit their profile from the account page', async () => {
   account.phone = '';
   account.bio = '';
   account.userType = 1;
+});
+
+test('search filters trips by price, departure window and driver rating', async () => {
+  const cheapId = '64f000000000000000000851';
+  const priceyId = '64f000000000000000000852';
+  const morningId = '64f000000000000000000853';
+  const eveningId = '64f000000000000000000854';
+
+  const base = {
+    status: 'published',
+    depart: 'Filtreville',
+    depart0: 'Centre',
+    arrivee: 'Bejaia',
+    arrivee0: 'Amizour',
+    dateData: '12 December 2030',
+    time: '08 : 00',
+    price: '1200da',
+    priceDZD: 1200,
+    places: 3,
+    places_taken: 0,
+    passengers: [],
+    description: '',
+    driver: { _id: driverId, name: 'Karim' },
+  };
+
+  state.trips.push({ ...base, _id: cheapId, price: '400da', priceDZD: 400 });
+  state.trips.push({ ...base, _id: priceyId, price: '2500da', priceDZD: 2500 });
+  state.trips.push({
+    ...base,
+    _id: morningId,
+    departureAt: new Date('2030-12-12T07:30:00Z'),
+    time: '07 : 30',
+  });
+  state.trips.push({
+    ...base,
+    _id: eveningId,
+    departureAt: new Date('2030-12-12T19:30:00Z'),
+    time: '19 : 30',
+  });
+
+  const cheap = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&prixMax=1000`)).text();
+  assert.match(cheap, /400da/);
+  assert.doesNotMatch(cheap, /2500da/);
+
+  const pricey = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&prixMin=2000`)).text();
+  assert.match(pricey, /2500da/);
+  assert.doesNotMatch(pricey, /400da/);
+
+  const morning = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&heureDebut=06&heureFin=12`)).text();
+  assert.match(morning, /07 : 30/);
+  assert.doesNotMatch(morning, /19 : 30/);
+  assert.match(morning, /type="time" name="heureDebut" value="06:00"/);
+  assert.match(morning, /type="time" name="heureFin" value="12:00"/);
+
+  const evening = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&heureDebut=18`)).text();
+  assert.match(evening, /19 : 30/);
+  assert.doesNotMatch(evening, /07 : 30/);
+
+  // The filters are kept in the search form.
+  const filtered = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&prixMax=1000`)).text();
+  assert.match(filtered, /name="prixMax" min="1" max="100000" value="1000"/);
+  assert.match(filtered, /name="depart" value="Filtreville"/);
+
+  // A review refreshes the rating stored on the driver trips.
+  const ratedTrip = state.trips.find((candidate) => candidate._id === cheapId);
+  ratedTrip.driverRating = 4.5;
+  ratedTrip.driverRatingCount = 2;
+  const bestId = '64f000000000000000000855';
+  state.trips.push({ ...base, _id: bestId, driverRating: 4.8, driverRatingCount: 5 });
+
+  const byRating = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&sort=rating`)).text();
+  assert.match(byRating, /4\.8/);
+  assert.match(byRating, /4\.5/);
+
+  for (const id of [cheapId, priceyId, morningId, eveningId, bestId]) {
+    const index = state.trips.findIndex((candidate) => candidate._id === id);
+    if (index !== -1) {
+      state.trips.splice(index, 1);
+    }
+  }
 });
 
 test('users can save trips to their favourites', async () => {

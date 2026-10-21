@@ -33,11 +33,28 @@
           <input type="number" name="places" min="1" max="5" value="<%= filters.places %>" placeholder="1">
         </label>
         <label class="field">
+          <span>Prix min (DA)</span>
+          <input type="number" name="prixMin" min="1" max="100000" value="<%= filters.prixMin %>" placeholder="ex : 500">
+        </label>
+        <label class="field">
+          <span>Prix max (DA)</span>
+          <input type="number" name="prixMax" min="1" max="100000" value="<%= filters.prixMax %>" placeholder="ex : 1500">
+        </label>
+        <label class="field">
+          <span>Départ de</span>
+          <input type="time" name="heureDebut" value="<%= filters.heureDebut %>">
+        </label>
+        <label class="field">
+          <span>Départ jusqu'à</span>
+          <input type="time" name="heureFin" value="<%= filters.heureFin %>">
+        </label>
+        <label class="field">
           <span>Trier par</span>
           <select name="sort">
             <option value="soonest" <%= filters.sort === 'soonest' ? 'selected' : '' %>>Départ le plus proche</option>
             <option value="price" <%= filters.sort === 'price' ? 'selected' : '' %>>Prix croissant</option>
             <option value="recent" <%= filters.sort === 'recent' ? 'selected' : '' %>>Publication récente</option>
+            <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Conducteurs les mieux notés</option>
           </select>
         </label>
         <button class="btn" type="submit">Rechercher</button>

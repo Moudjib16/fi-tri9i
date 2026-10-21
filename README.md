@@ -17,8 +17,11 @@ log in, and book their seats.
 - French-first dates: the calendar, the listings and the trip pages all render
   "12 décembre 2030"; ISO, French and legacy English labels are all accepted on
   input
-- Trip search by departure, arrival, date and available seats, with sorting,
+- Trip search by departure, arrival, date, available seats, price range and
+  departure time window, with sorting (soonest, price, recent, driver rating),
   pagination and automatic hiding of full or already-departed trips
+- Driver ratings are copied on their trips, so listings can sort by the best
+  rated drivers and cards can show the average rating
 - Trip details with seat reservation and cancellation before departure; past
   reservations are read-only
 - Public driver profiles with upcoming trips and links from trip cards

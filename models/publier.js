@@ -75,9 +75,20 @@ const Schema = new mongoose.Schema({
         default: ''
     },
     driver: {
-        type : mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
+    },
+    driverRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    driverRatingCount: {
+        type: Number,
+        default: 0,
+        min: 0
     },
     passengers: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -88,6 +99,7 @@ const Schema = new mongoose.Schema({
 Schema.index({ depart: 1, arrivee: 1 });
 Schema.index({ driver: 1 });
 Schema.index({ passengers: 1 });
+Schema.index({ driverRating: -1, departureAt: 1 });
 
 const trip = mongoose.models.trip || mongoose.model('trip', Schema);
 
