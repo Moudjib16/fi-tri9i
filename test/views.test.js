@@ -426,6 +426,36 @@ test('favourites page lists saved trips with a remove action', async () => {
   assert.match(html, /action="\/trajets\/64f000000000000000000001\/favori"/);
   assert.match(html, /Retirer des favoris/);
   assert.match(html, /Voir le trajet/);
+  assert.match(html, /À venir \(1\)/);
+});
+
+test('favourites page separates the trips that already left', async () => {
+  const html = await render('mes-favoris.ejs', {
+    stylesheet: 'mes-favoris/',
+    title: 'Mes favoris',
+    currentUser: { name: 'Sara' },
+    trips: [
+      sampleTrip,
+      {
+        ...sampleTrip,
+        _id: '64f000000000000000000009',
+        depart: 'Terminus',
+        departureAt: new Date('2020-01-10T08:00:00Z'),
+      },
+      {
+        ...sampleTrip,
+        _id: '64f000000000000000000010',
+        depart: 'Annule',
+        status: 'cancelled',
+      },
+    ],
+  });
+
+  assert.match(html, /À venir \(1\)/);
+  assert.match(html, /Terminés \(2\)/);
+  assert.match(html, /Terminus/);
+  assert.match(html, /Trajet terminé/);
+  assert.match(html, /Annulé par le conducteur/);
 });
 
 test('report form renders the reason list and the reported target', async () => {

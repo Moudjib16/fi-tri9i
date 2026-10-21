@@ -1854,6 +1854,28 @@ test('users can save trips to their favourites', async () => {
   assert.match(list.html, /Oran/);
   assert.match(list.html, /Retirer des favoris/);
   assert.match(list.html, /1 trajet en favori/);
+  assert.match(list.html, /À venir \(1\)/);
+
+  // A favourite that already left stays listed, but in the closed section.
+  const pastFavId = '64f000000000000000000602';
+  state.trips.push({
+    ...state.trips.find((candidate) => candidate._id === favTripId),
+    _id: pastFavId,
+    depart: 'Terminus',
+    dateData: '10 janvier 2020',
+    departureAt: new Date('2020-01-10T08:00:00Z'),
+  });
+  state.favorites.push({ _id: '64f000000000000000000603', user: passengerId, trip: pastFavId });
+
+  const listWithPast = await openPage('/mes-favoris', passenger.cookie);
+  assert.match(listWithPast.html, /À venir \(1\)/);
+  assert.match(listWithPast.html, /Terminés \(1\)/);
+  assert.match(listWithPast.html, /Terminus/);
+  assert.match(listWithPast.html, /Trajet terminé/);
+
+  state.favorites.length = 1;
+  const closedIndex = state.trips.findIndex((candidate) => candidate._id === pastFavId);
+  state.trips.splice(closedIndex, 1);
 
   const driver = await login('karim@test.dz', 'secret1');
   const driverPage = await openPage(`/trajets/${favTripId}`, driver.cookie);

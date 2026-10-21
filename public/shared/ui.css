@@ -1232,6 +1232,16 @@ textarea:focus-visible {
   color: var(--brand-deep);
 }
 
+.results-subtitle {
+  margin: 30px 0 16px;
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .results-head .publish-link {
   min-height: 40px;
   padding-inline: 16px;

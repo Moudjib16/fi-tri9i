@@ -83,7 +83,7 @@ router.get('/mes-favoris', async (req, res) => {
     const favorites = await Favorite.find({ user: req.session.userId })
       .populate({
         path: 'trip',
-        select: 'depart depart0 arrivee arrivee0 dateData time price places places_taken status departureAt',
+        select: 'depart depart0 arrivee arrivee0 dateData time price places places_taken status departureAt driverRating driverRatingCount',
         populate: { path: 'driver', select: 'name' },
       })
       .sort({ createdAt: -1 })
