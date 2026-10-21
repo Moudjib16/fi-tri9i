@@ -370,12 +370,21 @@ Object.assign(fakeUser, {
         items = items.slice(0, count);
         return query;
       },
+      skip(count) {
+        items = items.slice(count);
+        return query;
+      },
       lean: async () => items.map((candidate) => {
         const { password, ...safeUser } = candidate;
         return safeUser;
       }),
     };
     return query;
+  },
+  async countDocuments(filter = {}) {
+    return state.users.filter((candidate) => Object.entries(filter).every(
+      ([key, value]) => String(candidate[key]) === String(value)
+    )).length;
   },
 });
 
@@ -673,9 +682,18 @@ const fakeReport = {
         items = items.slice(0, count);
         return query;
       },
+      skip(count) {
+        items = items.slice(count);
+        return query;
+      },
       lean: async () => items.map((report) => ({ ...report })),
     };
     return query;
+  },
+  async countDocuments(filter = {}) {
+    return state.reports.filter((report) => Object.entries(filter).every(
+      ([key, value]) => String(report[key]) === String(value)
+    )).length;
   },
 };
 
@@ -2158,6 +2176,41 @@ test('administrators can moderate reports, trips and accounts', async () => {
 
   const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
   state.trips.splice(tripIndex, 1);
+  state.reports.length = 0;
+});
+
+test('the moderation dashboard paginates its sections', async () => {
+  state.reports.length = 0;
+
+  for (let index = 0; index < 12; index += 1) {
+    await fakeReport.create({
+      reporter: passengerId,
+      targetType: 'trip',
+      targetId: tripId,
+      reason: 'unsafe',
+      message: `Signalement ${index + 1}`,
+    });
+  }
+
+  const admin = await login('admin@test.dz', 'secret1');
+  const firstPage = await openPage('/admin', admin.cookie);
+  assert.equal(firstPage.response.status, 200);
+  assert.match(firstPage.html, /Signalements ouverts \(12\)/);
+  assert.match(firstPage.html, /Page 1 \/ 2/);
+  assert.match(firstPage.html, /signaux=2/);
+  // Only ten reports fit on a page.
+  assert.equal((firstPage.html.match(/action="\/admin\/signaux\//g) || []).length, 10);
+
+  const secondPage = await openPage('/admin?signaux=2', admin.cookie);
+  assert.equal(secondPage.response.status, 200);
+  assert.match(secondPage.html, /Page 2 \/ 2/);
+  assert.equal((secondPage.html.match(/action="\/admin\/signaux\//g) || []).length, 2);
+
+  // An out of range page falls back to the last one.
+  const outOfRange = await openPage('/admin?signaux=99', admin.cookie);
+  assert.equal(outOfRange.response.status, 200);
+  assert.match(outOfRange.html, /Page 2 \/ 2/);
+
   state.reports.length = 0;
 });
 

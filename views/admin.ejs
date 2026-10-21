@@ -16,26 +16,26 @@
 
     <section class="dashboard-stats" aria-label="Résumé de la modération">
       <div class="stat-card">
-        <strong><%= reports.length %></strong>
-        <span>signalement<%= reports.length === 1 ? '' : 's' %> ouvert<%= reports.length === 1 ? '' : 's' %></span>
+        <strong><%= totals.reports %></strong>
+        <span>signalement<%= totals.reports === 1 ? '' : 's' %> ouvert<%= totals.reports === 1 ? '' : 's' %></span>
       </div>
       <div class="stat-card">
-        <strong><%= publishedTrips.length %></strong>
-        <span>trajet<%= publishedTrips.length === 1 ? '' : 's' %> publié<%= publishedTrips.length === 1 ? '' : 's' %></span>
+        <strong><%= totals.trips %></strong>
+        <span>trajet<%= totals.trips === 1 ? '' : 's' %> publié<%= totals.trips === 1 ? '' : 's' %></span>
       </div>
       <div class="stat-card">
-        <strong><%= accounts.filter(function (account) { return account.suspended; }).length %></strong>
-        <span>compte<%= accounts.filter(function (account) { return account.suspended; }).length === 1 ? '' : 's' %> suspendu<%= accounts.filter(function (account) { return account.suspended; }).length === 1 ? '' : 's' %></span>
+        <strong><%= totals.suspended %></strong>
+        <span>compte<%= totals.suspended === 1 ? '' : 's' %> suspendu<%= totals.suspended === 1 ? '' : 's' %></span>
       </div>
       <div class="stat-card">
-        <strong><%= accounts.filter(function (account) { return account.isAdmin; }).length %></strong>
-        <span>administrateur<%= accounts.filter(function (account) { return account.isAdmin; }).length === 1 ? '' : 's' %></span>
+        <strong><%= totals.admins %></strong>
+        <span>administrateur<%= totals.admins === 1 ? '' : 's' %></span>
       </div>
     </section>
 
     <section class="my-section">
       <div class="results-head">
-        <h2>Signalements ouverts (<%= reports.length %>)</h2>
+        <h2>Signalements ouverts (<%= totals.reports %>)</h2>
       </div>
 
       <% if (!reports.length) { %>
@@ -72,12 +72,20 @@
             </article>
           <% }); %>
         </div>
+        <%- include('./partials/pagination.ejs', {
+          basePath: '/admin',
+          baseQuery: pagination.baseQuery,
+          param: 'signaux',
+          page: pagination.reports.page,
+          pages: pagination.reports.pages,
+          label: 'Pagination des signalements',
+        }) %>
       <% } %>
     </section>
 
     <section class="my-section">
       <div class="results-head">
-        <h2>Trajets publiés (<%= publishedTrips.length %>)</h2>
+        <h2>Trajets publiés (<%= totals.trips %>)</h2>
       </div>
 
       <% if (!publishedTrips.length) { %>
@@ -103,12 +111,20 @@
             </article>
           <% }); %>
         </div>
+        <%- include('./partials/pagination.ejs', {
+          basePath: '/admin',
+          baseQuery: pagination.baseQuery,
+          param: 'trajets',
+          page: pagination.trips.page,
+          pages: pagination.trips.pages,
+          label: 'Pagination des trajets publiés',
+        }) %>
       <% } %>
     </section>
 
     <section class="my-section">
       <div class="results-head">
-        <h2>Comptes (<%= accounts.length %>)</h2>
+        <h2>Comptes (<%= totals.accounts %>)</h2>
       </div>
 
       <div class="admin-list">
@@ -143,6 +159,14 @@
           </article>
         <% }); %>
       </div>
+      <%- include('./partials/pagination.ejs', {
+        basePath: '/admin',
+        baseQuery: pagination.baseQuery,
+        param: 'comptes',
+        page: pagination.accounts.page,
+        pages: pagination.accounts.pages,
+        label: 'Pagination des comptes',
+      }) %>
     </section>
   </main>
 

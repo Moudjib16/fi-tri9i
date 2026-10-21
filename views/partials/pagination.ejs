@@ -1,0 +1,22 @@
+<%
+  const params = new URLSearchParams(typeof baseQuery !== 'undefined' ? baseQuery : '');
+  const pageLink = (target) => {
+    params.set(param, String(target));
+    return `${basePath}?${params.toString()}`;
+  };
+%>
+<% if (pages > 1) { %>
+  <nav class="pagination" aria-label="<%= label %>">
+    <% if (page > 1) { %>
+      <a href="<%= pageLink(page - 1) %>">Précédent</a>
+    <% } else { %>
+      <span class="disabled">Précédent</span>
+    <% } %>
+    <span>Page <%= page %> / <%= pages %></span>
+    <% if (page < pages) { %>
+      <a href="<%= pageLink(page + 1) %>">Suivant</a>
+    <% } else { %>
+      <span class="disabled">Suivant</span>
+    <% } %>
+  </nav>
+<% } %>

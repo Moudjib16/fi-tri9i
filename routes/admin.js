@@ -13,6 +13,10 @@ const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
+const REPORTS_PER_PAGE = 10;
+const TRIPS_PER_PAGE = 10;
+const ACCOUNTS_PER_PAGE = 20;
+
 router.use('/admin', requireAdmin);
 
 function adminError(res, message) {
@@ -27,16 +31,43 @@ function adminError(res, message) {
 
 router.get('/admin', async (req, res) => {
   try {
+    const requestedReports = Math.max(1, Number.parseInt(req.query.signaux, 10) || 1);
+    const requestedTrips = Math.max(1, Number.parseInt(req.query.trajets, 10) || 1);
+    const requestedAccounts = Math.max(1, Number.parseInt(req.query.comptes, 10) || 1);
+
+    const [reportTotal, tripTotal, accountTotal, suspendedTotal, adminTotal] = await Promise.all([
+      Report.countDocuments({ status: 'open' }),
+      trip.countDocuments({ status: 'published' }),
+      user.countDocuments({}),
+      user.countDocuments({ suspended: true }),
+      user.countDocuments({ isAdmin: true }),
+    ]);
+
+    const reportPages = Math.max(1, Math.ceil(reportTotal / REPORTS_PER_PAGE));
+    const tripPages = Math.max(1, Math.ceil(tripTotal / TRIPS_PER_PAGE));
+    const accountPages = Math.max(1, Math.ceil(accountTotal / ACCOUNTS_PER_PAGE));
+
+    const reportsPage = Math.min(requestedReports, reportPages);
+    const tripsPage = Math.min(requestedTrips, tripPages);
+    const accountsPage = Math.min(requestedAccounts, accountPages);
+
     const [openReports, publishedTrips, accounts] = await Promise.all([
-      Report.find({ status: 'open' }).sort({ createdAt: -1 }).limit(50).lean(),
+      Report.find({ status: 'open' })
+        .sort({ createdAt: -1 })
+        .skip((reportsPage - 1) * REPORTS_PER_PAGE)
+        .limit(REPORTS_PER_PAGE)
+        .lean(),
       trip.find({ status: 'published' })
         .populate('driver', 'name')
         .sort({ departureAt: 1 })
-        .limit(25)
+        .skip((tripsPage - 1) * TRIPS_PER_PAGE)
+        .limit(TRIPS_PER_PAGE)
         .lean(),
-      user.find({}).select('name email userType isAdmin suspended createdAt')
+      user.find({})
+        .select('name email userType isAdmin suspended createdAt')
         .sort({ createdAt: -1 })
-        .limit(50)
+        .skip((accountsPage - 1) * ACCOUNTS_PER_PAGE)
+        .limit(ACCOUNTS_PER_PAGE)
         .lean(),
     ]);
 
@@ -46,12 +77,31 @@ router.get('/admin', async (req, res) => {
       reasonLabel: reportReasonLabel(item.report.reason),
     }));
 
+    // Every section keeps its own page, the links preserve the others.
+    const query = new URLSearchParams();
+    query.set('signaux', String(reportsPage));
+    query.set('trajets', String(tripsPage));
+    query.set('comptes', String(accountsPage));
+
     return res.render('admin', {
       stylesheet: 'admin/',
       title: 'Administration',
       reports,
       publishedTrips,
       accounts,
+      totals: {
+        reports: reportTotal,
+        trips: tripTotal,
+        accounts: accountTotal,
+        suspended: suspendedTotal,
+        admins: adminTotal,
+      },
+      pagination: {
+        baseQuery: query.toString(),
+        reports: { page: reportsPage, pages: reportPages },
+        trips: { page: tripsPage, pages: tripPages },
+        accounts: { page: accountsPage, pages: accountPages },
+      },
     });
   } catch (err) {
     console.error(err);

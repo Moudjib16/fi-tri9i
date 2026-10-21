@@ -81,22 +81,14 @@
           <% }); %>
         </div>
 
-        <% if (pagination.pages > 1) { %>
-          <% const queryPrefix = pagination.baseQuery ? `${pagination.baseQuery}&` : ''; %>
-          <nav class="pagination" aria-label="Pagination des trajets">
-            <% if (pagination.page > 1) { %>
-              <a href="/trajets?<%= queryPrefix %>page=<%= pagination.page - 1 %>">Précédent</a>
-            <% } else { %>
-              <span class="disabled">Précédent</span>
-            <% } %>
-            <span>Page <%= pagination.page %> / <%= pagination.pages %></span>
-            <% if (pagination.page < pagination.pages) { %>
-              <a href="/trajets?<%= queryPrefix %>page=<%= pagination.page + 1 %>">Suivant</a>
-            <% } else { %>
-              <span class="disabled">Suivant</span>
-            <% } %>
-          </nav>
-        <% } %>
+        <%- include('./partials/pagination.ejs', {
+          basePath: '/trajets',
+          baseQuery: pagination.baseQuery,
+          param: 'page',
+          page: pagination.page,
+          pages: pagination.pages,
+          label: 'Pagination des trajets',
+        }) %>
       <% } %>
     </section>
   </main>

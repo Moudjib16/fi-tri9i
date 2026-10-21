@@ -45,7 +45,7 @@ log in, and book their seats.
 - Reporting: flag a trip or a driver and follow the moderation status in
   "Mes signalements"
 - Moderation dashboard for administrators: treat reports, cancel trips,
-  suspend accounts and manage admin roles
+  suspend accounts and manage admin roles, with a pagination per section
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
 - "My trips" dashboard: drafts, upcoming rides, completed rides, cancelled

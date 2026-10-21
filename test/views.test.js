@@ -516,14 +516,33 @@ test('admin dashboard renders reports, published trips and accounts', async () =
       isAdmin: false,
       suspended: false,
     }],
+    totals: {
+      reports: 3,
+      trips: 12,
+      accounts: 42,
+      suspended: 1,
+      admins: 2,
+    },
+    pagination: {
+      baseQuery: 'signaux=1&trajets=1&comptes=1',
+      reports: { page: 1, pages: 2 },
+      trips: { page: 1, pages: 3 },
+      accounts: { page: 1, pages: 4 },
+    },
   });
 
   assert.match(html, /Administration/);
-  assert.match(html, /Signalements ouverts \(1\)/);
+  assert.match(html, /Signalements ouverts \(3\)/);
+  assert.match(html, /Trajets publiés \(12\)/);
+  assert.match(html, /Comptes \(42\)/);
   assert.match(html, /Conduite dangereuse/);
   assert.match(html, /action="\/admin\/signaux\/64f000000000000000000800"/);
   assert.match(html, /Annuler le trajet/);
   assert.match(html, /sara@test\.dz/);
   assert.match(html, /Suspendre/);
   assert.match(html, /Nommer admin/);
+  // Each section keeps its own pagination.
+  assert.match(html, /signaux=2/);
+  assert.match(html, /trajets=2/);
+  assert.match(html, /comptes=2/);
 });
