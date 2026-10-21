@@ -82,6 +82,7 @@ npm run dev     # with auto-reload (nodemon)
 npm test        # validation, views, wilayas and booking-flow tests
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
+npm run seed    # fill the database with demo accounts and trips
 ```
 
 ## Configuration (.env)
@@ -114,6 +115,9 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
    `db.sessions.find()` on the `MyApp` database
 9. Run `npm run create-admin -- <email>` to grant the moderation role, then open
    `/admin` to triage reports
+10. Run `npm run seed` to load demo accounts (`karim@demo.dz`, `amina@demo.dz`,
+    `yacine@demo.dz`, `sara@demo.dz`, `nadia@demo.dz`, `lina@demo.dz`, password
+    `demo1234`) with published trips, a booking, reviews and messages
 
 ## Project structure
 
@@ -125,6 +129,7 @@ lib/validation.js # Shared input/date helpers
 lib/wilayas.js    # Reference data for the 58 wilayas and their communes
 lib/ratings.js    # Keeps the driver rating stored on their trips up to date
 lib/tripStatus.js # Resolves and persists the completed trips
+lib/seedData.js  # Demo accounts and trips used by the seed script
 lib/reports.js    # Shared report reasons and labels
 lib/reportTargets.js # Resolves the trip or profile targeted by a report
 lib/session.js    # Session regeneration and route guards
@@ -133,8 +138,8 @@ lib/http.js       # Shared HTTP helpers (404 page and server error page)
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
-scripts/          # maintenance scripts (create-admin, complete-trips)
-test/             # node:test suites (validation, views, wilayas, http, booking flow)
+scripts/          # maintenance scripts (create-admin, complete-trips, seed)
+test/             # node:test suites (validation, views, wilayas, http, seed, booking flow)
 ```
 
 ## Roadmap
