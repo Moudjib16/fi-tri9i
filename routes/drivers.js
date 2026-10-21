@@ -12,7 +12,7 @@ router.get('/conducteurs/:id', async (req, res) => {
   }
 
   try {
-    const driver = await user.findById(req.params.id).select('name userType createdAt').lean();
+    const driver = await user.findById(req.params.id).select('name bio userType createdAt').lean();
     if (!driver) {
       return res.status(404).render('404', { title: '404' });
     }

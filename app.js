@@ -129,7 +129,7 @@ app.use(async (req, res, next) => {
   }
   try {
     const currentUser = await user.findById(req.session.userId)
-      .select('name email userType isAdmin suspended')
+      .select('name email userType phone bio isAdmin suspended')
       .lean();
     if (currentUser && currentUser.suspended) {
       // Suspended accounts are treated as signed out everywhere.

@@ -687,6 +687,10 @@ textarea:focus-visible {
   resize: vertical;
 }
 
+.field textarea.compact {
+  min-height: 96px;
+}
+
 .form-error {
   margin: 0 0 14px;
   padding: 10px 14px;
@@ -1738,6 +1742,14 @@ a.driver-card:hover strong {
 .profile-heading p:last-child {
   margin: 0;
   color: var(--muted);
+}
+
+.profile-heading p.profile-bio {
+  margin: 10px 0 0;
+  max-width: 52ch;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .profile-stats {

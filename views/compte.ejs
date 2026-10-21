@@ -9,6 +9,14 @@
 
     <% const role = currentUser.userType === 2 ? 'Conducteur' : 'Passager'; %>
     <% const initial = currentUser.name ? currentUser.name.trim().charAt(0) : '?'; %>
+    <%
+      const profileValues = (typeof profile !== 'undefined' && profile) ? profile : {
+        name: currentUser.name || '',
+        phone: currentUser.phone || '',
+        bio: currentUser.bio || '',
+        userType: currentUser.userType,
+      };
+    %>
 
     <header class="account-hero">
       <span class="avatar account-avatar" aria-hidden="true"><%= initial %></span>
@@ -19,6 +27,58 @@
       </div>
       <span class="account-role"><%= role %></span>
     </header>
+
+    <section class="wizard-card account-card">
+      <p class="eyebrow">Profil</p>
+      <h2>Mes informations</h2>
+      <p class="wizard-help">
+        Votre nom et votre présentation apparaissent sur votre profil public.
+        Votre numéro de téléphone reste privé.
+      </p>
+
+      <form class="wizard-form account-form" action="/compte/profil" method="post">
+        <%- include('./partials/csrf-input.ejs') %>
+
+        <label class="field">
+          <span>Nom</span>
+          <input type="text" name="name" value="<%= profileValues.name %>" minlength="2" maxlength="60" required>
+        </label>
+        <% if (errors.name) { %>
+          <p class="form-error" role="alert"><%= errors.name %></p>
+        <% } %>
+
+        <label class="field">
+          <span>Téléphone (privé)</span>
+          <input type="tel" name="phone" value="<%= profileValues.phone %>" maxlength="20" placeholder="0555 12 34 56">
+        </label>
+        <% if (errors.phone) { %>
+          <p class="form-error" role="alert"><%= errors.phone %></p>
+        <% } %>
+
+        <label class="field">
+          <span>Je suis</span>
+          <select name="userType">
+            <option value="1" <%= Number(profileValues.userType) === 1 ? 'selected' : '' %>>Passager</option>
+            <option value="2" <%= Number(profileValues.userType) === 2 ? 'selected' : '' %>>Conducteur</option>
+          </select>
+        </label>
+        <% if (errors.userType) { %>
+          <p class="form-error" role="alert"><%= errors.userType %></p>
+        <% } %>
+
+        <label class="field">
+          <span>Présentation</span>
+          <textarea name="bio" rows="3" maxlength="300" class="compact" placeholder="Quelques mots sur vous"><%= profileValues.bio %></textarea>
+        </label>
+        <% if (errors.bio) { %>
+          <p class="form-error" role="alert"><%= errors.bio %></p>
+        <% } %>
+
+        <div class="wizard-actions">
+          <button class="btn" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </section>
 
     <section class="wizard-card account-card">
       <p class="eyebrow">Sécurité</p>

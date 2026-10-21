@@ -172,7 +172,12 @@ test('driver profile shows average rating and recent reviews', async () => {
   const html = await render('conducteur.ejs', {
     title: 'Rami — Conducteur',
     currentUser: { name: 'Sara' },
-    driver: { _id: '64f000000000000000000002', name: 'Rami', createdAt: new Date('2025-01-01') },
+    driver: {
+      _id: '64f000000000000000000002',
+      name: 'Rami',
+      bio: 'Conducteur régulier entre Alger et Béjaïa.',
+      createdAt: new Date('2025-01-01'),
+    },
     upcomingTrips: [sampleTrip],
     ratingCount: 2,
     ratingAverage: 4.5,
@@ -192,6 +197,7 @@ test('driver profile shows average rating and recent reviews', async () => {
   assert.match(html, /Avis des passagers/);
   assert.match(html, /Trajet impeccable\./);
   assert.match(html, /Sara/);
+  assert.match(html, /Conducteur régulier entre Alger et Béjaïa\./);
 });
 
 test('about page renders the guest navbar and calls to action', async () => {
@@ -265,6 +271,8 @@ test('account page renders profile details and password errors', async () => {
       name: 'Sara',
       email: 'sara@test.dz',
       userType: 1,
+      phone: '0555 12 34 56',
+      bio: 'Je covoiture depuis Alger.',
     },
     errors: {
       currentPassword: 'Mot de passe actuel incorrect.',
@@ -281,6 +289,43 @@ test('account page renders profile details and password errors', async () => {
   assert.match(html, /name="confirm-password"/);
   assert.match(html, /Mot de passe actuel incorrect\./);
   assert.match(html, /Le nouveau mot de passe est trop court\./);
+});
+
+test('account page renders an editable profile form', async () => {
+  const html = await render('compte.ejs', {
+    title: 'Mon compte',
+    currentUser: {
+      _id: '64f000000000000000000002',
+      name: 'Sara',
+      email: 'sara@test.dz',
+      userType: 1,
+      phone: '0555 12 34 56',
+      bio: 'Je covoiture depuis Alger.',
+    },
+    errors: {},
+  });
+
+  assert.match(html, /action="\/compte\/profil"/);
+  assert.match(html, /Mes informations/);
+  assert.match(html, /name="name" value="Sara"/);
+  assert.match(html, /name="phone" value="0555 12 34 56"/);
+  assert.match(html, /Je covoiture depuis Alger\./);
+  assert.match(html, /<option value="1" selected>Passager<\/option>/);
+  assert.match(html, /<option value="2" >Conducteur<\/option>/);
+});
+
+test('account page keeps the submitted profile values after an error', async () => {
+  const html = await render('compte.ejs', {
+    title: 'Mon compte',
+    currentUser: { _id: '64f000000000000000000002', name: 'Sara', email: 'sara@test.dz', userType: 1 },
+    errors: { phone: 'Indiquez un numéro de téléphone valide.' },
+    profile: { name: 'Sara B', phone: 'appelle-moi', bio: 'Bonjour', userType: 2 },
+  });
+
+  assert.match(html, /Indiquez un numéro de téléphone valide\./);
+  assert.match(html, /name="name" value="Sara B"/);
+  assert.match(html, /name="phone" value="appelle-moi"/);
+  assert.match(html, /<option value="2" selected>Conducteur<\/option>/);
 });
 
 test('favourites page lists saved trips with a remove action', async () => {

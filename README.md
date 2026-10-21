@@ -30,6 +30,8 @@ log in, and book their seats.
 - One review per passenger after a completed trip; driver profiles show the
   average rating and recent comments
 - Account page with secure password changes and current profile details
+- Editable profile: display name, private phone number, short public bio and
+  passager/conducteur role, all managed from the account page
 - Favourites: save published trips from a trip page and review them in
   "Mes favoris"
 - Reporting: flag a trip or a driver and follow the moderation status in

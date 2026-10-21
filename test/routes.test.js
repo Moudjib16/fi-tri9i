@@ -1476,6 +1476,89 @@ test('users can change their password from the account page', async () => {
   updated.password = original;
 });
 
+test('users can edit their profile from the account page', async () => {
+  const guestPage = await openPage('/login');
+  const guest = await fetch(`${baseUrl}/compte/profil`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: guestPage.cookie },
+    body: new URLSearchParams({ _csrf: guestPage.token, name: 'Intrus' }),
+    redirect: 'manual',
+  });
+  assert.equal(guest.status, 302);
+  assert.equal(guest.headers.get('location'), '/login?next=%2Fcompte%2Fprofil');
+
+  // A POST without a CSRF token is always rejected.
+  const noToken = await fetch(`${baseUrl}/compte/profil`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ name: 'Intrus' }),
+    redirect: 'manual',
+  });
+  assert.equal(noToken.status, 403);
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const page = await openPage('/compte', passenger.cookie);
+  assert.equal(page.response.status, 200);
+  assert.match(page.html, /Mes informations/);
+  assert.match(page.html, /name="bio"/);
+  assert.match(page.html, /name="phone"/);
+
+  const postProfile = (fields) => fetch(`${baseUrl}/compte/profil`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: page.token, ...fields }),
+    redirect: 'manual',
+  });
+
+  const invalidName = await postProfile({
+    name: 'A',
+    phone: '0555 12 34 56',
+    bio: 'Salut',
+    userType: '1',
+  });
+  assert.equal(invalidName.status, 400);
+  assert.match(await invalidName.text(), /Indiquez un nom valide/);
+
+  const invalidPhone = await postProfile({
+    name: 'Sara B',
+    phone: 'appelle-moi',
+    bio: 'Salut',
+    userType: '1',
+  });
+  assert.equal(invalidPhone.status, 400);
+  assert.match(await invalidPhone.text(), /numéro de téléphone valide/);
+
+  const updated = await postProfile({
+    name: 'Sara Bouaziz',
+    phone: '0555 12 34 56',
+    bio: 'Je covoiture depuis Alger.',
+    userType: '2',
+  });
+  assert.equal(updated.status, 302);
+  assert.equal(updated.headers.get('location'), '/compte');
+
+  const account = state.users.find((candidate) => candidate._id === passengerId);
+  assert.equal(account.name, 'Sara Bouaziz');
+  assert.equal(account.phone, '0555 12 34 56');
+  assert.equal(account.bio, 'Je covoiture depuis Alger.');
+  assert.equal(account.userType, 2);
+
+  const confirmation = await openPage('/compte', passenger.cookie);
+  assert.match(confirmation.html, /Votre profil a été mis à jour/);
+  assert.match(confirmation.html, /Sara Bouaziz/);
+  assert.match(confirmation.html, /Je covoiture depuis Alger\./);
+
+  // The phone number stays private and is never shown on the public profile.
+  const profile = await (await fetch(`${baseUrl}/conducteurs/${passengerId}`)).text();
+  assert.match(profile, /Je covoiture depuis Alger\./);
+  assert.doesNotMatch(profile, /0555 12 34 56/);
+
+  account.name = 'Sara';
+  account.phone = '';
+  account.bio = '';
+  account.userType = 1;
+});
+
 test('users can save trips to their favourites', async () => {
   state.favorites.length = 0;
   const favTripId = '64f000000000000000000601';

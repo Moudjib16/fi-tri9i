@@ -17,7 +17,10 @@
       <div class="profile-heading">
         <p class="eyebrow">Conducteur</p>
         <h1><%= driver.name %></h1>
-        <p>Membre de la communauté Fi Tri9i<% if (memberSince) { %> depuis <%= memberSince %><% } %>.</p>
+        <p class="profile-intro">Membre de la communauté Fi Tri9i<% if (memberSince) { %> depuis <%= memberSince %><% } %>.</p>
+        <% if (driver.bio) { %>
+          <p class="profile-bio"><%= driver.bio %></p>
+        <% } %>
       </div>
       <div class="profile-stats" aria-label="Profil du conducteur">
         <div>

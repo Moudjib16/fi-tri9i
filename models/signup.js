@@ -24,6 +24,19 @@ const Schema = new mongoose.Schema({
         required : true,
         enum: [1, 2]
     },
+    phone:{
+        type: String,
+        trim: true,
+        default: '',
+        maxlength: 20,
+        match: [/^[0-9+()\s.-]{6,20}$/, 'Invalid phone number']
+    },
+    bio:{
+        type: String,
+        trim: true,
+        default: '',
+        maxlength: 300
+    },
     isAdmin:{
         type: Boolean,
         default: false
