@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { backfillTrip } = require('../lib/tripMigration');
+const { distanceBetweenWilayas } = require('../lib/distance');
 
 test('backfillTrip fills the wilaya keys of a legacy trip', () => {
   const changes = backfillTrip({
@@ -34,6 +35,7 @@ test('backfillTrip leaves an up to date trip untouched', () => {
     time: '08 : 00',
     price: '1200da',
     priceDZD: 1200,
+    distanceKm: distanceBetweenWilayas('Alger', 'Béjaïa'),
   });
 
   assert.deepEqual(changes, {});
@@ -48,6 +50,7 @@ test('backfillTrip rebuilds a missing departure date', () => {
     time: '09 : 30',
     price: '900da',
     priceDZD: 900,
+    distanceKm: distanceBetweenWilayas('Oran', 'Tlemcen'),
   });
 
   assert.equal(changes.departureAt.toISOString(), '2031-03-05T09:30:00.000Z');
@@ -62,6 +65,7 @@ test('backfillTrip keeps a trip without date or time as it is', () => {
     dateData: '',
     time: '',
     price: '',
+    distanceKm: distanceBetweenWilayas('Oran', 'Tlemcen'),
   });
 
   assert.deepEqual(changes, {});

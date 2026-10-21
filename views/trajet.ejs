@@ -47,6 +47,13 @@
             <dt>Places restantes</dt>
             <dd><%= remaining %> / <%= trip.places %></dd>
           </div>
+          <% const distance = tripDistance(trip); %>
+          <% if (distance) { %>
+            <div>
+              <dt>Distance</dt>
+              <dd>≈ <%= distance.km %> km<% if (distance.duration) { %> · <%= distance.duration %><% } %></dd>
+            </div>
+          <% } %>
         </dl>
 
         <section class="detail-section">

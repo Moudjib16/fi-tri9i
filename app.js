@@ -14,6 +14,7 @@ const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
 const { formatDateFr, formatDateIso } = require('./lib/validation');
 const { wilayaOptions } = require('./lib/wilayas');
+const { tripDistanceOf } = require('./lib/distance');
 const { completePastTrips } = require('./lib/tripStatus');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
@@ -99,6 +100,7 @@ app.use((req, res, next) => {
   res.locals.formatDate = formatDateFr;
   res.locals.formatDateIso = formatDateIso;
   res.locals.wilayas = wilayaOptions();
+  res.locals.tripDistance = tripDistanceOf;
   next();
 });
 

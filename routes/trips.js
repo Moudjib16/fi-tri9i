@@ -17,6 +17,7 @@ const { tripNotFound, serverError } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
 const { notifyUsers } = require('../lib/notifications');
 const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
+const { distanceBetweenWilayas } = require('../lib/distance');
 const { effectiveStatus, isPastDeparture } = require('../lib/tripStatus');
 
 const router = express.Router();
@@ -227,6 +228,7 @@ router.post('/trajets/:id/modifier', async (req, res) => {
     foundTrip.price = parsedPrice.display;
     foundTrip.priceDZD = parsedPrice.amount;
     foundTrip.description = values.description;
+    foundTrip.distanceKm = distanceBetweenWilayas(foundTrip.depart, foundTrip.arrivee) || 0;
 
     await foundTrip.save();
     await notifyUsers(foundTrip.passengers, {
@@ -255,7 +257,7 @@ router.get('/trajets', async (req, res) => {
       ? requestedPlaces
       : 1;
     const places = req.query.places ? wantedPlaces : '';
-    const sortKey = ['soonest', 'price', 'recent', 'rating'].includes(req.query.sort)
+    const sortKey = ['soonest', 'price', 'recent', 'rating', 'distance'].includes(req.query.sort)
       ? req.query.sort
       : 'soonest';
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
@@ -348,6 +350,7 @@ router.get('/trajets', async (req, res) => {
       price: { priceDZD: 1, departureAt: 1 },
       recent: { createdAt: -1 },
       rating: { driverRating: -1, departureAt: 1 },
+      distance: { distanceKm: 1, departureAt: 1 },
     };
 
     const trips = await trip

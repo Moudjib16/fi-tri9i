@@ -12,6 +12,7 @@ const {
 const { requireUser, requirePublishUser, requireDraftTrip } = require('../lib/session');
 const { setFlash } = require('../lib/flash');
 const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
+const { distanceBetweenWilayas } = require('../lib/distance');
 const { serverError } = require('../lib/http');
 
 const router = express.Router();
@@ -359,6 +360,7 @@ router.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) 
 
     existingTrip.status = 'published';
     existingTrip.publishedAt = new Date();
+    existingTrip.distanceKm = distanceBetweenWilayas(existingTrip.depart, existingTrip.arrivee) || 0;
     await existingTrip.save();
 
     delete req.session.tripId;

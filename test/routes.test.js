@@ -1930,6 +1930,43 @@ test('the place reference data is served as json', async () => {
   assert.ok(Array.isArray(places.bejaia));
 });
 
+test('search sorts the trips by distance', async () => {
+  const nearId = '64f000000000000000000866';
+  const farId = '64f000000000000000000867';
+
+  const base = {
+    status: 'published',
+    depart: 'Alger',
+    depart0: 'Centre',
+    arrivee: 'Oran',
+    arrivee0: 'Es Sénia',
+    dateData: '12 December 2030',
+    departureAt: new Date('2030-12-12T08:00:00Z'),
+    time: '08 : 00',
+    price: '1200da',
+    priceDZD: 1200,
+    places: 3,
+    places_taken: 0,
+    passengers: [],
+    description: '',
+    driver: { _id: driverId, name: 'Karim' },
+  };
+
+  state.trips.push({ ...base, _id: nearId, depart0: 'Procheville', distanceKm: 205 });
+  state.trips.push({ ...base, _id: farId, depart0: 'Lointainville', distanceKm: 402 });
+
+  const sorted = await (await fetch(`${baseUrl}/trajets?depart=Alger&sort=distance`)).text();
+  const nearIndex = sorted.indexOf('Procheville');
+  const farIndex = sorted.indexOf('Lointainville');
+  assert.ok(nearIndex !== -1 && farIndex !== -1);
+  assert.ok(nearIndex < farIndex, 'the shortest trip must come first');
+
+  for (const id of [nearId, farId]) {
+    const index = state.trips.findIndex((candidate) => candidate._id === id);
+    state.trips.splice(index, 1);
+  }
+});
+
 test('users can save trips to their favourites', async () => {
   state.favorites.length = 0;
   const favTripId = '64f000000000000000000601';

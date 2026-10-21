@@ -23,8 +23,11 @@ log in, and book their seats.
   "12 décembre 2030"; ISO, French and legacy English labels are all accepted on
   input
 - Trip search by departure, arrival, date, available seats, price range and
-  departure time window, with sorting (soonest, price, recent, driver rating),
-  pagination and automatic hiding of full or already-departed trips
+  departure time window, with sorting (soonest, price, recent, driver rating,
+  shortest trip), pagination and automatic hiding of full or already-departed
+  trips
+- Estimated distance and driving time between the two wilayas, computed from
+  the coordinates of the 58 wilaya capitals, shown on the trip cards and pages
 - Driver ratings are copied on their trips, so listings can sort by the best
   rated drivers and cards can show the average rating
 - Trip details with seat reservation and cancellation before departure; a
@@ -132,6 +135,7 @@ routes/           # pages, account, admin, auth, drivers, favourites, messages, 
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/wilayas.js    # Reference data for the 58 wilayas and their communes
+lib/distance.js   # Distance and driving time between two wilayas
 lib/ratings.js    # Keeps the driver rating stored on their trips up to date
 lib/tripStatus.js # Resolves and persists the completed trips
 lib/tripMigration.js # Computes the fields added later on the existing trips
@@ -146,7 +150,7 @@ models/           # User, Trip, Message, Notification, Review, Favorite and Repo
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips, backfill-trips, seed)
-test/             # node:test suites (validation, views, wilayas, http, seed, booking flow)
+test/             # node:test suites (validation, views, wilayas, distance, http, seed, booking flow)
 .github/workflows/ # CI running the lint and the test suite
 ```
 

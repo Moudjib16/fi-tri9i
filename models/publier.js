@@ -101,6 +101,12 @@ const Schema = new mongoose.Schema({
         default: 0,
         min: 0
     },
+    // Estimated road distance between the two wilayas, in kilometres.
+    distanceKm: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     passengers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -112,6 +118,7 @@ Schema.index({ departKey: 1, arriveeKey: 1 });
 Schema.index({ driver: 1 });
 Schema.index({ passengers: 1 });
 Schema.index({ driverRating: -1, departureAt: 1 });
+Schema.index({ distanceKm: 1, departureAt: 1 });
 
 const trip = mongoose.models.trip || mongoose.model('trip', Schema);
 

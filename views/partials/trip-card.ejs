@@ -3,6 +3,7 @@
 <% const driverId = t.driver && t.driver._id ? t.driver._id : null; %>
 <% const driverRating = Number(t.driverRating) || 0; %>
 <% const driverRatingCount = Number(t.driverRatingCount) || 0; %>
+<% const distance = tripDistance(t); %>
 <article class="trip-card">
   <div class="trip-route">
     <span><%= t.depart %></span>
@@ -33,6 +34,12 @@
       <dt>Places</dt>
       <dd><%= remaining %> / <%= t.places %></dd>
     </div>
+    <% if (distance) { %>
+      <div>
+        <dt>Distance</dt>
+        <dd>≈ <%= distance.km %> km<% if (distance.duration) { %> · <%= distance.duration %><% } %></dd>
+      </div>
+    <% } %>
   </dl>
 
   <% if (t.description) { %>

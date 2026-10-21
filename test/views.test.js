@@ -6,6 +6,7 @@ const ejs = require('ejs');
 const { REPORT_REASONS } = require('../lib/reports');
 const { formatDateFr, formatDateIso } = require('../lib/validation');
 const { wilayaOptions } = require('../lib/wilayas');
+const { tripDistanceOf } = require('../lib/distance');
 
 const renderFile = util.promisify(ejs.renderFile);
 const view = (name) => path.join(__dirname, '..', 'views', name);
@@ -14,6 +15,7 @@ const render = (name, data) => renderFile(view(name), {
   formatDate: formatDateFr,
   formatDateIso,
   wilayas: wilayaOptions(),
+  tripDistance: tripDistanceOf,
   ...data,
 });
 
@@ -72,6 +74,9 @@ test('trip listing renders trip cards', async () => {
   assert.match(html, /Bejaia/);
   assert.match(html, /Voir le trajet/);
   assert.match(html, /1 trajet trouvé/);
+  // The card shows the estimated distance between the two wilayas.
+  assert.match(html, /Distance/);
+  assert.match(html, /km/);
 });
 
 test('trip listing renders the price, time window and rating filters', async () => {
