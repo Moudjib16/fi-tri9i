@@ -1,5 +1,6 @@
 const express = require('express');
 const Notification = require('../models/notification');
+const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.get('/notifications', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load notifications' });
+    return serverError(res);
   }
 });
 

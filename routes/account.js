@@ -4,6 +4,7 @@ const user = require('../models/signup');
 const { setFlash } = require('../lib/flash');
 const { requireUser, regenerateSession } = require('../lib/session');
 const { pickString } = require('../lib/validation');
+const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -65,7 +66,7 @@ router.post('/compte/profil', requireUser, async (req, res) => {
     return res.redirect('/compte');
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update profile' });
+    return serverError(res);
   }
 });
 
@@ -126,13 +127,13 @@ router.post('/compte/mot-de-passe', requireUser, async (req, res) => {
     setFlash(req, 'success', 'Votre mot de passe a été mis à jour.');
     return req.session.save((err) => {
       if (err) {
-        return res.status(500).send({ message: 'Error saving session' });
+        return serverError(res);
       }
       return res.redirect('/compte');
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update password' });
+    return serverError(res);
   }
 });
 

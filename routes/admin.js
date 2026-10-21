@@ -9,6 +9,7 @@ const { describeReports } = require('../lib/reportTargets');
 const { setFlash } = require('../lib/flash');
 const { requireAdmin } = require('../lib/session');
 const { notifyUsers } = require('../lib/notifications');
+const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.get('/admin', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load the moderation dashboard' });
+    return serverError(res);
   }
 });
 
@@ -102,7 +103,7 @@ router.post('/admin/signaux/:id', async (req, res) => {
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update the report' });
+    return serverError(res);
   }
 });
 
@@ -135,7 +136,7 @@ router.post('/admin/trajets/:id/annuler', async (req, res) => {
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to cancel the trip' });
+    return serverError(res);
   }
 });
 
@@ -165,7 +166,7 @@ router.post('/admin/utilisateurs/:id/suspension', async (req, res) => {
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update the account' });
+    return serverError(res);
   }
 });
 
@@ -195,7 +196,7 @@ router.post('/admin/utilisateurs/:id/role', async (req, res) => {
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update the account' });
+    return serverError(res);
   }
 });
 

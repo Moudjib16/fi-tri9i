@@ -4,7 +4,7 @@ const trip = require('../models/publier');
 const Review = require('../models/review');
 const { pickString } = require('../lib/validation');
 const { setFlash } = require('../lib/flash');
-const { tripNotFound } = require('../lib/http');
+const { tripNotFound, serverError } = require('../lib/http');
 const { refreshDriverRating } = require('../lib/ratings');
 
 const router = express.Router();
@@ -82,7 +82,7 @@ router.get('/trajets/:id/avis', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load review form' });
+    return serverError(res);
   }
 });
 
@@ -144,7 +144,7 @@ router.post('/trajets/:id/avis', async (req, res) => {
       return res.redirect(`/trajets/${req.params.id}`);
     }
     console.error(err);
-    return res.status(500).send({ message: 'Unable to save review' });
+    return serverError(res);
   }
 });
 

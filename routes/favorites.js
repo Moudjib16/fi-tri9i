@@ -4,7 +4,7 @@ const trip = require('../models/publier');
 const Favorite = require('../models/favorite');
 const { safeRedirect } = require('../lib/validation');
 const { setFlash } = require('../lib/flash');
-const { tripNotFound } = require('../lib/http');
+const { tripNotFound, serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -69,7 +69,7 @@ router.post('/trajets/:id/favori', async (req, res) => {
       return res.redirect(tripUrl);
     }
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update favourites' });
+    return serverError(res);
   }
 });
 
@@ -100,7 +100,7 @@ router.get('/mes-favoris', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load your favourites' });
+    return serverError(res);
   }
 });
 

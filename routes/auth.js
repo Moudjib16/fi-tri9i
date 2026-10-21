@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const user = require('../models/signup');
 const { safeRedirect } = require('../lib/validation');
 const { regenerateSession } = require('../lib/session');
+const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ router.post('/signup', async (req, res) => {
     req.session.userId = result._id;
     return req.session.save((err) => {
       if (err) {
-        return res.status(500).send({ message: 'Error saving session' });
+        return serverError(res);
       }
       return res.redirect('/');
     });
@@ -58,7 +59,7 @@ router.post('/signup', async (req, res) => {
     if (err && err.name === 'ValidationError') {
       return res.status(400).render('signup', { exist: 'Invalid signup data.' });
     }
-    return res.status(500).send({ message: 'Error saving to database' });
+    return serverError(res);
   }
 });
 
@@ -83,7 +84,7 @@ router.post('/login', async (req, res) => {
       req.session.userId = check._id;
       return req.session.save((err) => {
         if (err) {
-          return res.status(500).send('wrong details');
+          return serverError(res);
         }
         return res.redirect(nextUrl);
       });
@@ -91,7 +92,7 @@ router.post('/login', async (req, res) => {
     return res.status(401).render('login/wrongpass');
   } catch (err) {
     console.log(err);
-    return res.status(500).send('wrong details');
+    return serverError(res);
   }
 });
 

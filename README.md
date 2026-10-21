@@ -57,7 +57,7 @@ log in, and book their seats.
   cancelling trips
 - About page, session-aware navbar and working footer/shortcut links
 - Dedicated error pages (existing email, user not found, wrong password, 403,
-  404, 500)
+  404, 500); every failure renders a page, never a raw JSON payload
 - Security: helmet with a strict CSP, rate limiting on authentication, httpOnly
   cookies, per-session CSRF tokens on every POST, and session regeneration on
   login/signup
@@ -129,12 +129,12 @@ lib/reports.js    # Shared report reasons and labels
 lib/reportTargets.js # Resolves the trip or profile targeted by a report
 lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
-lib/http.js       # Shared HTTP helpers
+lib/http.js       # Shared HTTP helpers (404 page and server error page)
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips)
-test/             # node:test suites (validation, views, wilayas, booking flow)
+test/             # node:test suites (validation, views, wilayas, http, booking flow)
 ```
 
 ## Roadmap

@@ -13,7 +13,7 @@ const {
   isPastDate,
   formatDateIso,
 } = require('../lib/validation');
-const { tripNotFound } = require('../lib/http');
+const { tripNotFound, serverError } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
 const { notifyUsers } = require('../lib/notifications');
 const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
@@ -140,7 +140,7 @@ router.get('/trajets/:id/modifier', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load edit form' });
+    return serverError(res);
   }
 });
 
@@ -215,7 +215,7 @@ router.post('/trajets/:id/modifier', async (req, res) => {
     return res.redirect(`/trajets/${foundTrip._id}`);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to update trip' });
+    return serverError(res);
   }
 });
 
@@ -365,7 +365,7 @@ router.get('/trajets', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load trips' });
+    return serverError(res);
   }
 });
 
@@ -434,7 +434,7 @@ router.get('/trajets/:id', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load trip' });
+    return serverError(res);
   }
 });
 
@@ -667,7 +667,7 @@ router.get('/mes-trajets', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load your trips' });
+    return serverError(res);
   }
 });
 

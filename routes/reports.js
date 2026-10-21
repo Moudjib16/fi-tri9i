@@ -7,7 +7,7 @@ const { pickString, formatDateFr } = require('../lib/validation');
 const { REPORT_REASONS, reportReasonLabel } = require('../lib/reports');
 const { describeReports } = require('../lib/reportTargets');
 const { setFlash } = require('../lib/flash');
-const { tripNotFound } = require('../lib/http');
+const { tripNotFound, serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -129,7 +129,7 @@ async function submitReport(req, res, target) {
     return res.redirect(target.targetUrl);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to save report' });
+    return serverError(res);
   }
 }
 
@@ -142,7 +142,7 @@ router.get('/trajets/:id/signaler', async (req, res) => {
     return await renderReportForm(req, res, target);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load report form' });
+    return serverError(res);
   }
 });
 
@@ -155,7 +155,7 @@ router.post('/trajets/:id/signaler', async (req, res) => {
     return await submitReport(req, res, target);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to save report' });
+    return serverError(res);
   }
 });
 
@@ -168,7 +168,7 @@ router.get('/conducteurs/:id/signaler', async (req, res) => {
     return await renderReportForm(req, res, target);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load report form' });
+    return serverError(res);
   }
 });
 
@@ -181,7 +181,7 @@ router.post('/conducteurs/:id/signaler', async (req, res) => {
     return await submitReport(req, res, target);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to save report' });
+    return serverError(res);
   }
 });
 
@@ -209,7 +209,7 @@ router.get('/mes-signalements', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load your reports' });
+    return serverError(res);
   }
 });
 

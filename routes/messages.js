@@ -4,7 +4,7 @@ const trip = require('../models/publier');
 const Message = require('../models/message');
 const { pickString } = require('../lib/validation');
 const { setFlash } = require('../lib/flash');
-const { tripNotFound } = require('../lib/http');
+const { tripNotFound, serverError } = require('../lib/http');
 const { notifyUsers, participantIds } = require('../lib/notifications');
 
 const router = express.Router();
@@ -80,7 +80,7 @@ router.get('/trajets/:id/messages', async (req, res) => {
     return await renderConversation(req, res, conversation);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to load messages' });
+    return serverError(res);
   }
 });
 
@@ -127,7 +127,7 @@ router.post('/trajets/:id/messages', async (req, res) => {
     return res.redirect(`/trajets/${conversation.trip._id}/messages`);
   } catch (err) {
     console.error(err);
-    return res.status(500).send({ message: 'Unable to send message' });
+    return serverError(res);
   }
 });
 

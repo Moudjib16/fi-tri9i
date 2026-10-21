@@ -12,6 +12,7 @@ const {
 const { requireUser, requirePublishUser, requireDraftTrip } = require('../lib/session');
 const { setFlash } = require('../lib/flash');
 const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
+const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
@@ -67,7 +68,8 @@ router.post('/depart', requirePublishUser, async (req, res) => {
   try {
     const depart = pickString(req.body.depart || req.body.content);
     if (!depart) {
-      return res.status(400).send({ message: 'Missing depart' });
+      setFlash(req, 'error', 'Indiquez la wilaya de départ.');
+      return res.redirect('/publier/page1');
     }
 
     // Only the 58 Algerian wilayas are accepted, stored with their canonical
@@ -117,7 +119,7 @@ router.post('/depart', requirePublishUser, async (req, res) => {
   } catch (err) {
     console.log(err);
     // Send an error response if saving fails
-    return res.status(500).send({ message: 'Error saving to database' });
+    return serverError(res);
   }
 });
 
@@ -126,12 +128,14 @@ router.post('/depart0', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const depart0 = pickString(req.body.depart0 ?? req.body.content);
     if (!depart0) {
-      return res.status(400).send({ message: 'Missing depart0' });
+      setFlash(req, 'error', 'Indiquez la commune de départ.');
+      return res.redirect('/publier/page2');
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
-      return res.status(404).send({ message: error });
+      setFlash(req, 'error', "Ce brouillon n'est plus disponible.");
+      return res.redirect('/publier/page1');
     }
 
     existingTrip.depart0 = depart0;
@@ -141,7 +145,7 @@ router.post('/depart0', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).redirect('/publier/page3');
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating depart0' });
+    return serverError(res);
   }
 });
 
@@ -149,7 +153,8 @@ router.post('/arrivee', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const arrivee = pickString(req.body.arrivee ?? req.body.content);
     if (!arrivee) {
-      return res.status(400).send({ message: 'Missing arrivee' });
+      setFlash(req, 'error', 'Indiquez la wilaya d’arrivée.');
+      return res.redirect('/publier/page3');
     }
 
     const canonicalArrivee = canonicalWilaya(arrivee);
@@ -160,7 +165,8 @@ router.post('/arrivee', requireUser, requireDraftTrip, async (req, res) => {
 
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
-      return res.status(404).send({ message: error });
+      setFlash(req, 'error', "Ce brouillon n'est plus disponible.");
+      return res.redirect('/publier/page1');
     }
 
     existingTrip.arrivee = canonicalArrivee;
@@ -171,7 +177,7 @@ router.post('/arrivee', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).redirect('/publier/page4');
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating arrivee' });
+    return serverError(res);
   }
 });
 
@@ -179,12 +185,14 @@ router.post('/arrivee0', requireUser, requireDraftTrip, async (req, res) => {
   try {
     const arrivee0 = pickString(req.body.arrivee0 ?? req.body.content);
     if (!arrivee0) {
-      return res.status(400).send({ message: 'Missing arrivee0' });
+      setFlash(req, 'error', 'Indiquez la commune d’arrivée.');
+      return res.redirect('/publier/page4');
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
-      return res.status(404).send({ message: error });
+      setFlash(req, 'error', "Ce brouillon n'est plus disponible.");
+      return res.redirect('/publier/page1');
     }
 
     existingTrip.arrivee0 = arrivee0;
@@ -194,7 +202,7 @@ router.post('/arrivee0', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).redirect('/publier/calendaire');
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating arrivee0' });
+    return serverError(res);
   }
 });
 
@@ -220,7 +228,7 @@ router.post('/date', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating date' });
+    return res.status(500).send({ message: 'Erreur serveur' });
   }
 });
 
@@ -241,7 +249,7 @@ router.post('/time', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating time' });
+    return res.status(500).send({ message: 'Erreur serveur' });
   }
 });
 
@@ -262,7 +270,7 @@ router.post('/places', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating places' });
+    return res.status(500).send({ message: 'Erreur serveur' });
   }
 });
 
@@ -283,7 +291,7 @@ router.post('/price', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating price' });
+    return res.status(500).send({ message: 'Erreur serveur' });
   }
 });
 
@@ -303,7 +311,7 @@ router.post('/description', requireUser, requireDraftTrip, async (req, res) => {
     return res.status(200).send({ ok: true });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ message: 'Error updating description' });
+    return res.status(500).send({ message: 'Erreur serveur' });
   }
 });
 
@@ -358,7 +366,7 @@ router.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) 
     return res.redirect(`/trajets/${existingTrip._id}`);
   } catch (err) {
     console.error(err);
-    return res.status(500).render('404', { stylesheet: '404/', title: 'Erreur' });
+    return serverError(res);
   }
 });
 
