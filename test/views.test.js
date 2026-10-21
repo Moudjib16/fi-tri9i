@@ -316,6 +316,7 @@ test('my trips renders published and reserved sections', async () => {
     booked: [{ ...sampleTrip, driver: { name: 'Karim' } }],
     drafts: [{ ...sampleTrip, depart: 'Draftville', arrivee: '', status: 'draft' }],
     cancelledTrips: [{ ...sampleTrip, status: 'cancelled' }],
+    completed: [{ ...sampleTrip, depart: 'Terminus', status: 'completed' }],
   });
 
   assert.match(html, /Brouillons \(1\)/);
@@ -323,10 +324,27 @@ test('my trips renders published and reserved sections', async () => {
   assert.match(html, /Draftville/);
   assert.match(html, /Reprendre/);
   assert.match(html, /\/publier\/continuer\/64f000000000000000000001/);
-  assert.match(html, /Trajets publiés \(1\)/);
+  assert.match(html, /Trajets à venir \(1\)/);
   assert.match(html, /Mes réservations \(1\)/);
   assert.match(html, /Sara/);
   assert.match(html, /Karim/);
+});
+
+test('my trips lists the completed trips apart', async () => {
+  const html = await render('mes-trajets.ejs', {
+    stylesheet: 'mes-trajets/',
+    title: 'Mes trajets',
+    currentUser: { name: 'Rami' },
+    published: [],
+    booked: [],
+    drafts: [],
+    cancelledTrips: [],
+    completed: [{ ...sampleTrip, depart: 'Terminus', status: 'completed' }],
+  });
+
+  assert.match(html, /Trajets terminés \(1\)/);
+  assert.match(html, /Terminus/);
+  assert.match(html, /Terminé/);
 });
 
 test('account page renders profile details and password errors', async () => {

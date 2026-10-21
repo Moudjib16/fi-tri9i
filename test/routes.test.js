@@ -110,6 +110,14 @@ function matchesTrip(candidate, filter) {
       if (!departure) {
         return false;
       }
+      if (value.$type !== undefined) {
+        // Only a real date matches, a missing departure does not.
+        if (value.$type !== 'date' || Number.isNaN(departure.getTime())) {
+          return false;
+        }
+        if (value.$lte !== undefined && departure > new Date(value.$lte)) return false;
+        return true;
+      }
       if (value.$hour !== undefined) {
         const hour = departure.getUTCHours();
         if (value.$hour.$gte !== undefined && hour < value.$hour.$gte) return false;
@@ -156,6 +164,9 @@ function matchesTrip(candidate, filter) {
     }
     if (key === 'status' && value && value.$nin) {
       return !value.$nin.includes(candidate.status);
+    }
+    if (key === 'status' && value && Array.isArray(value.$in)) {
+      return value.$in.includes(candidate.status);
     }
     if (key === 'status' && value && value.$ne !== undefined) {
       return candidate.status !== value.$ne;
@@ -1369,13 +1380,13 @@ test('passengers cannot cancel a past reservation', async () => {
     places: 2,
     places_taken: 1,
     passengers: [passengerId],
-    description: 'Trajet passé',
+    description: 'Ancien trajet',
     driver: { _id: driverId, name: 'Karim' },
   });
 
   const passenger = await login('sara@test.dz', 'secret1');
   const detail = await openPage(`/trajets/${pastTripId}`, passenger.cookie);
-  assert.match(detail.html, /Trajet passé/);
+  assert.match(detail.html, /Trajet terminé/);
   assert.doesNotMatch(detail.html, /Annuler ma réservation/);
 
   const cancel = await fetch(`${baseUrl}/trajets/${pastTripId}/annuler`, {
@@ -2094,4 +2105,51 @@ test('administrators can moderate reports, trips and accounts', async () => {
   const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
   state.trips.splice(tripIndex, 1);
   state.reports.length = 0;
+});
+
+test('a published trip that already left is completed', async () => {
+  const { completePastTrips } = require('../lib/tripStatus');
+  const driver = await login('karim@test.dz', 'secret1');
+  const pastTripId = '64f000000000000000000857';
+  state.trips.push({
+    _id: pastTripId,
+    status: 'published',
+    depart: 'Terminus',
+    depart0: 'Centre',
+    arrivee: 'Alger',
+    arrivee0: 'Bab Ezzouar',
+    dateData: '1 janvier 2020',
+    departureAt: new Date('2020-01-01T08:00:00Z'),
+    time: '08 : 00',
+    price: '600da',
+    priceDZD: 600,
+    places: 3,
+    places_taken: 1,
+    passengers: [],
+    description: 'Trajet terminé',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const dashboard = await (await fetch(`${baseUrl}/mes-trajets`, {
+    headers: { cookie: driver.cookie },
+  })).text();
+  assert.match(dashboard, /Trajets terminés \(\d+\)/);
+  assert.match(dashboard, /Terminus/);
+
+  const detail = await (await fetch(`${baseUrl}/trajets/${pastTripId}`)).text();
+  assert.match(detail, /Trajet terminé/);
+
+  // The maintenance helper persists the new status.
+  const result = await completePastTrips();
+  assert.ok(result.modifiedCount >= 1);
+  assert.equal(state.trips.find((candidate) => candidate._id === pastTripId).status, 'completed');
+
+  const afterSync = await (await fetch(`${baseUrl}/mes-trajets`, {
+    headers: { cookie: driver.cookie },
+  })).text();
+  assert.match(afterSync, /Trajets terminés \(\d+\)/);
+  assert.match(afterSync, /Terminus/);
+
+  const index = state.trips.findIndex((candidate) => candidate._id === pastTripId);
+  state.trips.splice(index, 1);
 });

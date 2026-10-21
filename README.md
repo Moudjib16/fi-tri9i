@@ -48,8 +48,11 @@ log in, and book their seats.
   suspend accounts and manage admin roles
 - Drivers can cancel published trips; cancelled rides leave search, appear in
   driver history, and are flagged in passengers' reservations
-- "My trips" dashboard: drafts, published rides, cancelled rides and
-  reservations in one place
+- "My trips" dashboard: drafts, upcoming rides, completed rides, cancelled
+  rides and reservations in one place
+- A published trip that already left is completed: it leaves the upcoming
+  list, appears under "Trajets terminés" and can no longer be edited
+  (`npm run complete-trips` persists the status in the database)
 - Flash confirmations and errors for publishing, deleting, booking and
   cancelling trips
 - About page, session-aware navbar and working footer/shortcut links
@@ -78,6 +81,7 @@ npm start       # http://localhost:3000
 npm run dev     # with auto-reload (nodemon)
 npm test        # validation, views and booking-flow tests
 npm run create-admin -- admin@exemple.com   # grant the moderation role
+npm run complete-trips   # mark the trips that already left as completed
 ```
 
 ## Configuration (.env)
@@ -120,6 +124,7 @@ db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
 lib/wilayas.js    # Reference data for the 58 wilayas and their communes
 lib/ratings.js    # Keeps the driver rating stored on their trips up to date
+lib/tripStatus.js # Resolves and persists the completed trips
 lib/reports.js    # Shared report reasons and labels
 lib/reportTargets.js # Resolves the trip or profile targeted by a report
 lib/session.js    # Session regeneration and route guards
@@ -128,8 +133,8 @@ lib/http.js       # Shared HTTP helpers
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
-scripts/          # maintenance scripts (create-admin)
-test/             # node:test suites (validation, views, booking flow)
+scripts/          # maintenance scripts (create-admin, complete-trips)
+test/             # node:test suites (validation, views, wilayas, booking flow)
 ```
 
 ## Roadmap

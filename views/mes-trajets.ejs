@@ -17,11 +17,12 @@
     <% const draftTrips = typeof drafts !== 'undefined' ? drafts : []; %>
     <% const cancelledList = typeof cancelledTrips !== 'undefined' ? cancelledTrips : []; %>
     <% const bookedList = typeof booked !== 'undefined' ? booked : []; %>
+    <% const completedList = typeof completed !== 'undefined' ? completed : []; %>
 
     <section class="dashboard-stats" aria-label="Résumé de votre activité">
       <div class="stat-card">
         <strong><%= published.length %></strong>
-        <span>trajet<%= published.length === 1 ? '' : 's' %> publié<%= published.length === 1 ? '' : 's' %></span>
+        <span>trajet<%= published.length === 1 ? '' : 's' %> à venir</span>
       </div>
       <div class="stat-card">
         <strong><%= bookedList.length %></strong>
@@ -87,12 +88,12 @@
 
     <section class="my-section">
       <div class="results-head">
-        <h2>Trajets publiés (<%= published.length %>)</h2>
+        <h2>Trajets à venir (<%= published.length %>)</h2>
       </div>
 
       <% if (!published.length) { %>
         <div class="empty-state">
-          <h3>Vous n'avez publié aucun trajet.</h3>
+          <h3>Vous n'avez publié aucun trajet à venir.</h3>
           <p>Publiez votre premier trajet pour partager vos places.</p>
           <a class="btn" href="/publier/page1">Publier un trajet</a>
         </div>
@@ -148,6 +149,55 @@
         </div>
       <% } %>
     </section>
+
+    <% if (completedList.length) { %>
+      <section class="my-section">
+        <div class="results-head">
+          <h2>Trajets terminés (<%= completedList.length %>)</h2>
+        </div>
+
+        <div class="trip-grid">
+          <% completedList.forEach(function (t) { %>
+            <% const passengers = (t.passengers || []).filter(function (p) { return p && p.name; }); %>
+            <article class="trip-card completed-card">
+              <span class="draft-badge">Terminé</span>
+              <div class="trip-route">
+                <span><%= t.depart %></span>
+                <span class="route-arrow">&rarr;</span>
+                <span><%= t.arrivee || 'Destination à préciser' %></span>
+              </div>
+
+              <dl class="trip-meta">
+                <div>
+                  <dt>Date</dt>
+                  <dd><%= formatDate(t.dateData) || t.dateData || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Heure</dt>
+                  <dd><%= t.time || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Prix</dt>
+                  <dd><%= t.price || 'À préciser' %></dd>
+                </div>
+                <div>
+                  <dt>Passagers</dt>
+                  <dd><%= passengers.length %></dd>
+                </div>
+              </dl>
+
+              <div class="trip-card-footer">
+                <span></span>
+                <span class="trip-card-links">
+                  <a class="trip-link" href="/trajets/<%= t._id %>/messages">Messages</a>
+                  <a class="trip-link" href="/trajets/<%= t._id %>">Voir le trajet &rarr;</a>
+                </span>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </section>
+    <% } %>
 
     <% if (cancelledList.length) { %>
       <section class="my-section">

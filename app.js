@@ -14,6 +14,7 @@ const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
 const { formatDateFr, formatDateIso } = require('./lib/validation');
 const { wilayaOptions } = require('./lib/wilayas');
+const { completePastTrips } = require('./lib/tripStatus');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
 const messagesRouter = require('./routes/messages');
@@ -222,6 +223,15 @@ if (require.main === module) {
   app.listen(port, () => {
     console.log(`App listening at port ${port}`);
   });
+
+  // Keep the status of the trips that already left up to date.
+  const completeTrips = () => {
+    completePastTrips().catch((err) => {
+      console.error('Unable to complete past trips:', err.message);
+    });
+  };
+  completeTrips();
+  setInterval(completeTrips, 15 * 60 * 1000);
 }
 
 module.exports = app;

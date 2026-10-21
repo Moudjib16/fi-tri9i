@@ -17,6 +17,7 @@ const { tripNotFound } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
 const { notifyUsers } = require('../lib/notifications');
 const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
+const { effectiveStatus, isPastDeparture } = require('../lib/tripStatus');
 
 const router = express.Router();
 
@@ -390,7 +391,8 @@ router.get('/trajets/:id', async (req, res) => {
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
     const isDraft = foundTrip.status === 'draft';
     const isCancelled = foundTrip.status === 'cancelled';
-    const hasDeparted = Boolean(foundTrip.departureAt && isPastDate(new Date(foundTrip.departureAt)));
+    const hasDeparted = isPastDeparture(foundTrip);
+    const isCompleted = effectiveStatus(foundTrip) === 'completed';
 
     if (isDraft && !isDriver) {
       return tripNotFound(res);
@@ -423,6 +425,7 @@ router.get('/trajets/:id', async (req, res) => {
       isBooked,
       isDraft,
       isCancelled,
+      isCompleted,
       hasDeparted,
       remaining,
       canReview: canReview && !hasReviewed,
@@ -632,8 +635,8 @@ router.get('/mes-trajets', async (req, res) => {
   }
 
   try {
-    const [published, booked, drafts, cancelledTrips] = await Promise.all([
-      trip.find({ driver: req.session.userId, status: { $nin: ['draft', 'cancelled'] } })
+    const [publishedRaw, booked, drafts, cancelledTrips] = await Promise.all([
+      trip.find({ driver: req.session.userId, status: { $in: ['published', 'completed'] } })
         .populate('passengers', 'name')
         .sort({ createdAt: -1 })
         .lean(),
@@ -649,10 +652,15 @@ router.get('/mes-trajets', async (req, res) => {
         .lean(),
     ]);
 
+    // A published trip that already left is completed.
+    const published = publishedRaw.filter((savedTrip) => effectiveStatus(savedTrip) === 'published');
+    const completed = publishedRaw.filter((savedTrip) => effectiveStatus(savedTrip) === 'completed');
+
     return res.render('mes-trajets', {
       stylesheet: 'mes-trajets/',
       title: 'Mes trajets',
       published,
+      completed,
       booked,
       drafts,
       cancelledTrips,

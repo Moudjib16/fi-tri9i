@@ -1272,6 +1272,15 @@ textarea:focus-visible {
   opacity: 0.78;
 }
 
+.trip-card.completed-card {
+  opacity: 0.85;
+}
+
+.trip-card.completed-card .draft-badge {
+  background: #eef2f0;
+  color: var(--muted);
+}
+
 .trip-route {
   display: flex;
   align-items: center;

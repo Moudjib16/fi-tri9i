@@ -119,6 +119,8 @@
                 </form>
               <% } else if (typeof isCancelled !== 'undefined' && isCancelled) { %>
                 <span class="status-badge muted-badge">Trajet annulé</span>
+              <% } else if (typeof isCompleted !== 'undefined' && isCompleted) { %>
+                <span class="status-badge muted-badge">Trajet terminé</span>
               <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
                 <span class="status-badge muted-badge">Trajet passé</span>
               <% } else { %>
@@ -131,7 +133,7 @@
             <% } else if (typeof isCancelled !== 'undefined' && isCancelled) { %>
               <span class="status-badge muted-badge">Annulé par le conducteur</span>
             <% } else if (isBooked && typeof hasDeparted !== 'undefined' && hasDeparted) { %>
-              <span class="status-badge muted-badge">Trajet passé</span>
+              <span class="status-badge muted-badge">Trajet terminé</span>
             <% } else if (isBooked) { %>
               <span class="status-badge">Place réservée</span>
               <form action="/trajets/<%= trip._id %>/annuler" method="post">
@@ -139,7 +141,7 @@
                 <button type="submit" class="btn secondary block">Annuler ma réservation</button>
               </form>
             <% } else if (typeof hasDeparted !== 'undefined' && hasDeparted) { %>
-              <span class="status-badge muted-badge">Trajet passé</span>
+              <span class="status-badge muted-badge">Trajet terminé</span>
             <% } else if (remaining <= 0) { %>
               <span class="status-badge muted-badge">Trajet complet</span>
             <% } else if (!currentUser) { %>
