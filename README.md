@@ -79,7 +79,7 @@ runner.
 npm install
 npm start       # http://localhost:3000
 npm run dev     # with auto-reload (nodemon)
-npm test        # validation, views and booking-flow tests
+npm test        # validation, views, wilayas and booking-flow tests
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
 ```

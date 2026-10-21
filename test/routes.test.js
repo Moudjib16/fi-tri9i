@@ -304,7 +304,19 @@ Object.assign(fakeTrip, {
   },
 });
 
-const fakeUser = {
+function fakeUser(data = {}) {
+  Object.assign(this, data);
+  this._id = data._id || `64f${String(900 + state.users.length).padStart(21, '0')}`;
+  this.createdAt = data.createdAt || new Date();
+  this.save = async () => {
+    if (!state.users.includes(this)) {
+      state.users.push(this);
+    }
+    return this;
+  };
+}
+
+Object.assign(fakeUser, {
   findById(id) {
     const found = state.users.find((candidate) => String(candidate._id) === String(id)) || null;
     const account = found
@@ -366,7 +378,7 @@ const fakeUser = {
     };
     return query;
   },
-};
+});
 
 const fakeMessage = {
   async create(data) {
@@ -2100,11 +2112,165 @@ test('administrators can moderate reports, trips and accounts', async () => {
   assert.equal(self.status, 302);
   assert.notEqual(state.users.find((candidate) => candidate._id === adminId).suspended, true);
 
+  // An administrator can grant the moderation role to another account.
+  const role = await fetch(`${baseUrl}/admin/utilisateurs/${passengerId}/role`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({ _csrf: dashboard.token }),
+    redirect: 'manual',
+  });
+  assert.equal(role.status, 302);
+  assert.equal(state.users.find((candidate) => candidate._id === passengerId).isAdmin, true);
+
+  const selfRole = await fetch(`${baseUrl}/admin/utilisateurs/${adminId}/role`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
+    body: new URLSearchParams({ _csrf: dashboard.token }),
+    redirect: 'manual',
+  });
+  assert.equal(selfRole.status, 302);
+  // An administrator cannot change their own role.
+  assert.equal(state.users.find((candidate) => candidate._id === adminId).isAdmin, true);
+
+  state.users.find((candidate) => candidate._id === passengerId).isAdmin = false;
   state.users.find((candidate) => candidate._id === driverId).suspended = false;
 
   const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
   state.trips.splice(tripIndex, 1);
   state.reports.length = 0;
+});
+
+test('a visitor can create an account, sign in and sign out', async () => {
+  const page = await openPage('/signup');
+  assert.equal(page.response.status, 200);
+  assert.match(page.html, /name="name"/);
+  assert.match(page.html, /name="userType"/);
+
+  const created = await fetch(`${baseUrl}/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({
+      _csrf: page.token,
+      name: 'Nadia',
+      email: 'nadia@test.dz',
+      password: 'secret123',
+      'confirm-password': 'secret123',
+      userType: '2',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(created.status, 302);
+  assert.equal(created.headers.get('location'), '/');
+
+  const account = state.users.find((candidate) => candidate.email === 'nadia@test.dz');
+  assert.ok(account);
+  assert.equal(account.name, 'Nadia');
+  assert.equal(account.userType, 2);
+  assert.notEqual(account.password, 'secret123');
+  assert.equal(await bcrypt.compare('secret123', account.password), true);
+
+  // The session is signed in right away.
+  const cookie = sessionCookie(created) || page.cookie;
+  const profile = await openPage('/compte', cookie);
+  assert.equal(profile.response.status, 200);
+  assert.match(profile.html, /Nadia/);
+
+  // Signing out drops the session.
+  const logout = await fetch(`${baseUrl}/logout`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: profile.token }),
+    redirect: 'manual',
+  });
+  assert.equal(logout.status, 302);
+  assert.equal(logout.headers.get('location'), '/');
+
+  const afterLogout = await fetch(`${baseUrl}/compte`, { headers: { cookie }, redirect: 'manual' });
+  assert.equal(afterLogout.status, 302);
+  assert.equal(afterLogout.headers.get('location'), '/login?next=%2Fcompte');
+
+  // The same email cannot be used twice.
+  const again = await openPage('/signup');
+  const duplicate = await fetch(`${baseUrl}/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: again.cookie },
+    body: new URLSearchParams({
+      _csrf: again.token,
+      name: 'Nadia',
+      email: 'nadia@test.dz',
+      password: 'secret123',
+      'confirm-password': 'secret123',
+      userType: '2',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(duplicate.status, 409);
+  assert.match(await duplicate.text(), /Email déjà utilisé/);
+
+  const mismatch = await fetch(`${baseUrl}/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: again.cookie },
+    body: new URLSearchParams({
+      _csrf: again.token,
+      name: 'Nadia',
+      email: 'autre@test.dz',
+      password: 'secret123',
+      'confirm-password': 'autreSecret',
+      userType: '2',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(mismatch.status, 400);
+
+  state.users = state.users.filter((candidate) => candidate.email !== 'nadia@test.dz');
+});
+
+test('the wizard saves the seats, the price and the description', async () => {
+  const passenger = await login('sara@test.dz', 'secret1');
+  const { cookie } = passenger;
+  const page = await openPage('/publier/page1', cookie);
+
+  const start = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'Alger', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(start.status, 302);
+
+  const post = (url, content) => fetch(`${baseUrl}${url}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content, _csrf: page.token }),
+    redirect: 'manual',
+  });
+
+  const tooManySeats = await post('/places', '9');
+  assert.equal(tooManySeats.status, 400);
+
+  const seats = await post('/places', '3');
+  assert.equal(seats.status, 200);
+
+  const badPrice = await post('/price', 'gratuit');
+  assert.equal(badPrice.status, 400);
+
+  const price = await post('/price', '1500');
+  assert.equal(price.status, 200);
+
+  const tooLong = await post('/description', 'x'.repeat(1001));
+  assert.equal(tooLong.status, 400);
+
+  const description = await post('/description', 'Trajet tranquille le matin.');
+  assert.equal(description.status, 200);
+
+  const drafts = state.trips.filter(
+    (candidate) => candidate.status === 'draft' && String(candidate.driver) === passengerId
+  );
+  const draft = drafts[drafts.length - 1];
+  assert.equal(draft.places, 3);
+  assert.equal(draft.price, '1500da');
+  assert.equal(draft.priceDZD, 1500);
+  assert.equal(draft.description, 'Trajet tranquille le matin.');
 });
 
 test('a published trip that already left is completed', async () => {
