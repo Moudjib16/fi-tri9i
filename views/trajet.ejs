@@ -135,7 +135,9 @@
             <% } else if (isBooked && typeof hasDeparted !== 'undefined' && hasDeparted) { %>
               <span class="status-badge muted-badge">Trajet terminé</span>
             <% } else if (isBooked) { %>
-              <span class="status-badge">Place réservée</span>
+              <span class="status-badge">
+                <%= (typeof mySeats !== 'undefined' && mySeats > 1) ? `${mySeats} places réservées` : 'Place réservée' %>
+              </span>
               <form action="/trajets/<%= trip._id %>/annuler" method="post">
                 <%- include('./partials/csrf-input.ejs') %>
                 <button type="submit" class="btn secondary block">Annuler ma réservation</button>
@@ -147,9 +149,17 @@
             <% } else if (!currentUser) { %>
               <a class="btn block" href="/login?next=<%= encodeURIComponent('/trajets/' + trip._id) %>">Se connecter pour réserver</a>
             <% } else { %>
-              <form action="/trajets/<%= trip._id %>/reserver" method="post">
+              <form action="/trajets/<%= trip._id %>/reserver" method="post" class="booking-form">
                 <%- include('./partials/csrf-input.ejs') %>
-                <button type="submit" class="btn block">Réserver une place</button>
+                <label class="field">
+                  <span>Places à réserver</span>
+                  <select name="places">
+                    <% for (let seat = 1; seat <= remaining; seat += 1) { %>
+                      <option value="<%= seat %>"><%= seat %></option>
+                    <% } %>
+                  </select>
+                </label>
+                <button type="submit" class="btn block">Réserver</button>
               </form>
             <% } %>
 

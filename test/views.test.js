@@ -117,6 +117,44 @@ test('trip detail shows a booking action for guests', async () => {
   assert.match(html, /Rami/);
 });
 
+test('trip detail offers a seat selector to a passenger', async () => {
+  const html = await render('trajet.ejs', {
+    stylesheet: 'trajet/',
+    title: 'Trajet',
+    currentUser: { name: 'Sara' },
+    trip: sampleTrip,
+    remaining: 3,
+    isDriver: false,
+    isBooked: false,
+    hasDeparted: false,
+    isCancelled: false,
+  });
+
+  assert.match(html, /Places à réserver/);
+  assert.match(html, /<option value="1">/);
+  assert.match(html, /<option value="3">/);
+  assert.doesNotMatch(html, /<option value="4">/);
+  assert.match(html, /action="\/trajets\/64f000000000000000000001\/reserver"/);
+});
+
+test('trip detail shows how many seats a passenger booked', async () => {
+  const html = await render('trajet.ejs', {
+    stylesheet: 'trajet/',
+    title: 'Trajet',
+    currentUser: { name: 'Sara' },
+    trip: sampleTrip,
+    remaining: 1,
+    isDriver: false,
+    isBooked: true,
+    mySeats: 3,
+    hasDeparted: false,
+    isCancelled: false,
+  });
+
+  assert.match(html, /3 places réservées/);
+  assert.match(html, /Annuler ma réservation/);
+});
+
 test('edit form preloads trip values and reserves booked seats', async () => {
   const html = await render('trajet-modifier.ejs', {
     title: 'Modifier le trajet',

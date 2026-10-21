@@ -27,8 +27,8 @@ log in, and book their seats.
   pagination and automatic hiding of full or already-departed trips
 - Driver ratings are copied on their trips, so listings can sort by the best
   rated drivers and cards can show the average rating
-- Trip details with seat reservation and cancellation before departure; past
-  reservations are read-only
+- Trip details with seat reservation and cancellation before departure; a
+  passenger can book several seats at once and past reservations are read-only
 - Public driver profiles with upcoming trips and links from trip cards
 - Drivers can edit published trips while keeping enough seats for existing
   reservations
@@ -142,6 +142,7 @@ lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers (404 page and server error page)
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
+                  # (the Trip passengers array holds one entry per booked seat)
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips, backfill-trips, seed)

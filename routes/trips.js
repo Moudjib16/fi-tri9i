@@ -21,6 +21,8 @@ const { effectiveStatus, isPastDeparture } = require('../lib/tripStatus');
 
 const router = express.Router();
 
+const MAX_SEATS_PER_TRIP = 5;
+
 const TRIP_ERROR_MESSAGES = {
   full: 'Ce trajet est complet.',
   already: 'Vous avez déjà réservé ce trajet.',
@@ -30,8 +32,30 @@ const TRIP_ERROR_MESSAGES = {
   unavailable: 'Opération impossible pour le moment.',
 };
 
-function redirectWithTripError(req, res, tripUrl, code = 'unavailable') {
-  setFlash(req, 'error', TRIP_ERROR_MESSAGES[code] || TRIP_ERROR_MESSAGES.unavailable);
+// The number of seats a passenger asked for, capped to the maximum of a trip.
+function requestedSeats(value) {
+  const seats = Number.parseInt(value, 10);
+  if (!Number.isInteger(seats) || seats < 1) {
+    return 1;
+  }
+  return Math.min(seats, MAX_SEATS_PER_TRIP);
+}
+
+// How many seats a passenger booked on a trip.
+function seatCountFor(tripDoc, userId) {
+  return (tripDoc.passengers || [])
+    .filter((passenger) => String(passenger) === String(userId))
+    .length;
+}
+
+function redirectWithTripError(req, res, tripUrl, code = 'unavailable', freeSeats = 0) {
+  let message = TRIP_ERROR_MESSAGES[code] || TRIP_ERROR_MESSAGES.unavailable;
+  if (code === 'seats') {
+    message = freeSeats > 0
+      ? `Il ne reste que ${freeSeats} place${freeSeats === 1 ? '' : 's'} sur ce trajet.`
+      : 'Ce trajet est complet.';
+  }
+  setFlash(req, 'error', message);
   return res.redirect(tripUrl);
 }
 
@@ -388,6 +412,7 @@ router.get('/trajets/:id', async (req, res) => {
       : null;
     const isDriver = Boolean(userId && driverId === userId);
     const isBooked = Boolean(userId && passengerIds.includes(userId));
+    const mySeats = userId ? passengerIds.filter((id) => id === userId).length : 0;
     const remaining = Math.max((foundTrip.places || 0) - (foundTrip.places_taken || 0), 0);
     const isDraft = foundTrip.status === 'draft';
     const isCancelled = foundTrip.status === 'cancelled';
@@ -423,6 +448,7 @@ router.get('/trajets/:id', async (req, res) => {
       trip: foundTrip,
       isDriver,
       isBooked,
+      mySeats,
       isDraft,
       isCancelled,
       isCompleted,
@@ -438,7 +464,7 @@ router.get('/trajets/:id', async (req, res) => {
   }
 });
 
-// Reserve a seat
+// Reserve one or more seats
 router.post('/trajets/:id/reserver', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.redirect('/trajets');
@@ -448,6 +474,7 @@ router.post('/trajets/:id/reserver', async (req, res) => {
   }
 
   const tripUrl = `/trajets/${req.params.id}`;
+  const seats = requestedSeats(req.body.places);
 
   try {
     const updatedTrip = await trip.findOneAndUpdate(
@@ -456,15 +483,21 @@ router.post('/trajets/:id/reserver', async (req, res) => {
         status: { $nin: ['draft', 'cancelled'] },
         driver: { $ne: req.session.userId },
         passengers: { $ne: req.session.userId },
-        $expr: { $lt: [{ $ifNull: ['$places_taken', 0] }, '$places'] },
+        $expr: {
+          $lte: [
+            { $add: [{ $ifNull: ['$places_taken', 0] }, seats] },
+            '$places',
+          ],
+        },
         $or: [
           { departureAt: { $gt: new Date() } },
           { departureAt: null },
         ],
       },
       {
-        $push: { passengers: req.session.userId },
-        $inc: { places_taken: 1 },
+        // The passengers array holds one entry per booked seat.
+        $push: { passengers: { $each: new Array(seats).fill(req.session.userId) } },
+        $inc: { places_taken: seats },
       },
       { new: true }
     );
@@ -474,9 +507,11 @@ router.post('/trajets/:id/reserver', async (req, res) => {
         actor: req.session.userId,
         tripId: updatedTrip._id,
         type: 'booking',
-        body: `${currentUserName(res, 'Un passager')} a réservé une place sur le trajet ${tripLabel(updatedTrip)}.`,
+        body: `${currentUserName(res, 'Un passager')} a réservé ${seats} place${seats === 1 ? '' : 's'} sur le trajet ${tripLabel(updatedTrip)}.`,
       });
-      setFlash(req, 'success', 'Votre place est réservée.');
+      setFlash(req, 'success', seats === 1
+        ? 'Votre place est réservée.'
+        : `Vos ${seats} places sont réservées.`);
       return res.redirect(tripUrl);
     }
 
@@ -496,8 +531,9 @@ router.post('/trajets/:id/reserver', async (req, res) => {
     if ((foundTrip.passengers || []).map(String).includes(String(req.session.userId))) {
       return redirectWithTripError(req, res, tripUrl, 'already');
     }
-    if ((foundTrip.places_taken || 0) >= (foundTrip.places || 0)) {
-      return redirectWithTripError(req, res, tripUrl, 'full');
+    const freeSeats = (foundTrip.places || 0) - (foundTrip.places_taken || 0);
+    if (freeSeats < seats) {
+      return redirectWithTripError(req, res, tripUrl, 'seats', freeSeats);
     }
     return redirectWithTripError(req, res, tripUrl);
   } catch (err) {
@@ -506,7 +542,7 @@ router.post('/trajets/:id/reserver', async (req, res) => {
   }
 });
 
-// Cancel a reservation
+// Cancel a reservation, every seat booked by the passenger is released
 router.post('/trajets/:id/annuler', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.redirect('/trajets');
@@ -518,6 +554,16 @@ router.post('/trajets/:id/annuler', async (req, res) => {
   const tripUrl = `/trajets/${req.params.id}`;
 
   try {
+    const foundTrip = await trip.findById(req.params.id).lean();
+    if (!foundTrip) {
+      return tripNotFound(res);
+    }
+
+    const seats = seatCountFor(foundTrip, req.session.userId);
+    if (!seats) {
+      return redirectWithTripError(req, res, tripUrl, 'already');
+    }
+
     const updatedTrip = await trip.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -530,7 +576,7 @@ router.post('/trajets/:id/annuler', async (req, res) => {
       },
       {
         $pull: { passengers: req.session.userId },
-        $inc: { places_taken: -1 },
+        $inc: { places_taken: -seats },
       },
       { new: true }
     );
@@ -540,9 +586,11 @@ router.post('/trajets/:id/annuler', async (req, res) => {
         actor: req.session.userId,
         tripId: updatedTrip._id,
         type: 'reservation_cancelled',
-        body: `${currentUserName(res, 'Un passager')} a annulé sa réservation sur le trajet ${tripLabel(updatedTrip)}.`,
+        body: `${currentUserName(res, 'Un passager')} a annulé sa réservation de ${seats} place${seats === 1 ? '' : 's'} sur le trajet ${tripLabel(updatedTrip)}.`,
       });
-      setFlash(req, 'success', 'Votre réservation a été annulée.');
+      setFlash(req, 'success', seats === 1
+        ? 'Votre réservation a été annulée.'
+        : `Votre réservation de ${seats} places a été annulée.`);
       return res.redirect(tripUrl);
     }
     return redirectWithTripError(req, res, tripUrl);

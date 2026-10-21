@@ -280,13 +280,36 @@ Object.assign(fakeTrip, {
       }
     }
     if (filter.$expr) {
-      if (!((found.places_taken || 0) < found.places)) {
-        return null;
+      const expr = filter.$expr;
+      if (expr.$lte) {
+        // Seats left must cover the requested booking.
+        const requested = expr.$lte[0].$add ? expr.$lte[0].$add[1] : 0;
+        if ((found.places_taken || 0) + requested > (found.places || 0)) {
+          return null;
+        }
+      } else if (expr.$lt) {
+        if (!((found.places_taken || 0) < found.places)) {
+          return null;
+        }
+      } else if (expr.$gte) {
+        const [left, right] = expr.$gte[0].$subtract;
+        const leftValue = found[left.replace('$', '')] || 0;
+        const rightValue = right.$ifNull
+          ? found[right.$ifNull[0].replace('$', '')] || 0
+          : right;
+        if (leftValue - rightValue < expr.$gte[1]) {
+          return null;
+        }
       }
     }
     if (update.$push && update.$push.passengers !== undefined) {
       found.passengers = found.passengers || [];
-      found.passengers.push(update.$push.passengers);
+      const value = update.$push.passengers;
+      if (value && Array.isArray(value.$each)) {
+        found.passengers.push(...value.$each);
+      } else {
+        found.passengers.push(value);
+      }
     }
     if (update.$pull && update.$pull.passengers !== undefined) {
       found.passengers = (found.passengers || []).filter(
@@ -1080,7 +1103,7 @@ test('booking notifications are visible and marked read on the notifications pag
   assert.equal(state.notifications.length, 1);
   assert.equal(state.notifications[0].recipient, driverId);
   assert.equal(state.notifications[0].type, 'booking');
-  assert.match(state.notifications[0].body, /Sara a réservé une place/);
+  assert.match(state.notifications[0].body, /Sara a réservé 1 place/);
 
   const driver = await login('karim@test.dz', 'secret1');
   const withBadge = await openPage('/trajets', driver.cookie);
@@ -1089,7 +1112,7 @@ test('booking notifications are visible and marked read on the notifications pag
 
   const notificationPage = await openPage('/notifications', driver.cookie);
   assert.equal(notificationPage.response.status, 200);
-  assert.match(notificationPage.html, /Sara a réservé une place/);
+  assert.match(notificationPage.html, /Sara a réservé 1 place/);
   assert.match(notificationPage.html, /notification-item is-unread/);
   assert.ok(state.notifications[0].readAt instanceof Date);
 
@@ -1161,7 +1184,102 @@ test('a logged-in passenger can reserve and cancel a seat', async () => {
 
   const cancelledHtml = await (await fetch(`${baseUrl}/trajets/${tripId}`, { headers: { cookie } })).text();
   assert.match(cancelledHtml, /Votre réservation a été annulée/);
-  assert.match(cancelledHtml, /Réserver une place/);
+  assert.match(cancelledHtml, /Réserver/);
+});
+
+test('a passenger can book several seats at once', async () => {
+  const groupTripId = '64f000000000000000000611';
+  const secondPassengerId = '64f000000000000000000612';
+
+  state.trips.push({
+    _id: groupTripId,
+    status: 'published',
+    depart: 'Oran',
+    depart0: 'Es Senia',
+    arrivee: 'Tlemcen',
+    arrivee0: 'Mansourah',
+    dateData: '20 January 2032',
+    departureAt: new Date('2032-01-20T08:00:00Z'),
+    time: '08 : 00',
+    price: '900da',
+    priceDZD: 900,
+    places: 4,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet de groupe',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  state.users.push({
+    _id: secondPassengerId,
+    name: 'Lina',
+    email: 'lina@test.dz',
+    password: await bcrypt.hash('secret1', 10),
+    userType: 1,
+  });
+
+  const passenger = await login('sara@test.dz', 'secret1');
+  const page = await openPage(`/trajets/${groupTripId}`, passenger.cookie);
+
+  // The booking form offers every free seat.
+  assert.match(page.html, /Places à réserver/);
+  assert.match(page.html, /<option value="4">/);
+
+  const reserve = await fetch(`${baseUrl}/trajets/${groupTripId}/reserver`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: page.token, places: '3' }),
+    redirect: 'manual',
+  });
+  assert.equal(reserve.status, 302);
+  assert.equal(reserve.headers.get('location'), `/trajets/${groupTripId}`);
+
+  const bookedTrip = state.trips.find((candidate) => candidate._id === groupTripId);
+  assert.equal(bookedTrip.places_taken, 3);
+  // The passengers array holds one entry per booked seat.
+  assert.deepEqual(bookedTrip.passengers, [passengerId, passengerId, passengerId]);
+
+  const booked = await openPage(`/trajets/${groupTripId}`, passenger.cookie);
+  assert.match(booked.html, /3 places réservées/);
+  assert.match(booked.html, /Annuler ma réservation/);
+
+  // Another passenger cannot take the seats that are left.
+  const other = await login('lina@test.dz', 'secret1');
+  const otherPage = await openPage(`/trajets/${groupTripId}`, other.cookie);
+  assert.match(otherPage.html, /<option value="1">/);
+  assert.doesNotMatch(otherPage.html, /<option value="2">/);
+
+  const tooMany = await fetch(`${baseUrl}/trajets/${groupTripId}/reserver`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: other.cookie },
+    body: new URLSearchParams({ _csrf: otherPage.token, places: '2' }),
+    redirect: 'manual',
+  });
+  assert.equal(tooMany.status, 302);
+
+  const refused = await openPage(`/trajets/${groupTripId}`, other.cookie);
+  assert.match(refused.html, /Il ne reste que 1 place/);
+  assert.equal(
+    state.trips.find((candidate) => candidate._id === groupTripId).places_taken,
+    3
+  );
+
+  // Cancelling releases every seat booked by the passenger.
+  const cancel = await fetch(`${baseUrl}/trajets/${groupTripId}/annuler`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: passenger.cookie },
+    body: new URLSearchParams({ _csrf: booked.token }),
+    redirect: 'manual',
+  });
+  assert.equal(cancel.status, 302);
+
+  const cancelledTrip = state.trips.find((candidate) => candidate._id === groupTripId);
+  assert.equal(cancelledTrip.places_taken, 0);
+  assert.deepEqual(cancelledTrip.passengers, []);
+
+  const tripIndex = state.trips.findIndex((candidate) => candidate._id === groupTripId);
+  state.trips.splice(tripIndex, 1);
+  state.users = state.users.filter((candidate) => candidate._id !== secondPassengerId);
 });
 
 test('search hides full trips and paginates results', async () => {

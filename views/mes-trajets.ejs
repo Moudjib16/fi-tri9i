@@ -102,7 +102,8 @@
           <% published.forEach(function (t) { %>
             <% const remaining = Math.max((t.places || 0) - (t.places_taken || 0), 0); %>
             <% const passengers = t.passengers || []; %>
-            <% const passengerNames = passengers.filter(function (p) { return p && p.name; }).map(function (p) { return p.name; }); %>
+            <% const bookedSeats = passengers.length; %>
+            <% const passengerNames = [...new Set(passengers.filter(function (p) { return p && p.name; }).map(function (p) { return p.name; }))]; %>
             <article class="trip-card">
               <div class="trip-route">
                 <span><%= t.depart %></span>
@@ -130,7 +131,7 @@
               </dl>
 
               <p class="my-count">
-                Réservations : <strong><%= passengerNames.length %></strong>
+                Réservations : <strong><%= bookedSeats %></strong> place<%= bookedSeats === 1 ? '' : 's' %>
                 <% if (passengerNames.length) { %>
                   &middot; <%= passengerNames.join(', ') %>
                 <% } %>
@@ -158,7 +159,6 @@
 
         <div class="trip-grid">
           <% completedList.forEach(function (t) { %>
-            <% const passengers = (t.passengers || []).filter(function (p) { return p && p.name; }); %>
             <article class="trip-card completed-card">
               <span class="draft-badge">Terminé</span>
               <div class="trip-route">
@@ -181,8 +181,8 @@
                   <dd><%= t.price || 'À préciser' %></dd>
                 </div>
                 <div>
-                  <dt>Passagers</dt>
-                  <dd><%= passengers.length %></dd>
+                  <dt>Places réservées</dt>
+                  <dd><%= (t.passengers || []).length %></dd>
                 </div>
               </dl>
 
