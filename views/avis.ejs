@@ -12,7 +12,7 @@
       <h1 class="wizard-title">Comment s'est passé votre trajet ?</h1>
       <p class="wizard-help">
         <%= trip.depart %> &rarr; <%= trip.arrivee || 'Destination à préciser' %>
-        &middot; <%= trip.dateData || 'Date à préciser' %> &middot; avec <%= driverName %>
+        &middot; <%= formatDate(trip.dateData) || trip.dateData || 'Date à préciser' %> &middot; avec <%= driverName %>
       </p>
 
       <% if (error) { %>

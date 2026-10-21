@@ -12,6 +12,7 @@ const connectDB = require('./db/db');
 const user = require('./models/signup');
 const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
+const { formatDateFr, formatDateIso } = require('./lib/validation');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
 const messagesRouter = require('./routes/messages');
@@ -93,6 +94,8 @@ app.use(flashMiddleware);
 app.use((req, res, next) => {
   res.locals.currentUser = null;
   res.locals.unreadNotifications = 0;
+  res.locals.formatDate = formatDateFr;
+  res.locals.formatDateIso = formatDateIso;
   next();
 });
 

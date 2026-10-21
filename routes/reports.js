@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const trip = require('../models/publier');
 const user = require('../models/signup');
 const Report = require('../models/report');
-const { pickString } = require('../lib/validation');
+const { pickString, formatDateFr } = require('../lib/validation');
 const { REPORT_REASONS, reportReasonLabel } = require('../lib/reports');
 const { describeReports } = require('../lib/reportTargets');
 const { setFlash } = require('../lib/flash');
@@ -35,7 +35,7 @@ async function loadTripTarget(req, res) {
     targetType: 'trip',
     targetId: foundTrip._id,
     targetLabel: `${foundTrip.depart} → ${foundTrip.arrivee || 'Destination à préciser'}`,
-    targetDate: foundTrip.dateData || '',
+    targetDate: formatDateFr(foundTrip.dateData) || foundTrip.dateData || '',
     targetUrl: `/trajets/${foundTrip._id}`,
     formAction: `/trajets/${foundTrip._id}/signaler`,
   };

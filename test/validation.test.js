@@ -10,6 +10,8 @@ const {
   parsePriceInput,
   combineDepartureAt,
   isPastDate,
+  formatDateFr,
+  formatDateIso,
 } = require('../lib/validation');
 
 test('pickString trims strings and rejects other types', () => {
@@ -35,18 +37,45 @@ test('escapeRegex escapes regular expression characters', () => {
 });
 
 test('dateToDisplay converts ISO dates to wizard display format', () => {
-  assert.equal(dateToDisplay('2024-12-12'), '12 December 2024');
-  assert.equal(dateToDisplay('2026-01-05'), '5 January 2026');
+  assert.equal(dateToDisplay('2024-12-12'), '12 décembre 2024');
+  assert.equal(dateToDisplay('2026-01-05'), '5 janvier 2026');
   assert.equal(dateToDisplay('12/12/2024'), '');
   assert.equal(dateToDisplay('not-a-date'), '');
 });
 
 test('parseDateInput accepts ISO and calendar display formats', () => {
-  assert.equal(parseDateInput('2030-12-12').display, '12 December 2030');
-  assert.equal(parseDateInput('5 january 2030').display, '5 January 2030');
+  assert.equal(parseDateInput('2030-12-12').display, '12 décembre 2030');
+  assert.equal(parseDateInput('5 january 2030').display, '5 janvier 2030');
   assert.equal(parseDateInput('31 February 2030'), null);
   assert.equal(parseDateInput('12/12/2030'), null);
   assert.equal(parseDateInput(''), null);
+});
+
+test('parseDateInput understands French months and a leading weekday', () => {
+  assert.equal(parseDateInput('12 décembre 2030').display, '12 décembre 2030');
+  assert.equal(parseDateInput('12 decembre 2030').display, '12 décembre 2030');
+  assert.equal(parseDateInput('5 janvier 2030').display, '5 janvier 2030');
+  assert.equal(parseDateInput('3 août 2030').display, '3 août 2030');
+  assert.equal(parseDateInput('9 sept 2030').display, '9 septembre 2030');
+  // The calendar widget prefixes the selected day with its weekday.
+  assert.equal(parseDateInput('jeudi 12 décembre 2030').display, '12 décembre 2030');
+  assert.equal(parseDateInput('Thursday 12 December 2030').display, '12 décembre 2030');
+  assert.equal(parseDateInput('12 decemb 2030'), null);
+});
+
+test('parseDateInput exposes an ISO and a legacy English label', () => {
+  const parsed = parseDateInput('12 December 2030');
+  assert.equal(parsed.iso, '2030-12-12');
+  assert.equal(parsed.display, '12 décembre 2030');
+  assert.equal(parsed.displayEn, '12 December 2030');
+});
+
+test('formatDateFr and formatDateIso normalise any stored date label', () => {
+  assert.equal(formatDateFr('12 December 2030'), '12 décembre 2030');
+  assert.equal(formatDateFr('2030-12-12'), '12 décembre 2030');
+  assert.equal(formatDateFr('12/12/2030'), '');
+  assert.equal(formatDateIso('12 December 2030'), '2030-12-12');
+  assert.equal(formatDateIso('12/12/2030'), '');
 });
 
 test('parseTimeInput normalizes HH:MM values', () => {
@@ -69,6 +98,7 @@ test('parsePriceInput only accepts whole DA amounts in range', () => {
 test('combineDepartureAt merges date and time and detects past dates', () => {
   const future = combineDepartureAt('12 December 2030', '08 : 30');
   assert.equal(future.toISOString(), '2030-12-12T08:30:00.000Z');
+  assert.equal(combineDepartureAt('12 décembre 2030', '08 : 30').toISOString(), '2030-12-12T08:30:00.000Z');
   assert.equal(combineDepartureAt('12 December 2030', ''), null);
   assert.equal(isPastDate(new Date('2000-01-01T00:00:00Z')), true);
   assert.equal(isPastDate(future), false);

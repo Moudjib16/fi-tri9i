@@ -12,7 +12,7 @@
         <p class="eyebrow">Messages du trajet</p>
         <h1><%= trip.depart %> &rarr; <%= trip.arrivee || 'Destination à préciser' %></h1>
         <p class="messages-meta">
-          <%= trip.dateData || 'Date à préciser' %> &middot; <%= trip.time || 'Heure à préciser' %>
+          <%= formatDate(trip.dateData) || trip.dateData || 'Date à préciser' %> &middot; <%= trip.time || 'Heure à préciser' %>
           &middot; Conducteur : <%= driverName %>
         </p>
         <p class="messages-role">Vous participez à ce trajet en tant que <%= isDriver ? 'conducteur' : 'passager' %>.</p>

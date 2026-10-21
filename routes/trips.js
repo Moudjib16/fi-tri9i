@@ -11,6 +11,7 @@ const {
   parsePriceInput,
   combineDepartureAt,
   isPastDate,
+  formatDateIso,
 } = require('../lib/validation');
 const { tripNotFound } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
@@ -206,7 +207,8 @@ router.get('/trajets', async (req, res) => {
   try {
     const depart = pickString(req.query.depart);
     const arrivee = pickString(req.query.arrivee);
-    const date = pickString(req.query.date);
+    // Only keep a date the app understands, so pagination links stay valid.
+    const date = formatDateIso(pickString(req.query.date));
     const requestedPlaces = Number(req.query.places);
     const wantedPlaces = Number.isInteger(requestedPlaces) && requestedPlaces > 0 && requestedPlaces <= 5
       ? requestedPlaces
@@ -237,7 +239,8 @@ router.get('/trajets', async (req, res) => {
       conditions.push({
         $or: [
           { departureAt: { $gte: start, $lt: end } },
-          { departureAt: null, dateData: parsedDate.display },
+          // Legacy drafts have no typed date yet, so match the stored label too.
+          { departureAt: null, dateData: { $in: [parsedDate.display, parsedDate.displayEn] } },
         ],
       });
     } else {

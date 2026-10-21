@@ -92,7 +92,7 @@
               <div>
                 <strong><%= t.depart %> → <%= t.arrivee || 'Destination à préciser' %></strong>
                 <span class="admin-meta">
-                  <%= t.dateData || 'Date à préciser' %> · <%= t.time || 'Heure à préciser' %>
+                  <%= formatDate(t.dateData) || t.dateData || 'Date à préciser' %> · <%= t.time || 'Heure à préciser' %>
                   · <%= t.driver && t.driver.name ? t.driver.name : 'Conducteur' %>
                 </span>
               </div>

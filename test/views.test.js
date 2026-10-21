@@ -4,9 +4,16 @@ const path = require('node:path');
 const util = require('node:util');
 const ejs = require('ejs');
 const { REPORT_REASONS } = require('../lib/reports');
+const { formatDateFr, formatDateIso } = require('../lib/validation');
 
 const renderFile = util.promisify(ejs.renderFile);
 const view = (name) => path.join(__dirname, '..', 'views', name);
+// Mirrors the helpers that app.js exposes to every rendered view.
+const render = (name, data) => renderFile(view(name), {
+  formatDate: formatDateFr,
+  formatDateIso,
+  ...data,
+});
 
 const sampleTrip = {
   _id: '64f000000000000000000001',
@@ -24,7 +31,7 @@ const sampleTrip = {
 };
 
 test('home renders the guest navbar and search form', async () => {
-  const html = await renderFile(view('home.ejs'), {
+  const html = await render('home.ejs', {
     stylesheet: 'home/',
     title: 'Home',
     currentUser: null,
@@ -36,7 +43,7 @@ test('home renders the guest navbar and search form', async () => {
 });
 
 test('trip listing renders trip cards', async () => {
-  const html = await renderFile(view('trajets.ejs'), {
+  const html = await render('trajets.ejs', {
     stylesheet: 'trajets/',
     title: 'Trajets',
     currentUser: { name: 'Sara' },
@@ -52,7 +59,7 @@ test('trip listing renders trip cards', async () => {
 });
 
 test('trip detail shows a booking action for guests', async () => {
-  const html = await renderFile(view('trajet.ejs'), {
+  const html = await render('trajet.ejs', {
     stylesheet: 'trajet/',
     title: 'Trajet',
     currentUser: null,
@@ -67,7 +74,7 @@ test('trip detail shows a booking action for guests', async () => {
 });
 
 test('edit form preloads trip values and reserves booked seats', async () => {
-  const html = await renderFile(view('trajet-modifier.ejs'), {
+  const html = await render('trajet-modifier.ejs', {
     title: 'Modifier le trajet',
     currentUser: { name: 'Rami' },
     trip: { ...sampleTrip, places: 4, places_taken: 2 },
@@ -94,7 +101,7 @@ test('edit form preloads trip values and reserves booked seats', async () => {
 
 test('message thread renders participants and highlights own messages', async () => {
   const userId = '64f000000000000000000002';
-  const html = await renderFile(view('messages.ejs'), {
+  const html = await render('messages.ejs', {
     title: 'Messages du trajet',
     currentUser: { _id: userId, name: 'Rami' },
     trip: sampleTrip,
@@ -120,7 +127,7 @@ test('message thread renders participants and highlights own messages', async ()
 });
 
 test('notifications page renders unread activity and trip links', async () => {
-  const html = await renderFile(view('notifications.ejs'), {
+  const html = await render('notifications.ejs', {
     title: 'Notifications',
     currentUser: { _id: '64f000000000000000000002', name: 'Rami' },
     unreadNotifications: 1,
@@ -144,7 +151,7 @@ test('notifications page renders unread activity and trip links', async () => {
 });
 
 test('review form renders rating choices and a public notice', async () => {
-  const html = await renderFile(view('avis.ejs'), {
+  const html = await render('avis.ejs', {
     title: 'Laisser un avis',
     currentUser: { name: 'Rami' },
     trip: sampleTrip,
@@ -162,7 +169,7 @@ test('review form renders rating choices and a public notice', async () => {
 });
 
 test('driver profile shows average rating and recent reviews', async () => {
-  const html = await renderFile(view('conducteur.ejs'), {
+  const html = await render('conducteur.ejs', {
     title: 'Rami — Conducteur',
     currentUser: { name: 'Sara' },
     driver: { _id: '64f000000000000000000002', name: 'Rami', createdAt: new Date('2025-01-01') },
@@ -188,7 +195,7 @@ test('driver profile shows average rating and recent reviews', async () => {
 });
 
 test('about page renders the guest navbar and calls to action', async () => {
-  const html = await renderFile(view('a-propos.ejs'), {
+  const html = await render('a-propos.ejs', {
     stylesheet: 'a-propos/',
     title: 'À propos',
     currentUser: null,
@@ -200,7 +207,7 @@ test('about page renders the guest navbar and calls to action', async () => {
 });
 
 test('time step exposes every selectable departure time', async () => {
-  const html = await renderFile(view('publier/heure.ejs'), {
+  const html = await render('publier/heure.ejs', {
     currentUser: null,
     trip: null,
   });
@@ -215,7 +222,7 @@ test('wizard steps use inline errors instead of browser alerts', async () => {
   const steps = ['calendaire', 'heure', 'people', 'prix'];
 
   for (const step of steps) {
-    const html = await renderFile(view(`publier/${step}.ejs`), {
+    const html = await render(`publier/${step}.ejs`, {
       currentUser: null,
       trip: null,
     });
@@ -229,7 +236,7 @@ test('wizard steps use inline errors instead of browser alerts', async () => {
 });
 
 test('my trips renders published and reserved sections', async () => {
-  const html = await renderFile(view('mes-trajets.ejs'), {
+  const html = await render('mes-trajets.ejs', {
     stylesheet: 'mes-trajets/',
     title: 'Mes trajets',
     currentUser: { name: 'Rami' },
@@ -251,7 +258,7 @@ test('my trips renders published and reserved sections', async () => {
 });
 
 test('account page renders profile details and password errors', async () => {
-  const html = await renderFile(view('compte.ejs'), {
+  const html = await render('compte.ejs', {
     title: 'Mon compte',
     currentUser: {
       _id: '64f000000000000000000002',
@@ -277,7 +284,7 @@ test('account page renders profile details and password errors', async () => {
 });
 
 test('favourites page lists saved trips with a remove action', async () => {
-  const html = await renderFile(view('mes-favoris.ejs'), {
+  const html = await render('mes-favoris.ejs', {
     stylesheet: 'mes-favoris/',
     title: 'Mes favoris',
     currentUser: { name: 'Sara' },
@@ -293,7 +300,7 @@ test('favourites page lists saved trips with a remove action', async () => {
 });
 
 test('report form renders the reason list and the reported target', async () => {
-  const html = await renderFile(view('signaler.ejs'), {
+  const html = await render('signaler.ejs', {
     title: 'Signaler',
     currentUser: { name: 'Sara' },
     target: {
@@ -318,7 +325,7 @@ test('report form renders the reason list and the reported target', async () => 
 });
 
 test('admin dashboard renders reports, published trips and accounts', async () => {
-  const html = await renderFile(view('admin.ejs'), {
+  const html = await render('admin.ejs', {
     stylesheet: 'admin/',
     title: 'Administration',
     currentUser: { name: 'Admin', isAdmin: true },

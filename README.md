@@ -14,6 +14,9 @@ log in, and book their seats.
   delete drafts from "Mes trajets"
 - Server-side validation for dates (future only), times (`HH:MM`), seat count
   (1–5) and price (1–100000 DA); departures are stored as a sortable `Date`
+- French-first dates: the calendar, the listings and the trip pages all render
+  "12 décembre 2030"; ISO, French and legacy English labels are all accepted on
+  input
 - Trip search by departure, arrival, date and available seats, with sorting,
   pagination and automatic hiding of full or already-departed trips
 - Trip details with seat reservation and cancellation before departure; past

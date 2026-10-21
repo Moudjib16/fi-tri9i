@@ -33,7 +33,7 @@
         <dl class="trip-meta detail-meta">
           <div>
             <dt>Date</dt>
-            <dd><%= trip.dateData || 'À préciser' %></dd>
+            <dd><%= formatDate(trip.dateData) || trip.dateData || 'À préciser' %></dd>
           </div>
           <div>
             <dt>Heure</dt>
@@ -93,7 +93,7 @@
           <dl class="booking-facts">
             <div>
               <dt>Date</dt>
-              <dd><%= trip.dateData || 'À préciser' %></dd>
+              <dd><%= formatDate(trip.dateData) || trip.dateData || 'À préciser' %></dd>
             </div>
             <div>
               <dt>Départ</dt>

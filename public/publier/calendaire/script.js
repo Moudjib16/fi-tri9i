@@ -31,12 +31,30 @@ function formatDate(value) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+// The server stores dates as ISO strings, so the locale never matters.
+function formatIsoDate(value) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// ISO dates are parsed as UTC by the browser, so read them as local calendar days.
+function parseIsoDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+  if (!match) {
+    return null;
+  }
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
 function updateHeader() {
   if (eventDay) {
     eventDay.textContent = weekdays[selected.getDay()];
   }
   if (eventDate) {
     eventDate.textContent = formatDate(selected);
+    eventDate.dataset.iso = formatIsoDate(selected);
   }
 }
 
@@ -140,14 +158,13 @@ if (gotoButton && dateInput) {
 
 const initialValue = eventDate ? eventDate.dataset.initial : '';
 if (initialValue) {
-  const parsed = new Date(initialValue);
+  const parsed = parseIsoDate(initialValue) || new Date(initialValue);
   if (!Number.isNaN(parsed.getTime())) {
     selected = parsed;
     month = parsed.getMonth();
     year = parsed.getFullYear();
   }
 }
-
 initCalendar();
 
 const precedentButton = document.getElementById('precedent');
@@ -161,7 +178,7 @@ if (window.wizard) {
   window.wizard.initStep({
     buttonId: 'prochaine',
     getContent: function () {
-      return eventDate ? eventDate.textContent : '';
+      return eventDate ? eventDate.dataset.iso || formatIsoDate(selected) : '';
     },
     url: '/date',
     next: '/publier/heure',

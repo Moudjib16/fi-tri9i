@@ -97,6 +97,9 @@ function matchesTrip(candidate, filter) {
       return true;
     }
     if (key === 'dateData') {
+      if (value && Array.isArray(value.$in)) {
+        return value.$in.includes(candidate.dateData);
+      }
       return candidate.dateData === value;
     }
     if (key === 'driver') {
@@ -127,9 +130,14 @@ function matchesTrip(candidate, filter) {
   });
 }
 
+// Auto-generated trip ids must stay unique even when trips are removed,
+// otherwise the mock lookup can return the wrong document.
+let tripIdCounter = 800;
+
 function fakeTrip(data = {}) {
   Object.assign(this, data);
-  this._id = data._id || `64f${String(state.trips.length + 100).padStart(21, '0')}`;
+  tripIdCounter += 1;
+  this._id = data._id || `64f${String(tripIdCounter).padStart(21, '0')}`;
   this.status = data.status || 'draft';
   this.save = async () => {
     if (!state.trips.includes(this)) {
@@ -817,7 +825,7 @@ test('driver can edit a published trip and seats cannot drop below reservations'
   assert.equal(updated.depart0, 'El Khroub');
   assert.equal(updated.arrivee, 'Annaba');
   assert.equal(updated.arrivee0, 'El Bouni');
-  assert.equal(updated.dateData, '20 May 2031');
+  assert.equal(updated.dateData, '20 mai 2031');
   assert.equal(updated.time, '09 : 30');
   assert.equal(updated.departureAt.toISOString(), '2031-05-20T09:30:00.000Z');
   assert.equal(updated.places, 3);
@@ -1196,6 +1204,65 @@ test('drafts stay private and out of listings', async () => {
 
   const afterFlash = await (await fetch(`${baseUrl}/mes-trajets`, { headers: { cookie } })).text();
   assert.doesNotMatch(afterFlash, /Le trajet a été supprimé/);
+});
+
+test('the publishing wizard accepts the French calendar date format', async () => {
+  const session = await login('sara@test.dz', 'secret1');
+  const { cookie } = session;
+  const page = await openPage('/publier/page1', cookie);
+
+  const start = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'Alger', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(start.status, 302);
+
+  const calendarPage = await openPage('/publier/calendaire', cookie);
+  assert.equal(calendarPage.response.status, 200);
+
+  // The calendar widget posts the selected day with its French weekday.
+  const frenchDate = await fetch(`${baseUrl}/date`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: 'jeudi 12 décembre 2030', _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(frenchDate.status, 200);
+  assert.deepEqual(await frenchDate.json(), { ok: true });
+
+  const isoDate = await fetch(`${baseUrl}/date`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: '2031-01-05', _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(isoDate.status, 200);
+
+  const time = await fetch(`${baseUrl}/time`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: '08:30', _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(time.status, 200);
+
+  const drafts = state.trips.filter(
+    (candidate) => candidate.status === 'draft' && String(candidate.driver) === passengerId
+  );
+  const draft = drafts[drafts.length - 1];
+  assert.equal(draft.dateData, '5 janvier 2031');
+  assert.equal(draft.time, '08 : 30');
+  assert.equal(draft.departureAt.toISOString(), '2031-01-05T08:30:00.000Z');
+
+  const pastDate = await fetch(`${baseUrl}/date`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: '12 janvier 2001', _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(pastDate.status, 400);
 });
 
 test('driver can cancel a trip and passengers see it', async () => {

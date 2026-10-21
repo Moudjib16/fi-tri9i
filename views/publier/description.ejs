@@ -28,7 +28,7 @@
           </div>
           <div>
             <span>Date</span>
-            <strong><%= trip.dateData || 'À préciser' %><% if (trip.time) { %> · <%= trip.time %><% } %></strong>
+            <strong><%= formatDate(trip.dateData) || trip.dateData || 'À préciser' %><% if (trip.time) { %> · <%= trip.time %><% } %></strong>
           </div>
           <div>
             <span>Places</span>

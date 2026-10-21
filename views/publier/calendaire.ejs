@@ -49,7 +49,7 @@
 
         <aside class="calendar-side">
           <div class="event-day">Choisir</div>
-          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? trip.dateData : '' %>"><%= trip && trip.dateData ? trip.dateData : '' %></div>
+          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>" data-iso="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>"><%= trip && trip.dateData ? formatDate(trip.dateData) : '' %></div>
           <div class="events">Sélectionnez un jour dans le calendrier pour continuer.</div>
         </aside>
       </div>
