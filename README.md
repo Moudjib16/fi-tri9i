@@ -83,8 +83,12 @@ npm test        # validation, views, wilayas and booking-flow tests
 npm run lint    # eslint on the JavaScript sources
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
+npm run backfill-trips   # fill the fields added later on the existing trips
 npm run seed    # fill the database with demo accounts and trips
 ```
+
+`npm run backfill-trips -- --dry-run` shows what would be updated without
+writing anything.
 
 ## Configuration (.env)
 
@@ -130,6 +134,7 @@ lib/validation.js # Shared input/date helpers
 lib/wilayas.js    # Reference data for the 58 wilayas and their communes
 lib/ratings.js    # Keeps the driver rating stored on their trips up to date
 lib/tripStatus.js # Resolves and persists the completed trips
+lib/tripMigration.js # Computes the fields added later on the existing trips
 lib/seedData.js  # Demo accounts and trips used by the seed script
 lib/reports.js    # Shared report reasons and labels
 lib/reportTargets.js # Resolves the trip or profile targeted by a report
@@ -139,7 +144,7 @@ lib/http.js       # Shared HTTP helpers (404 page and server error page)
 models/           # User, Trip, Message, Notification, Review, Favorite and Report schemas
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
-scripts/          # maintenance scripts (create-admin, complete-trips, seed)
+scripts/          # maintenance scripts (create-admin, complete-trips, backfill-trips, seed)
 test/             # node:test suites (validation, views, wilayas, http, seed, booking flow)
 .github/workflows/ # CI running the lint and the test suite
 ```

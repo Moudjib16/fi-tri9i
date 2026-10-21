@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "create-admin": "node scripts/create-admin.js",
     "complete-trips": "node scripts/complete-trips.js",
+    "backfill-trips": "node scripts/backfill-trips.js",
     "seed": "node scripts/seed.js"
   },
   "engines": {
