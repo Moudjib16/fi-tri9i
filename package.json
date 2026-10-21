@@ -7,6 +7,7 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "test": "node --test",
+    "lint": "eslint .",
     "create-admin": "node scripts/create-admin.js",
     "complete-trips": "node scripts/complete-trips.js",
     "seed": "node scripts/seed.js"
@@ -28,6 +29,7 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "eslint": "^9.39.5",
     "nodemon": "^3.1.3"
   }
 }

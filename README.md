@@ -80,6 +80,7 @@ npm install
 npm start       # http://localhost:3000
 npm run dev     # with auto-reload (nodemon)
 npm test        # validation, views, wilayas and booking-flow tests
+npm run lint    # eslint on the JavaScript sources
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
 npm run seed    # fill the database with demo accounts and trips
@@ -140,6 +141,7 @@ views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signa
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips, seed)
 test/             # node:test suites (validation, views, wilayas, http, seed, booking flow)
+.github/workflows/ # CI running the lint and the test suite
 ```
 
 ## Roadmap

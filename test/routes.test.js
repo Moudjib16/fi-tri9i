@@ -3,7 +3,6 @@ process.env.SESSION_SECRET = 'test-secret';
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const path = require('node:path');
 const bcrypt = require('bcrypt');
 const { normalizePlace } = require('../lib/wilayas');
 
@@ -516,7 +515,7 @@ const fakeReview = {
     };
   },
   find(filter = {}) {
-    let items = state.reviews.filter(
+    const items = state.reviews.filter(
       (review) => !filter.driver || String(review.driver) === String(filter.driver)
     );
     const query = {
@@ -573,7 +572,7 @@ const fakeFavorite = {
     };
   },
   find(filter = {}) {
-    let items = state.favorites.filter(
+    const items = state.favorites.filter(
       (favorite) => !filter.user || String(favorite.user) === String(filter.user)
     );
     const query = {
