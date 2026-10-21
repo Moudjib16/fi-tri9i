@@ -1,0 +1,5 @@
+<datalist id="wilayas">
+  <% wilayas.forEach(function (wilaya) { %>
+    <option value="<%= wilaya.name %>"><%= wilaya.name %> (<%= wilaya.code %>)</option>
+  <% }); %>
+</datalist>

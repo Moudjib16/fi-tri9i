@@ -11,6 +11,7 @@ const {
 } = require('../lib/validation');
 const { requireUser, requirePublishUser, requireDraftTrip } = require('../lib/session');
 const { setFlash } = require('../lib/flash');
+const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
 
 const router = express.Router();
 
@@ -69,12 +70,21 @@ router.post('/depart', requirePublishUser, async (req, res) => {
       return res.status(400).send({ message: 'Missing depart' });
     }
 
+    // Only the 58 Algerian wilayas are accepted, stored with their canonical
+    // name so the search matches every spelling of the same wilaya.
+    const canonicalDepart = canonicalWilaya(depart);
+    if (!canonicalDepart) {
+      setFlash(req, 'error', 'Choisissez une wilaya valide pour le départ.');
+      return res.redirect('/publier/page1');
+    }
+
     // Reuse the current draft when the user restarts the wizard so abandoned
     // drafts do not pile up in the database.
     const currentDraft = await loadDraft(req);
     let savedTrip;
     if (currentDraft) {
-      currentDraft.depart = depart;
+      currentDraft.depart = canonicalDepart;
+      currentDraft.departKey = normalizePlace(canonicalDepart);
       currentDraft.depart0 = '';
       currentDraft.arrivee = '';
       currentDraft.arrivee0 = '';
@@ -91,7 +101,8 @@ router.post('/depart', requirePublishUser, async (req, res) => {
       savedTrip = await currentDraft.save();
     } else {
       const newtrip = new trip({
-        depart,
+        depart: canonicalDepart,
+        departKey: normalizePlace(canonicalDepart),
         driver: req.session.userId || null,
       });
       savedTrip = await newtrip.save();
@@ -141,12 +152,19 @@ router.post('/arrivee', requireUser, requireDraftTrip, async (req, res) => {
       return res.status(400).send({ message: 'Missing arrivee' });
     }
 
+    const canonicalArrivee = canonicalWilaya(arrivee);
+    if (!canonicalArrivee) {
+      setFlash(req, 'error', 'Choisissez une wilaya valide pour l’arrivée.');
+      return res.redirect('/publier/page3');
+    }
+
     const { existingTrip, error } = await getSessionTrip(req);
     if (error) {
       return res.status(404).send({ message: error });
     }
 
-    existingTrip.arrivee = arrivee;
+    existingTrip.arrivee = canonicalArrivee;
+    existingTrip.arriveeKey = normalizePlace(canonicalArrivee);
 
     await existingTrip.save();
 
@@ -385,7 +403,7 @@ router.get('/publier/page1', requireUser, async (req, res) => {
 router.get('/publier/page2', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/page2', { trip: draft });
+  return res.render('publier/page2', { trip: draft, communes: communesFor(draft.depart) });
 });
 
 router.get('/publier/page3', requireUser, requireDraftTrip, async (req, res) => {
@@ -397,7 +415,7 @@ router.get('/publier/page3', requireUser, requireDraftTrip, async (req, res) => 
 router.get('/publier/page4', requireUser, requireDraftTrip, async (req, res) => {
   const draft = await loadDraft(req);
   if (!draft) return res.redirect('/publier/page1');
-  return res.render('publier/page4', { trip: draft });
+  return res.render('publier/page4', { trip: draft, communes: communesFor(draft.arrivee) });
 });
 
 router.get('/publier/calendaire', requireUser, requireDraftTrip, async (req, res) => {

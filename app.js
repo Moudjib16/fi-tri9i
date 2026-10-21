@@ -13,6 +13,7 @@ const user = require('./models/signup');
 const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
 const { formatDateFr, formatDateIso } = require('./lib/validation');
+const { wilayaOptions } = require('./lib/wilayas');
 const pagesRouter = require('./routes/pages');
 const driversRouter = require('./routes/drivers');
 const messagesRouter = require('./routes/messages');
@@ -96,6 +97,7 @@ app.use((req, res, next) => {
   res.locals.unreadNotifications = 0;
   res.locals.formatDate = formatDateFr;
   res.locals.formatDateIso = formatDateIso;
+  res.locals.wilayas = wilayaOptions();
   next();
 });
 
@@ -154,9 +156,11 @@ app.use(async (req, res, next) => {
 });
 
 // Basic brute-force protection for auth endpoints
+const isTest = process.env.NODE_ENV === 'test';
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  // The test suite signs in many times, it must not hit the production limit.
+  max: isTest ? 1000 : 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many attempts, please try again later.' },
@@ -166,7 +170,7 @@ app.use('/signup', authLimiter);
 
 const accountLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isTest ? 1000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many attempts, please try again later.' },

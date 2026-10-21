@@ -9,6 +9,11 @@ log in, and book their seats.
 - Sign-up / login with hashed passwords (bcrypt) and Mongo-backed sessions
 - 9-step publishing wizard (login required): departure wilaya and commune,
   arrival wilaya and commune, date, time, seat count, price, description
+- Reference data for the 58 wilayas: the place inputs suggest them, the wilaya
+  is validated and stored with its canonical name, and the search matches a
+  wilaya with or without its accents
+- Communes are suggested from the selected wilaya, but stay free text so a
+  missing entry never blocks a trip
 - Drafts are private: a trip only appears in search after the final "publier"
   step validates that every required step is complete; owners can resume or
   delete drafts from "Mes trajets"
@@ -113,6 +118,8 @@ app.js            # Express setup, middleware and router mounting
 routes/           # pages, account, admin, auth, drivers, favourites, messages, notifications, reports, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
 lib/validation.js # Shared input/date helpers
+lib/wilayas.js    # Reference data for the 58 wilayas and their communes
+lib/ratings.js    # Keeps the driver rating stored on their trips up to date
 lib/reports.js    # Shared report reasons and labels
 lib/reportTargets.js # Resolves the trip or profile targeted by a report
 lib/session.js    # Session regeneration and route guards

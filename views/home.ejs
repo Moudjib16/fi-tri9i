@@ -19,11 +19,11 @@
             <div class="search-grid">
               <label class="field">
                 <span>Départ</span>
-                <input type="text" name="depart" placeholder="Alger" autocomplete="address-level2">
+                <input type="text" name="depart" list="wilayas" placeholder="Alger" autocomplete="off">
               </label>
               <label class="field">
                 <span>Arrivée</span>
-                <input type="text" name="arrivee" placeholder="Béjaïa" autocomplete="address-level2">
+                <input type="text" name="arrivee" list="wilayas" placeholder="Béjaïa" autocomplete="off">
               </label>
               <label class="field">
                 <span>Date</span>
@@ -36,6 +36,7 @@
               <button class="btn" type="submit">Rechercher</button>
             </div>
           </form>
+          <%- include('./partials/wilaya-list.ejs') %>
 
           <ul class="trust-list">
             <li>

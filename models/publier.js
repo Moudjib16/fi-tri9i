@@ -16,6 +16,12 @@ const Schema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    // Lowercase, accent free copy of the wilaya, used by the search filters.
+    departKey: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     depart0: {
         type : String,
         trim: true,
@@ -23,6 +29,11 @@ const Schema = new mongoose.Schema({
     },
     arrivee: {
         type : String,
+        trim: true,
+        default: ''
+    },
+    arriveeKey: {
+        type: String,
         trim: true,
         default: ''
     },
@@ -97,6 +108,7 @@ const Schema = new mongoose.Schema({
 }, { timestamps: true });
 
 Schema.index({ depart: 1, arrivee: 1 });
+Schema.index({ departKey: 1, arriveeKey: 1 });
 Schema.index({ driver: 1 });
 Schema.index({ passengers: 1 });
 Schema.index({ driverRating: -1, departureAt: 1 });

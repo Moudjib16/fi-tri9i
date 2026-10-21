@@ -23,8 +23,9 @@
         <%- include('../partials/csrf-input.ejs') %>
         <label class="field">
           <span>Wilaya de départ</span>
-          <input type="text" name="depart" id="commencer" placeholder="ex : Alger" value="<%= trip && trip.depart ? trip.depart : '' %>" required autofocus>
+          <input type="text" name="depart" id="commencer" list="wilayas" placeholder="ex : Alger" value="<%= trip && trip.depart ? trip.depart : '' %>" required autofocus>
         </label>
+        <%- include('../partials/wilaya-list.ejs') %>
         <div class="wizard-actions">
           <a class="btn ghost" href="/mes-trajets">Annuler</a>
           <button class="btn" id="suiv" type="submit">Continuer &rarr;</button>

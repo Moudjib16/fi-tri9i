@@ -22,19 +22,19 @@
         <div class="form-grid">
           <label class="field">
             <span>Wilaya de départ</span>
-            <input type="text" name="depart" value="<%= values.depart %>" required>
+            <input type="text" name="depart" list="wilayas" data-communes-for="communes-depart" value="<%= values.depart %>" required>
           </label>
           <label class="field">
             <span>Commune de départ</span>
-            <input type="text" name="depart0" value="<%= values.depart0 %>" required>
+            <input type="text" name="depart0" list="communes-depart" value="<%= values.depart0 %>" required>
           </label>
           <label class="field">
             <span>Wilaya d'arrivée</span>
-            <input type="text" name="arrivee" value="<%= values.arrivee %>" required>
+            <input type="text" name="arrivee" list="wilayas" data-communes-for="communes-arrivee" value="<%= values.arrivee %>" required>
           </label>
           <label class="field">
             <span>Commune d'arrivée</span>
-            <input type="text" name="arrivee0" value="<%= values.arrivee0 %>" required>
+            <input type="text" name="arrivee0" list="communes-arrivee" value="<%= values.arrivee0 %>" required>
           </label>
           <label class="field">
             <span>Date</span>
@@ -74,9 +74,14 @@
           <button class="btn" type="submit">Enregistrer les modifications</button>
         </div>
       </form>
+
+      <%- include('./partials/wilaya-list.ejs') %>
+      <%- include('./partials/commune-list.ejs', { id: 'communes-depart', communes: departCommunes }) %>
+      <%- include('./partials/commune-list.ejs', { id: 'communes-arrivee', communes: arriveeCommunes }) %>
     </section>
   </main>
 
+  <script src="/shared/places.js"></script>
   <script src="/shared/navbar.js" defer></script>
 </body>
 </html>

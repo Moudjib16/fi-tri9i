@@ -16,8 +16,9 @@
         <%- include('../partials/csrf-input.ejs') %>
         <label class="field">
           <span>Commune d'arrivée</span>
-          <input type="text" name="arrivee0" id="commencer" placeholder="ex : Amizour" value="<%= trip && trip.arrivee0 ? trip.arrivee0 : '' %>" required autofocus>
+          <input type="text" name="arrivee0" id="commencer" list="communes" placeholder="ex : Amizour" value="<%= trip && trip.arrivee0 ? trip.arrivee0 : '' %>" required autofocus>
         </label>
+        <%- include('../partials/commune-list.ejs', { id: 'communes', communes: communes }) %>
         <div class="wizard-actions">
           <button class="btn secondary precedent" id="prec" type="button">Précédent</button>
           <button class="btn" id="suiv" type="submit">Continuer &rarr;</button>

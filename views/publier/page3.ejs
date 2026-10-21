@@ -16,8 +16,9 @@
         <%- include('../partials/csrf-input.ejs') %>
         <label class="field">
           <span>Wilaya d'arrivée</span>
-          <input type="text" name="arrivee" id="commencer" placeholder="ex : Béjaïa" value="<%= trip && trip.arrivee ? trip.arrivee : '' %>" required autofocus>
+          <input type="text" name="arrivee" id="commencer" list="wilayas" placeholder="ex : Béjaïa" value="<%= trip && trip.arrivee ? trip.arrivee : '' %>" required autofocus>
         </label>
+        <%- include('../partials/wilaya-list.ejs') %>
         <div class="wizard-actions">
           <button class="btn secondary precedent" id="prec" type="button">Précédent</button>
           <button class="btn" id="suiv" type="submit">Continuer &rarr;</button>

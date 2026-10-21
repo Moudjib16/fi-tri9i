@@ -18,11 +18,11 @@
       <form class="trip-search" action="/trajets" method="get">
         <label class="field">
           <span>Départ</span>
-          <input type="text" name="depart" value="<%= filters.depart %>" placeholder="ex : Alger">
+          <input type="text" name="depart" list="wilayas" value="<%= filters.depart %>" placeholder="ex : Alger">
         </label>
         <label class="field">
           <span>Arrivée</span>
-          <input type="text" name="arrivee" value="<%= filters.arrivee %>" placeholder="ex : Béjaïa">
+          <input type="text" name="arrivee" list="wilayas" value="<%= filters.arrivee %>" placeholder="ex : Béjaïa">
         </label>
         <label class="field">
           <span>Date</span>
@@ -59,6 +59,7 @@
         </label>
         <button class="btn" type="submit">Rechercher</button>
       </form>
+      <%- include('./partials/wilaya-list.ejs') %>
     </section>
 
     <section class="results">

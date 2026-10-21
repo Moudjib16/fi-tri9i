@@ -5,6 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const bcrypt = require('bcrypt');
+const { normalizePlace } = require('../lib/wilayas');
 
 const tripId = '64f000000000000000000001';
 const passengerId = '64f000000000000000000002';
@@ -125,6 +126,12 @@ function matchesTrip(candidate, filter) {
       if (value.$gte !== undefined && price < value.$gte) return false;
       if (value.$lte !== undefined && price > value.$lte) return false;
       return true;
+    }
+    if (key === 'departKey' || key === 'arriveeKey') {
+      // Legacy trips have no key, the accent free wilaya is used instead.
+      const raw = key === 'departKey' ? candidate.depart : candidate.arrivee;
+      const stored = candidate[key] || normalizePlace(raw);
+      return value.test(stored || '');
     }
     if (key === 'dateData') {
       if (value && Array.isArray(value.$in)) {
@@ -1665,7 +1672,7 @@ test('search filters trips by price, departure window and driver rating', async 
   // The filters are kept in the search form.
   const filtered = await (await fetch(`${baseUrl}/trajets?depart=Filtreville&prixMax=1000`)).text();
   assert.match(filtered, /name="prixMax" min="1" max="100000" value="1000"/);
-  assert.match(filtered, /name="depart" value="Filtreville"/);
+  assert.match(filtered, /name="depart" list="wilayas" value="Filtreville"/);
 
   // A review refreshes the rating stored on the driver trips.
   const ratedTrip = state.trips.find((candidate) => candidate._id === cheapId);
@@ -1684,6 +1691,85 @@ test('search filters trips by price, departure window and driver rating', async 
       state.trips.splice(index, 1);
     }
   }
+});
+
+test('only the 58 wilayas are accepted and stored with their canonical name', async () => {
+  const passenger = await login('sara@test.dz', 'secret1');
+  const { cookie } = passenger;
+  const page = await openPage('/publier/page1', cookie);
+
+  const unknown = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'Narnia', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(unknown.status, 302);
+  assert.equal(unknown.headers.get('location'), '/publier/page1');
+
+  const rejection = await (await fetch(`${baseUrl}/publier/page1`, { headers: { cookie } })).text();
+  assert.match(rejection, /Choisissez une wilaya valide/);
+
+  // The wilaya is stored with its canonical spelling, whatever the input.
+  const accepted = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'bejaia', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(accepted.status, 302);
+  assert.equal(accepted.headers.get('location'), '/publier/page2');
+
+  const drafts = state.trips.filter(
+    (candidate) => candidate.status === 'draft' && String(candidate.driver) === passengerId
+  );
+  const draft = drafts[drafts.length - 1];
+  assert.equal(draft.depart, 'Béjaïa');
+  assert.equal(draft.departKey, 'bejaia');
+
+  // The search matches the wilaya with or without its accents.
+  const accentTripId = '64f000000000000000000856';
+  state.trips.push({
+    _id: accentTripId,
+    status: 'published',
+    depart: 'Béjaïa',
+    departKey: 'bejaia',
+    depart0: 'Amizour',
+    arrivee: 'Alger',
+    arriveeKey: 'alger',
+    arrivee0: 'Bab Ezzouar',
+    dateData: '12 December 2030',
+    departureAt: new Date('2030-12-12T08:00:00Z'),
+    time: '08 : 00',
+    price: '1200da',
+    priceDZD: 1200,
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: 'Trajet accentué',
+    driver: { _id: driverId, name: 'Karim' },
+  });
+
+  const search = await (await fetch(`${baseUrl}/trajets?depart=bejaia`)).text();
+  assert.match(search, /Amizour/);
+
+  const searchWithAccent = await (await fetch(`${baseUrl}/trajets?depart=Béjaïa`)).text();
+  assert.match(searchWithAccent, /Amizour/);
+
+  const searchOther = await (await fetch(`${baseUrl}/trajets?depart=oran`)).text();
+  assert.doesNotMatch(searchOther, /Amizour/);
+
+  const index = state.trips.findIndex((candidate) => candidate._id === accentTripId);
+  state.trips.splice(index, 1);
+});
+
+test('the place reference data is served as json', async () => {
+  const response = await fetch(`${baseUrl}/api/places`);
+  assert.equal(response.status, 200);
+  const places = await response.json();
+  assert.ok(Array.isArray(places.alger));
+  assert.ok(places.alger.includes('Bab Ezzouar'));
+  assert.ok(Array.isArray(places.bejaia));
 });
 
 test('users can save trips to their favourites', async () => {

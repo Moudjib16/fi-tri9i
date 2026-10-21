@@ -5,6 +5,7 @@ const util = require('node:util');
 const ejs = require('ejs');
 const { REPORT_REASONS } = require('../lib/reports');
 const { formatDateFr, formatDateIso } = require('../lib/validation');
+const { wilayaOptions } = require('../lib/wilayas');
 
 const renderFile = util.promisify(ejs.renderFile);
 const view = (name) => path.join(__dirname, '..', 'views', name);
@@ -12,6 +13,7 @@ const view = (name) => path.join(__dirname, '..', 'views', name);
 const render = (name, data) => renderFile(view(name), {
   formatDate: formatDateFr,
   formatDateIso,
+  wilayas: wilayaOptions(),
   ...data,
 });
 
@@ -40,6 +42,10 @@ test('home renders the guest navbar and search form', async () => {
   assert.match(html, /action="\/trajets"/);
   assert.match(html, /Connexion/);
   assert.match(html, /Inscription/);
+  // The wilaya datalist suggests the 58 wilayas.
+  assert.match(html, /<datalist id="wilayas">/);
+  assert.match(html, /<option value="Béjaïa">/);
+  assert.match(html, /<option value="Alger">/);
 });
 
 test('trip listing renders trip cards', async () => {
@@ -128,6 +134,8 @@ test('edit form preloads trip values and reserves booked seats', async () => {
       description: 'Trajet tranquille',
     },
     error: 'Erreur de test',
+    departCommunes: ['Alger Centre', 'Bab Ezzouar'],
+    arriveeCommunes: ['Amizour', 'Akbou'],
   });
 
   assert.match(html, /action="\/trajets\/64f000000000000000000001\/modifier"/);
@@ -135,6 +143,9 @@ test('edit form preloads trip values and reserves booked seats', async () => {
   assert.match(html, /min="2"/);
   assert.match(html, /value="2030-12-12"/);
   assert.match(html, /Erreur de test/);
+  assert.match(html, /list="wilayas"/);
+  assert.match(html, /<option value="Bab Ezzouar">/);
+  assert.match(html, /<option value="Amizour">/);
 });
 
 test('message thread renders participants and highlights own messages', async () => {
@@ -260,6 +271,23 @@ test('time step exposes every selectable departure time', async () => {
   assert.equal(options.length, 108);
   assert.match(html, /À quelle heure partez-vous/);
   assert.doesNotMatch(html, /id="time-option"/);
+});
+
+test('the wizard suggests the wilayas and the communes of the draft', async () => {
+  const firstStep = await render('publier/page1.ejs', {
+    currentUser: null,
+    trip: null,
+  });
+  assert.match(firstStep, /list="wilayas"/);
+  assert.match(firstStep, /<datalist id="wilayas">/);
+
+  const secondStep = await render('publier/page2.ejs', {
+    currentUser: null,
+    trip: { depart: 'Alger', depart0: 'Bab Ezzouar' },
+    communes: ['Alger Centre', 'Bab Ezzouar'],
+  });
+  assert.match(secondStep, /list="communes"/);
+  assert.match(secondStep, /<option value="Bab Ezzouar">/);
 });
 
 test('wizard steps use inline errors instead of browser alerts', async () => {

@@ -16,6 +16,7 @@ const {
 const { tripNotFound } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
 const { notifyUsers } = require('../lib/notifications');
+const { canonicalWilaya, communesFor, normalizePlace } = require('../lib/wilayas');
 
 const router = express.Router();
 
@@ -133,6 +134,8 @@ router.get('/trajets/:id/modifier', async (req, res) => {
       trip: foundTrip,
       values: editValuesFromTrip(foundTrip),
       error: '',
+      departCommunes: communesFor(foundTrip.depart),
+      arriveeCommunes: communesFor(foundTrip.arrivee),
     });
   } catch (err) {
     console.error(err);
@@ -153,10 +156,14 @@ router.post('/trajets/:id/modifier', async (req, res) => {
     const parsedPrice = parsePriceInput(values.price);
     const places = Number(values.places);
     const placesTaken = foundTrip.places_taken || 0;
+    const canonicalDepart = canonicalWilaya(values.depart);
+    const canonicalArrivee = canonicalWilaya(values.arrivee);
 
     let error = '';
     if (!values.depart || !values.depart0 || !values.arrivee || !values.arrivee0) {
       error = 'Renseignez la wilaya et la commune de départ et d’arrivée.';
+    } else if (!canonicalDepart || !canonicalArrivee) {
+      error = 'Choisissez une wilaya valide pour le départ et l’arrivée.';
     } else if (!parsedDate || isPastDate(parsedDate.date)) {
       error = 'Choisissez une date future.';
     } else if (!parsedTime) {
@@ -177,12 +184,16 @@ router.post('/trajets/:id/modifier', async (req, res) => {
         trip: foundTrip,
         values,
         error,
+        departCommunes: communesFor(values.depart),
+        arriveeCommunes: communesFor(values.arrivee),
       });
     }
 
-    foundTrip.depart = values.depart;
+    foundTrip.depart = canonicalDepart;
+    foundTrip.departKey = normalizePlace(canonicalDepart);
     foundTrip.depart0 = values.depart0;
-    foundTrip.arrivee = values.arrivee;
+    foundTrip.arrivee = canonicalArrivee;
+    foundTrip.arriveeKey = normalizePlace(canonicalArrivee);
     foundTrip.arrivee0 = values.arrivee0;
     foundTrip.dateData = parsedDate.display;
     foundTrip.time = parsedTime.display;
@@ -228,8 +239,24 @@ router.get('/trajets', async (req, res) => {
     const filter = { status: { $nin: ['draft', 'cancelled'] } };
     const conditions = [];
 
-    if (depart) filter.depart = new RegExp(escapeRegex(depart), 'i');
-    if (arrivee) filter.arrivee = new RegExp(escapeRegex(arrivee), 'i');
+    if (depart) {
+      // The accent free key matches "bejaia" and "Béjaïa" alike, the raw
+      // field keeps older trips without a key reachable.
+      conditions.push({
+        $or: [
+          { departKey: new RegExp(escapeRegex(normalizePlace(depart)), 'i') },
+          { depart: new RegExp(escapeRegex(depart), 'i') },
+        ],
+      });
+    }
+    if (arrivee) {
+      conditions.push({
+        $or: [
+          { arriveeKey: new RegExp(escapeRegex(normalizePlace(arrivee)), 'i') },
+          { arrivee: new RegExp(escapeRegex(arrivee), 'i') },
+        ],
+      });
+    }
     filter.$expr = {
       $gte: [
         { $subtract: ['$places', { $ifNull: ['$places_taken', 0] }] },
