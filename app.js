@@ -8,6 +8,7 @@ const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
+const config = require('./lib/config');
 const connectDB = require('./db/db');
 const user = require('./models/signup');
 const Notification = require('./models/notification');
@@ -31,13 +32,7 @@ const publishRouter = require('./routes/publish');
 
 const app = express();
 
-const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
-const sessionSecret = process.env.SESSION_SECRET || 'fi-tri9i-dev-secret';
-
-if (isProduction && !process.env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET must be set in production');
-}
+const { isProduction, isTest, sessionSecret } = config;
 
 // Register view engine
 app.set('view engine', 'ejs');
@@ -70,12 +65,12 @@ app.use(morgan(isProduction ? 'combined' : 'dev'));
 app.use(express.urlencoded({ extended: true, limit: '32kb' }));
 
 // Sessions are persisted in MongoDB so logins survive restarts
-const sessionStore = process.env.NODE_ENV === 'test'
+const sessionStore = isTest
   ? undefined
   : MongoStore.create({
-    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/MyApp',
+    mongoUrl: config.mongoUri,
     collectionName: 'sessions',
-    ttl: 7 * 24 * 60 * 60,
+    ttl: config.sessionTtlSeconds,
     crypto: { secret: sessionSecret },
   });
 
@@ -88,7 +83,7 @@ app.use(session({
     httpOnly: true,
     sameSite: 'lax',
     secure: isProduction,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: config.sessionMaxAgeMs,
   },
 }));
 app.use(bodyParser.json({ limit: '32kb' }));
@@ -244,21 +239,26 @@ app.use((err, req, res, next) => {
 
 // server start
 if (require.main === module) {
-  connectDB();
-  const port = process.env.PORT || 3000;
-
-  app.listen(port, () => {
-    console.log(`App listening at port ${port}`);
-  });
-
-  // Keep the status of the trips that already left up to date.
-  const completeTrips = () => {
-    completePastTrips().catch((err) => {
-      console.error('Unable to complete past trips:', err.message);
+  const start = async () => {
+    await connectDB();
+    app.listen(config.port, () => {
+      console.log(`App listening at port ${config.port}`);
     });
+
+    // Keep the status of the trips that already left up to date.
+    const completeTrips = () => {
+      completePastTrips().catch((err) => {
+        console.error('Unable to complete past trips:', err.message);
+      });
+    };
+    completeTrips();
+    setInterval(completeTrips, 15 * 60 * 1000);
   };
-  completeTrips();
-  setInterval(completeTrips, 15 * 60 * 1000);
+
+  start().catch((err) => {
+    console.error('Unable to start the application:', err.message);
+    process.exit(1);
+  });
 }
 
 module.exports = app;
