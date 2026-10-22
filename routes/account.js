@@ -25,6 +25,8 @@ router.post('/compte/profil', requireUser, async (req, res) => {
   const phone = pickString(req.body.phone);
   const bio = pickString(req.body.bio);
   const userType = Number(req.body.userType);
+  const emailNotifications = req.body.emailNotifications === 'on'
+    || req.body.emailNotifications === 'true';
 
   const errors = {};
   if (name.length < 2 || name.length > 60) {
@@ -44,7 +46,7 @@ router.post('/compte/profil', requireUser, async (req, res) => {
     return res.status(400).render('compte', {
       title: 'Mon compte',
       errors,
-      profile: { name, phone, bio, userType },
+      profile: { name, phone, bio, userType, emailNotifications },
     });
   }
 
@@ -60,6 +62,7 @@ router.post('/compte/profil', requireUser, async (req, res) => {
     account.phone = phone;
     account.bio = bio;
     account.userType = userType;
+    account.emailNotifications = emailNotifications;
     await account.save();
 
     setFlash(req, 'success', 'Votre profil a été mis à jour.');

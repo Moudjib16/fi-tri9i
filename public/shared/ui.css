@@ -1951,6 +1951,27 @@ a.driver-card:hover strong {
   margin-top: 20px;
 }
 
+.policy.account-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.policy.account-check input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin-top: 2px;
+  accent-color: var(--brand);
+}
+
+.policy.account-check label {
+  cursor: pointer;
+}
+
 .report-link {
   display: block;
   margin-top: 14px;

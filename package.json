@@ -15,7 +15,7 @@
     "seed": "node scripts/seed.js"
   },
   "engines": {
-    "node": ">=18.11"
+    "node": ">=20"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -26,7 +26,8 @@
     "express-rate-limit": "^7.2.0",
     "express-session": "^1.18.0",
     "helmet": "^7.1.0",
-    "mongoose": "^8.4.0"
+    "mongoose": "^8.4.0",
+    "nodemailer": "^10.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

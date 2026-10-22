@@ -45,8 +45,40 @@ const Schema = new mongoose.Schema({
     suspended:{
         type: Boolean,
         default: false
+    },
+    // Existing accounts predate email verification and stay trusted.
+    emailVerified:{
+        type: Boolean,
+        default: true
+    },
+    emailNotifications:{
+        type: Boolean,
+        default: true
+    },
+    emailVerificationTokenHash:{
+        type: String,
+        default: null,
+        select: false
+    },
+    emailVerificationExpires:{
+        type: Date,
+        default: null,
+        select: false
+    },
+    passwordResetTokenHash:{
+        type: String,
+        default: null,
+        select: false
+    },
+    passwordResetExpires:{
+        type: Date,
+        default: null,
+        select: false
     }
 }, { timestamps: true });
+
+Schema.index({ emailVerificationTokenHash: 1 }, { sparse: true });
+Schema.index({ passwordResetTokenHash: 1 }, { sparse: true });
 
 const user = mongoose.models.User || mongoose.model('User', Schema);
 

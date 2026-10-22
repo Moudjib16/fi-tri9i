@@ -9,6 +9,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const { combineDepartureAt } = require('../lib/validation');
 const MongoRateLimitStore = require('../lib/mongoRateLimitStore');
 const { createLogger } = require('../lib/logger');
+const { getOutbox, clearOutbox } = require('../lib/email');
 
 let app;
 let Trip;
@@ -230,7 +231,100 @@ test('search uses the Algiers date and hour with real Mongo queries', async () =
   assert.deepEqual(statuses.sort(), ['cancelled', 'completed', 'published']);
 });
 
+test('email verification and password reset work with real tokens', async () => {
+  clearOutbox();
+  const page = await open('/signup');
+  const created = await fetch(`${baseUrl}/signup`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: page.cookie,
+    },
+    body: new URLSearchParams({
+      _csrf: csrfToken(page.html),
+      name: 'Verifie',
+      email: 'verifie@integration.dz',
+      password: 'secret123',
+      'confirm-password': 'secret123',
+      userType: '1',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(created.status, 302);
+
+  const unverified = await User.findOne({ email: 'verifie@integration.dz' })
+    .select('+emailVerificationTokenHash +emailVerificationExpires')
+    .lean();
+  assert.equal(unverified.emailVerified, false);
+  assert.match(unverified.emailVerificationTokenHash, /^[a-f0-9]{64}$/);
+  assert.ok(unverified.emailVerificationExpires > new Date());
+
+  const signupMail = getOutbox().find((message) => message.to === 'verifie@integration.dz');
+  const verificationLink = /\/verifier-email\/([A-Za-z0-9_-]+)/.exec(signupMail.text);
+  assert.ok(verificationLink);
+
+  const confirmed = await open(`/verifier-email/${verificationLink[1]}`);
+  assert.equal(confirmed.response.status, 302);
+  assert.equal(confirmed.response.headers.get('location'), '/login');
+
+  const verified = await User.findOne({ email: 'verifie@integration.dz' })
+    .select('+emailVerificationTokenHash')
+    .lean();
+  assert.equal(verified.emailVerified, true);
+  assert.equal(verified.emailVerificationTokenHash, null);
+
+  const forgotPage = await open('/mot-de-passe-oublie');
+  const sent = await fetch(`${baseUrl}/mot-de-passe-oublie`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: forgotPage.cookie,
+    },
+    body: new URLSearchParams({
+      _csrf: csrfToken(forgotPage.html),
+      email: 'verifie@integration.dz',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(sent.status, 200);
+
+  const resetMail = getOutbox().find((message) => (
+    message.to === 'verifie@integration.dz' && /initialisation/i.test(message.subject)
+  ));
+  assert.ok(resetMail);
+  const resetLink = /\/reinitialiser-mot-de-passe\/([A-Za-z0-9_-]+)/.exec(resetMail.text);
+  assert.ok(resetLink);
+
+  const resetPage = await open(`/reinitialiser-mot-de-passe/${resetLink[1]}`);
+  assert.equal(resetPage.response.status, 200);
+  const changed = await fetch(`${baseUrl}/reinitialiser-mot-de-passe/${resetLink[1]}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: resetPage.cookie,
+    },
+    body: new URLSearchParams({
+      _csrf: csrfToken(resetPage.html),
+      password: 'nouveauSecret1',
+      'confirm-password': 'nouveauSecret1',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(changed.status, 302);
+  assert.equal(changed.headers.get('location'), '/login');
+
+  const updated = await User.findOne({ email: 'verifie@integration.dz' })
+    .select('+password +passwordResetTokenHash')
+    .lean();
+  assert.equal(await bcrypt.compare('nouveauSecret1', updated.password), true);
+  assert.equal(updated.passwordResetTokenHash, null);
+
+  const reused = await open(`/reinitialiser-mot-de-passe/${resetLink[1]}`);
+  assert.equal(reused.response.status, 400);
+});
+
 test('two simultaneous bookings cannot oversell the last seat', async () => {
+  clearOutbox();
   const driver = await addUser('Driver', 'driver@integration.dz', 2);
   await addUser('Passenger One', 'one@integration.dz');
   await addUser('Passenger Two', 'two@integration.dz');
@@ -271,4 +365,8 @@ test('two simultaneous bookings cannot oversell the last seat', async () => {
   assert.equal(saved.places_taken, 1);
   assert.equal(saved.passengers.length, 1);
   assert.equal(await Notification.countDocuments({ type: 'booking' }), 1);
+  assert.ok(getOutbox().some((message) => (
+    message.to === 'driver@integration.dz'
+    && /Nouvelle r/.test(message.subject)
+  )));
 });

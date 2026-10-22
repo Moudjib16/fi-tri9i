@@ -150,7 +150,7 @@ app.use(async (req, res, next) => {
   }
   try {
     const currentUser = await user.findById(req.session.userId)
-      .select('name email userType phone bio isAdmin suspended')
+      .select('name email userType phone bio isAdmin suspended emailVerified emailNotifications')
       .lean();
     if (currentUser && currentUser.suspended) {
       // Suspended accounts are treated as signed out everywhere.
@@ -206,6 +206,9 @@ const accountLimiter = rateLimit({
   message: { message: 'Too many attempts, please try again later.' },
 });
 app.use('/compte/mot-de-passe', accountLimiter);
+app.use('/mot-de-passe-oublie', accountLimiter);
+app.use('/reinitialiser-mot-de-passe', accountLimiter);
+app.use('/verifier-email', accountLimiter);
 
 // Every state-changing request is throttled, so a single client cannot spam
 // bookings, messages, reports or favourites.

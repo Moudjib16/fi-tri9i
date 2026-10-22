@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<%- include('./partials/head.ejs', { title: 'Mot de passe oublié' }) %>
+<body>
+  <%- include('./partials/navbar.ejs') %>
+
+  <main class="auth-body">
+    <section class="auth-layout">
+      <aside class="auth-aside">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 19c6 0 3-8 9-8 2.2 0 3.4 1.2 5 1.8"></path>
+              <circle cx="5" cy="19" r="2"></circle>
+              <circle cx="19" cy="13" r="2"></circle>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Fi Tri9i</strong>
+            <span>Covoiturage</span>
+          </span>
+        </a>
+        <h1>Retrouvez votre compte.</h1>
+        <p>Indiquez votre adresse email pour recevoir un lien de réinitialisation.</p>
+        <p class="auth-quote">Un lien valable une heure, à usage unique.</p>
+      </aside>
+
+      <div class="auth-card">
+        <p class="eyebrow">Mot de passe</p>
+        <h2>Mot de passe oublié</h2>
+
+        <% if (sent) { %>
+          <p class="auth-intro" role="status">
+            Si ce compte existe, un email de réinitialisation vient d'être envoyé.
+          </p>
+        <% } else { %>
+          <p class="auth-intro">Saisissez l'email associé à votre compte.</p>
+          <form class="auth-form" action="/mot-de-passe-oublie" method="post">
+            <%- include('./partials/csrf-input.ejs') %>
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="email" placeholder="vous@exemple.dz" autocomplete="email" required>
+            </label>
+            <% if (error) { %>
+              <p class="form-error" role="alert"><%= error %></p>
+            <% } %>
+            <button class="btn block" type="submit">Envoyer le lien</button>
+          </form>
+        <% } %>
+
+        <p class="auth-switch"><a href="/login">Retour à la connexion</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/shared/navbar.js"></script>
+</body>
+</html>

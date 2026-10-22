@@ -15,6 +15,7 @@
         phone: currentUser.phone || '',
         bio: currentUser.bio || '',
         userType: currentUser.userType,
+        emailNotifications: currentUser.emailNotifications !== false,
       };
     %>
 
@@ -27,6 +28,24 @@
       </div>
       <span class="account-role"><%= role %></span>
     </header>
+
+    <section class="wizard-card account-card">
+      <p class="eyebrow">Email</p>
+      <h2>Adresse email</h2>
+      <% if (currentUser.emailVerified === false) { %>
+        <p class="wizard-help">
+          Votre adresse email n'est pas encore vérifiée. Confirmez-la pour sécuriser votre compte.
+        </p>
+        <form class="wizard-form account-form" action="/verifier-email/renvoyer" method="post">
+          <%- include('./partials/csrf-input.ejs') %>
+          <div class="wizard-actions">
+            <button class="btn" type="submit">Renvoyer l'email de vérification</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p class="wizard-help">Votre adresse email est vérifiée.</p>
+      <% } %>
+    </section>
 
     <section class="wizard-card account-card">
       <p class="eyebrow">Profil</p>
@@ -73,6 +92,11 @@
         <% if (errors.bio) { %>
           <p class="form-error" role="alert"><%= errors.bio %></p>
         <% } %>
+
+        <div class="policy account-check">
+          <input type="checkbox" name="emailNotifications" id="emailNotifications" <%= profileValues.emailNotifications !== false ? 'checked' : '' %>>
+          <label for="emailNotifications">Recevoir les notifications de l'application par email.</label>
+        </div>
 
         <div class="wizard-actions">
           <button class="btn" type="submit">Enregistrer</button>

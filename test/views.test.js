@@ -472,6 +472,54 @@ test('account page keeps the submitted profile values after an error', async () 
   assert.match(html, /<option value="2" selected>Conducteur<\/option>/);
 });
 
+test('account page offers to verify an unconfirmed email address', async () => {
+  const html = await render('compte.ejs', {
+    title: 'Mon compte',
+    currentUser: {
+      _id: '64f000000000000000000002',
+      name: 'Sara',
+      email: 'sara@test.dz',
+      userType: 1,
+      emailVerified: false,
+      emailNotifications: false,
+    },
+    errors: {},
+  });
+
+  assert.match(html, /action="\/verifier-email\/renvoyer"/);
+  assert.match(html, /name="emailNotifications"/);
+  assert.doesNotMatch(html, /id="emailNotifications" checked/);
+});
+
+test('forgot and reset password pages render their forms', async () => {
+  const forgot = await render('mot-de-passe-oublie.ejs', {
+    title: 'Mot de passe oublié',
+    sent: false,
+    error: '',
+  });
+  assert.match(forgot, /action="\/mot-de-passe-oublie"/);
+  assert.match(forgot, /name="email"/);
+
+  const reset = await render('reinitialiser-mot-de-passe.ejs', {
+    title: 'Nouveau mot de passe',
+    token: 'jeton-test',
+    invalid: false,
+    error: '',
+  });
+  assert.match(reset, /action="\/reinitialiser-mot-de-passe\/jeton-test"/);
+  assert.match(reset, /name="password"/);
+  assert.match(reset, /name="confirm-password"/);
+
+  const expired = await render('reinitialiser-mot-de-passe.ejs', {
+    title: 'Nouveau mot de passe',
+    token: 'jeton-test',
+    invalid: true,
+    error: 'Ce lien est invalide ou a expiré.',
+  });
+  assert.match(expired, /Ce lien est invalide ou a expiré\./);
+  assert.doesNotMatch(expired, /name="password"/);
+});
+
 test('favourites page lists saved trips with a remove action', async () => {
   const html = await render('mes-favoris.ejs', {
     stylesheet: 'mes-favoris/',

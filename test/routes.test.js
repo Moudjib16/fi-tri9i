@@ -5,6 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const bcrypt = require('bcrypt');
 const { normalizePlace } = require('../lib/wilayas');
+const { getOutbox, clearOutbox } = require('../lib/email');
 
 const tripId = '64f000000000000000000001';
 const passengerId = '64f000000000000000000002';
@@ -383,12 +384,9 @@ Object.assign(fakeUser, {
       ? {
         ...found,
         save: async () => {
-          const index = state.users.findIndex(
-            (candidate) => String(candidate._id) === String(account._id)
-          );
           const { save, ...data } = account;
-          state.users[index] = { ...state.users[index], ...data };
-          return state.users[index];
+          Object.assign(found, data);
+          return found;
         },
       }
       : null;
@@ -409,15 +407,32 @@ Object.assign(fakeUser, {
     };
     return query;
   },
-  findOne({ email }) {
-    const found = state.users.find((candidate) => candidate.email === email) || null;
+  findOne(filter = {}) {
+    const found = state.users.find((candidate) => Object.entries(filter).every(
+      ([key, value]) => {
+        if (value && typeof value === 'object' && value.$gt) {
+          return new Date(candidate[key]) > new Date(value.$gt);
+        }
+        return String(candidate[key]) === String(value);
+      }
+    )) || null;
+    const account = found
+      ? {
+        ...found,
+        save: async () => {
+          const { save, ...data } = account;
+          Object.assign(found, data);
+          return found;
+        },
+      }
+      : null;
     const query = {
       select() {
         return query;
       },
       lean: async () => found,
       then(resolve) {
-        resolve(found);
+        resolve(account);
       },
     };
     return query;
@@ -1184,6 +1199,7 @@ test('booking notifications are visible and marked read on the notifications pag
   assert.equal(guest.status, 302);
   assert.equal(guest.headers.get('location'), '/login?next=%2Fnotifications');
 
+  clearOutbox();
   const passenger = await login('sara@test.dz', 'secret1');
   const detail = await openPage(`/trajets/${notifTripId}`, passenger.cookie);
   const reserve = await fetch(`${baseUrl}/trajets/${notifTripId}/reserver`, {
@@ -1197,6 +1213,13 @@ test('booking notifications are visible and marked read on the notifications pag
   assert.equal(state.notifications.length, 1);
   assert.equal(state.notifications[0].recipient, driverId);
   assert.equal(state.notifications[0].type, 'booking');
+
+  const bookingEmails = getOutbox();
+  assert.ok(bookingEmails.some((message) => (
+    message.to === 'karim@test.dz'
+    && /Nouvelle r/.test(message.subject)
+    && /Sara a r/.test(message.text)
+  )));
   assert.match(state.notifications[0].body, /Sara a réservé 1 place/);
 
   const driver = await login('karim@test.dz', 'secret1');
@@ -2671,7 +2694,94 @@ test('invalid credentials get a clear, non-enumerating login error', async () =>
   );
 });
 
+test('a user can reset a forgotten password with a single-use email link', async () => {
+  const account = state.users.find((candidate) => candidate.email === 'sara@test.dz');
+  const originalPassword = account.password;
+  clearOutbox();
+
+  const page = await openPage('/mot-de-passe-oublie');
+  assert.equal(page.response.status, 200);
+  assert.match(page.html, /action="\/mot-de-passe-oublie"/);
+
+  const unknown = await fetch(`${baseUrl}/mot-de-passe-oublie`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ _csrf: page.token, email: 'ghost@test.dz' }),
+    redirect: 'manual',
+  });
+  assert.equal(unknown.status, 200);
+  assert.match(await unknown.text(), /Si ce compte existe/);
+  assert.equal(getOutbox().length, 0);
+
+  const sent = await fetch(`${baseUrl}/mot-de-passe-oublie`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ _csrf: page.token, email: 'sara@test.dz' }),
+    redirect: 'manual',
+  });
+  assert.equal(sent.status, 200);
+  assert.match(await sent.text(), /Si ce compte existe/);
+
+  const resetEmail = getOutbox().find((message) => message.to === 'sara@test.dz');
+  assert.ok(resetEmail);
+  const resetLink = /\/reinitialiser-mot-de-passe\/([A-Za-z0-9_-]+)/.exec(resetEmail.text);
+  assert.ok(resetLink);
+
+  const invalid = await openPage('/reinitialiser-mot-de-passe/inconnu');
+  assert.equal(invalid.response.status, 400);
+  assert.match(invalid.html, /Ce lien est invalide/);
+
+  const resetPage = await openPage(`/reinitialiser-mot-de-passe/${resetLink[1]}`);
+  assert.equal(resetPage.response.status, 200);
+  assert.match(resetPage.html, /name="confirm-password"/);
+
+  const mismatch = await fetch(`${baseUrl}/reinitialiser-mot-de-passe/${resetLink[1]}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: resetPage.cookie,
+    },
+    body: new URLSearchParams({
+      _csrf: resetPage.token,
+      password: 'nouveauSecret1',
+      'confirm-password': 'autreSecret1',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(mismatch.status, 400);
+  assert.match(await mismatch.text(), /ne correspondent pas/);
+
+  const changed = await fetch(`${baseUrl}/reinitialiser-mot-de-passe/${resetLink[1]}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: resetPage.cookie,
+    },
+    body: new URLSearchParams({
+      _csrf: resetPage.token,
+      password: 'nouveauSecret1',
+      'confirm-password': 'nouveauSecret1',
+    }),
+    redirect: 'manual',
+  });
+  assert.equal(changed.status, 302);
+  assert.equal(changed.headers.get('location'), '/login');
+  assert.equal(await bcrypt.compare('nouveauSecret1', account.password), true);
+  assert.equal(account.passwordResetTokenHash, null);
+
+  const signedIn = await login('sara@test.dz', 'nouveauSecret1');
+  assert.equal(signedIn.response.status, 302);
+
+  const reused = await openPage(`/reinitialiser-mot-de-passe/${resetLink[1]}`);
+  assert.equal(reused.response.status, 400);
+
+  account.password = originalPassword;
+  account.passwordResetTokenHash = null;
+  account.passwordResetExpires = null;
+});
+
 test('a visitor can create an account, sign in and sign out', async () => {
+  clearOutbox();
   const page = await openPage('/signup');
   assert.equal(page.response.status, 200);
   assert.match(page.html, /name="name"/);
@@ -2699,12 +2809,49 @@ test('a visitor can create an account, sign in and sign out', async () => {
   assert.equal(account.userType, 2);
   assert.notEqual(account.password, 'secret123');
   assert.equal(await bcrypt.compare('secret123', account.password), true);
+  assert.equal(account.emailVerified, false);
+
+  const signupEmail = getOutbox().find((message) => message.to === 'nadia@test.dz');
+  assert.ok(signupEmail);
+  assert.match(signupEmail.subject, /Confirmez votre adresse email/);
 
   // The session is signed in right away.
   const cookie = sessionCookie(created) || page.cookie;
   const profile = await openPage('/compte', cookie);
   assert.equal(profile.response.status, 200);
   assert.match(profile.html, /Nadia/);
+  assert.match(profile.html, /action="\/verifier-email\/renvoyer"/);
+
+  // A fresh link can be requested and confirms the address once.
+  const resent = await fetch(`${baseUrl}/verifier-email/renvoyer`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ _csrf: profile.token }),
+    redirect: 'manual',
+  });
+  assert.equal(resent.status, 302);
+  assert.equal(resent.headers.get('location'), '/compte');
+
+  const verificationEmail = getOutbox()
+    .filter((message) => message.to === 'nadia@test.dz')
+    .pop();
+  const verificationLink = /\/verifier-email\/([A-Za-z0-9_-]+)/.exec(verificationEmail.text);
+  assert.ok(verificationLink);
+
+  const confirmed = await fetch(`${baseUrl}/verifier-email/${verificationLink[1]}`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(confirmed.status, 302);
+  assert.equal(confirmed.headers.get('location'), '/compte');
+  assert.equal(account.emailVerified, true);
+
+  const reused = await fetch(`${baseUrl}/verifier-email/${verificationLink[1]}`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(reused.status, 302);
+  assert.equal(reused.headers.get('location'), '/login');
 
   // Signing out drops the session.
   const logout = await fetch(`${baseUrl}/logout`, {

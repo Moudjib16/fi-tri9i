@@ -7,6 +7,17 @@ test('the password is excluded from user queries by default', () => {
   assert.equal(User.schema.path('password').options.select, false);
 });
 
+test('account token hashes are hidden and new tokens are single-use fields', () => {
+  assert.equal(User.schema.path('emailVerificationTokenHash').options.select, false);
+  assert.equal(User.schema.path('emailVerificationExpires').options.select, false);
+  assert.equal(User.schema.path('passwordResetTokenHash').options.select, false);
+  assert.equal(User.schema.path('passwordResetExpires').options.select, false);
+
+  const user = new User({ name: 'Sara', email: 'sara@test.dz', password: 'secret1', userType: 1 });
+  assert.equal(user.emailVerified, true);
+  assert.equal(user.emailNotifications, true);
+});
+
 test('trip keys and publication date are kept in sync', async () => {
   const trip = new Trip({
     depart: 'Béjaïa',
