@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { normalizePlace } = require('../lib/wilayas');
 
 const Schema = new mongoose.Schema({
     status: {
@@ -113,12 +114,29 @@ const Schema = new mongoose.Schema({
     }],
 }, { timestamps: true });
 
+// Keep the denormalised fields consistent even when a document is updated
+// outside of the publishing wizard.
+Schema.pre('validate', function syncDerivedFields() {
+  if (this.isModified('depart') || !this.departKey) {
+    this.departKey = normalizePlace(this.depart);
+  }
+  if (this.isModified('arrivee') || !this.arriveeKey) {
+    this.arriveeKey = normalizePlace(this.arrivee);
+  }
+  if (this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = new Date();
+  }
+});
+
 Schema.index({ depart: 1, arrivee: 1 });
 Schema.index({ departKey: 1, arriveeKey: 1 });
 Schema.index({ driver: 1 });
 Schema.index({ passengers: 1 });
-Schema.index({ driverRating: -1, departureAt: 1 });
-Schema.index({ distanceKm: 1, departureAt: 1 });
+Schema.index({ status: 1, departureAt: 1 });
+Schema.index({ status: 1, departKey: 1, arriveeKey: 1, departureAt: 1 });
+Schema.index({ driver: 1, status: 1, departureAt: 1 });
+Schema.index({ status: 1, driverRating: -1, departureAt: 1 });
+Schema.index({ status: 1, distanceKm: 1, departureAt: 1 });
 
 const trip = mongoose.models.trip || mongoose.model('trip', Schema);
 

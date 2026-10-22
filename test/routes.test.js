@@ -372,7 +372,17 @@ Object.assign(fakeUser, {
     return query;
   },
   findOne({ email }) {
-    return state.users.find((candidate) => candidate.email === email) || null;
+    const found = state.users.find((candidate) => candidate.email === email) || null;
+    const query = {
+      select() {
+        return query;
+      },
+      lean: async () => found,
+      then(resolve) {
+        resolve(found);
+      },
+    };
+    return query;
   },
   find(filter = {}) {
     let items = state.users.filter((candidate) => Object.entries(filter).every(

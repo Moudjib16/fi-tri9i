@@ -97,7 +97,7 @@ router.post('/compte/mot-de-passe', requireUser, async (req, res) => {
   }
 
   try {
-    const account = await user.findById(req.session.userId);
+    const account = await user.findById(req.session.userId).select('+password');
     if (!account) {
       delete req.session.userId;
       setFlash(req, 'error', 'Votre compte est introuvable. Reconnectez-vous.');

@@ -96,7 +96,7 @@ router.post('/login', async (req, res) => {
         'Renseignez votre adresse email et votre mot de passe.'
       );
     }
-    const check = await user.findOne({ email });
+    const check = await user.findOne({ email }).select('+password');
     const passwordMatch = await bcrypt.compare(password, check ? check.password : DUMMY_HASH);
     if (!check || !passwordMatch) {
       return renderLoginError(req, res, 401, INVALID_LOGIN);
