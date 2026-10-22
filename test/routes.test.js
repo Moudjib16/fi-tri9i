@@ -826,6 +826,12 @@ async function login(email, password) {
   return { response, cookie: sessionCookie(response) || page.cookie };
 }
 
+test('the health endpoint reports the database state', async () => {
+  const response = await fetch(`${baseUrl}/health`);
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { status: 'unavailable' });
+});
+
 test('public pages render and guest actions redirect to login', async () => {
   const home = await fetch(`${baseUrl}/`);
   assert.equal(home.status, 200);

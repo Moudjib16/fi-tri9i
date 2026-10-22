@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const morgan = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -42,7 +43,16 @@ if (isProduction) {
 }
 
 // Static files
-app.use(express.static(path.join(__dirname, 'public'), { redirect: false }));
+app.use(express.static(path.join(__dirname, 'public'), {
+  redirect: false,
+  maxAge: isProduction ? '1d' : 0,
+}));
+
+// Readiness probe used by deployments and container orchestrators.
+app.get('/health', (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({ status: ready ? 'ok' : 'unavailable' });
+});
 
 // Middleware
 app.use(helmet({
@@ -241,7 +251,7 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   const start = async () => {
     await connectDB();
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
       console.log(`App listening at port ${config.port}`);
     });
 
@@ -252,7 +262,25 @@ if (require.main === module) {
       });
     };
     completeTrips();
-    setInterval(completeTrips, 15 * 60 * 1000);
+    const timer = setInterval(completeTrips, 15 * 60 * 1000);
+
+    const shutdown = async (signal) => {
+      console.log(`${signal} received, shutting down.`);
+      clearInterval(timer);
+
+      const forcedExit = setTimeout(() => process.exit(1), 10 * 1000);
+      forcedExit.unref();
+
+      await new Promise((resolve) => server.close(resolve));
+      if (sessionStore && typeof sessionStore.close === 'function') {
+        await sessionStore.close().catch(() => {});
+      }
+      await mongoose.disconnect();
+      process.exit(0);
+    };
+
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
   };
 
   start().catch((err) => {
