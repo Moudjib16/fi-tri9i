@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: Check out the repository
@@ -63,9 +63,20 @@ jobs:
           key: mongodb-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       # The integration suite starts a temporary MongoDB instance and exercises
-      # the real models, queries, sessions and booking concurrency.
+      # the real models, queries, sessions, account tokens and booking concurrency.
       - name: Run the MongoDB integration tests
         run: npm run test:integration
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build the production image
+        run: docker build --tag fi-tri9i:ci .
 
   audit:
     runs-on: ubuntu-latest
