@@ -3,12 +3,14 @@ const mongoose = require('mongoose');
 const trip = require('../models/publier');
 const user = require('../models/signup');
 const Report = require('../models/report');
+const AuditLog = require('../models/auditLog');
 const { pickString } = require('../lib/validation');
 const { reportReasonLabel } = require('../lib/reports');
 const { describeReports } = require('../lib/reportTargets');
 const { setFlash } = require('../lib/flash');
 const { requireAdmin } = require('../lib/session');
 const { notifyUsers } = require('../lib/notifications');
+const { auditActionLabel, recordModeration } = require('../lib/auditLog');
 const { serverError } = require('../lib/http');
 
 const router = express.Router();
@@ -28,18 +30,25 @@ function adminError(res, message) {
   });
 }
 
+function moderatorName(res) {
+  return res.locals.currentUser && res.locals.currentUser.name
+    ? res.locals.currentUser.name
+    : '';
+}
+
 router.get('/admin', async (req, res) => {
   try {
     const requestedReports = Math.max(1, Number.parseInt(req.query.signaux, 10) || 1);
     const requestedTrips = Math.max(1, Number.parseInt(req.query.trajets, 10) || 1);
     const requestedAccounts = Math.max(1, Number.parseInt(req.query.comptes, 10) || 1);
 
-    const [reportTotal, tripTotal, accountTotal, suspendedTotal, adminTotal] = await Promise.all([
+    const [reportTotal, tripTotal, accountTotal, suspendedTotal, adminTotal, auditLogs] = await Promise.all([
       Report.countDocuments({ status: 'open' }),
       trip.countDocuments({ status: 'published' }),
       user.countDocuments({}),
       user.countDocuments({ suspended: true }),
       user.countDocuments({ isAdmin: true }),
+      AuditLog.find({}).sort({ createdAt: -1 }).limit(20).lean(),
     ]);
 
     const reportPages = Math.max(1, Math.ceil(reportTotal / REPORTS_PER_PAGE));
@@ -87,6 +96,10 @@ router.get('/admin', async (req, res) => {
       reports,
       publishedTrips,
       accounts,
+      auditLogs: auditLogs.map((entry) => ({
+        ...entry,
+        actionLabel: auditActionLabel(entry.action),
+      })),
       totals: {
         reports: reportTotal,
         trips: tripTotal,
@@ -140,6 +153,21 @@ router.post('/admin/signaux/:id', async (req, res) => {
     report.resolvedAt = new Date();
     await report.save();
 
+    await recordModeration({
+      actor: req.session.userId,
+      actorName: moderatorName(res),
+      action: `report.${action}`,
+      targetType: 'report',
+      targetId: report._id,
+      targetLabel: reportReasonLabel(report.reason),
+      note,
+      metadata: {
+        reportedType: report.targetType,
+        reportedId: report.targetId,
+        status: report.status,
+      },
+    });
+
     await notifyUsers([report.reporter], {
       actor: req.session.userId,
       tripId: null,
@@ -172,6 +200,19 @@ router.post('/admin/trajets/:id/annuler', async (req, res) => {
       setFlash(req, 'error', 'Ce trajet ne peut pas être annulé.');
       return res.redirect('/admin');
     }
+
+    await recordModeration({
+      actor: req.session.userId,
+      actorName: moderatorName(res),
+      action: 'trip.cancel',
+      targetType: 'trip',
+      targetId: cancelledTrip._id,
+      targetLabel: `${cancelledTrip.depart} - ${cancelledTrip.arrivee || 'destination à préciser'}`,
+      metadata: {
+        driver: cancelledTrip.driver,
+        passengers: cancelledTrip.passengers ? cancelledTrip.passengers.length : 0,
+      },
+    });
 
     await notifyUsers(cancelledTrip.passengers, {
       actor: req.session.userId,
@@ -240,6 +281,17 @@ router.post('/admin/utilisateurs/:id/suspension', async (req, res) => {
     } else {
       setFlash(req, 'success', 'Le compte a été réactivé.');
     }
+
+    await recordModeration({
+      actor: req.session.userId,
+      actorName: moderatorName(res),
+      action: account.suspended ? 'user.suspend' : 'user.restore',
+      targetType: 'user',
+      targetId: account._id,
+      targetLabel: `${account.name} (${account.email})`,
+      metadata: { cancelledTrips: cancelledCount },
+    });
+
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);
@@ -266,6 +318,16 @@ router.post('/admin/utilisateurs/:id/role', async (req, res) => {
 
     account.isAdmin = !account.isAdmin;
     await account.save();
+
+    await recordModeration({
+      actor: req.session.userId,
+      actorName: moderatorName(res),
+      action: account.isAdmin ? 'user.grant_admin' : 'user.revoke_admin',
+      targetType: 'user',
+      targetId: account._id,
+      targetLabel: `${account.name} (${account.email})`,
+      metadata: { isAdmin: account.isAdmin },
+    });
 
     setFlash(req, 'success', account.isAdmin
       ? 'Le compte est désormais administrateur.'

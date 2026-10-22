@@ -168,6 +168,44 @@
         label: 'Pagination des comptes',
       }) %>
     </section>
+    <section class="my-section" aria-labelledby="audit-title">
+      <div class="results-head">
+        <h2 id="audit-title">Journal de modération</h2>
+      </div>
+
+      <% if (typeof auditLogs === 'undefined' || auditLogs.length === 0) { %>
+        <div class="empty-state">
+          <h3>Aucune action enregistrée.</h3>
+          <p>Les décisions de modération apparaîtront ici.</p>
+        </div>
+      <% } else { %>
+        <div class="admin-list">
+          <% auditLogs.forEach(function (entry) { %>
+            <%
+              const auditAt = new Intl.DateTimeFormat('fr-FR', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }).format(new Date(entry.createdAt));
+            %>
+            <article class="admin-card">
+              <div class="admin-card-head">
+                <span class="pill"><%= entry.actionLabel %></span>
+                <time datetime="<%= new Date(entry.createdAt).toISOString() %>"><%= auditAt %></time>
+              </div>
+              <strong><%= entry.targetLabel || 'Élément modéré' %></strong>
+              <span class="admin-meta">
+                Par <%= entry.actorName || 'un administrateur' %>
+                · <%= entry.targetType === 'trip' ? 'trajet' : entry.targetType === 'user' ? 'compte' : 'signalement' %>
+                · <%= entry.targetId %>
+              </span>
+              <% if (entry.note) { %>
+                <p><%= entry.note %></p>
+              <% } %>
+            </article>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
   </main>
 
   <%- include('./partials/footer.ejs') %>

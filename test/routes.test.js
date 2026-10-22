@@ -18,6 +18,7 @@ const state = {
   reviews: [],
   favorites: [],
   reports: [],
+  auditLogs: [],
   trips: [
     {
       _id: tripId,
@@ -772,6 +773,40 @@ const fakeReport = {
   },
 };
 
+const fakeAuditLog = {
+  async create(data) {
+    const entry = {
+      _id: `64f${String(900 + state.auditLogs.length).padStart(21, '0')}`,
+      actorName: '',
+      targetLabel: '',
+      note: '',
+      metadata: {},
+      ...data,
+      createdAt: new Date(`2031-03-01T12:00:${String(state.auditLogs.length).padStart(2, '0')}Z`),
+    };
+    state.auditLogs.push(entry);
+    return entry;
+  },
+  find() {
+    let items = state.auditLogs.slice();
+    const query = {
+      sort(spec = {}) {
+        const direction = spec.createdAt === -1 ? -1 : 1;
+        items.sort((left, right) => (
+          (new Date(left.createdAt) - new Date(right.createdAt)) * direction
+        ));
+        return query;
+      },
+      limit(count) {
+        items = items.slice(0, count);
+        return query;
+      },
+      lean: async () => items.map((entry) => ({ ...entry })),
+    };
+    return query;
+  },
+};
+
 function installMock(relativePath, exports) {
   const resolved = require.resolve(relativePath);
   require.cache[resolved] = {
@@ -789,6 +824,7 @@ installMock('../models/notification', fakeNotification);
 installMock('../models/review', fakeReview);
 installMock('../models/favorite', fakeFavorite);
 installMock('../models/report', fakeReport);
+installMock('../models/auditLog', fakeAuditLog);
 
 const app = require('../app');
 
@@ -2365,6 +2401,7 @@ test('users can report a trip or a driver and follow their reports', async () =>
 
 test('administrators can moderate reports, trips and accounts', async () => {
   state.reports.length = 0;
+  state.auditLogs.length = 0;
   const modTripId = '64f000000000000000000701';
   state.trips.push({
     _id: modTripId,
@@ -2436,6 +2473,10 @@ test('administrators can moderate reports, trips and accounts', async () => {
   assert.equal(state.reports[0].adminNote, 'Trajet vérifié, avertissement envoyé.');
   assert.equal(state.notifications.length, notificationsBefore + 1);
   assert.equal(state.notifications[state.notifications.length - 1].type, 'report_resolved');
+  assert.equal(state.auditLogs.length, 1);
+  assert.equal(state.auditLogs[0].action, 'report.resolve');
+  assert.equal(state.auditLogs[0].actor, adminId);
+  assert.equal(state.auditLogs[0].note, 'Trajet vérifié, avertissement envoyé.');
 
   const myReports = await openPage('/mes-signalements', passenger.cookie);
   assert.match(myReports.html, /Traité/);
@@ -2451,6 +2492,8 @@ test('administrators can moderate reports, trips and accounts', async () => {
     state.trips.find((candidate) => candidate._id === modTripId).status,
     'cancelled'
   );
+  assert.equal(state.auditLogs[state.auditLogs.length - 1].action, 'trip.cancel');
+  assert.equal(state.auditLogs[state.auditLogs.length - 1].targetId, modTripId);
 
   const suspendTripId = '64f000000000000000000709';
   state.trips.push({
@@ -2472,7 +2515,7 @@ test('administrators can moderate reports, trips and accounts', async () => {
     driver: driverId,
   });
   const suspensionCandidates = state.trips
-    .filter((candidate) => candidate.driver === driverId
+    .filter((candidate) => String(candidate.driver && candidate.driver._id ? candidate.driver._id : candidate.driver) === String(driverId)
       && candidate.status === 'published'
       && (!candidate.departureAt || new Date(candidate.departureAt) > new Date()))
     .map((candidate) => ({ candidate, status: candidate.status }));
@@ -2495,6 +2538,8 @@ test('administrators can moderate reports, trips and accounts', async () => {
       && notification.type === 'trip_cancelled'
       && /suspension du conducteur/.test(notification.body)
   ));
+  assert.equal(state.auditLogs[state.auditLogs.length - 1].action, 'user.suspend');
+  assert.equal(state.auditLogs[state.auditLogs.length - 1].metadata.cancelledTrips, suspensionCandidates.length);
 
   const suspendedLogin = await login('karim@test.dz', 'secret1');
   assert.equal(suspendedLogin.response.status, 403);
@@ -2518,6 +2563,14 @@ test('administrators can moderate reports, trips and accounts', async () => {
   });
   assert.equal(role.status, 302);
   assert.equal(state.users.find((candidate) => candidate._id === passengerId).isAdmin, true);
+  assert.equal(state.auditLogs[state.auditLogs.length - 1].action, 'user.grant_admin');
+
+  const auditDashboard = await openPage('/admin', admin.cookie);
+  assert.match(auditDashboard.html, /Journal de modération/);
+  assert.match(auditDashboard.html, /Signalement traité/);
+  assert.match(auditDashboard.html, /Trajet annulé/);
+  assert.match(auditDashboard.html, /Compte suspendu/);
+  assert.match(auditDashboard.html, /Rôle administrateur accordé/);
 
   const selfRole = await fetch(`${baseUrl}/admin/utilisateurs/${adminId}/role`, {
     method: 'POST',
@@ -2540,6 +2593,7 @@ test('administrators can moderate reports, trips and accounts', async () => {
   const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
   state.trips.splice(tripIndex, 1);
   state.reports.length = 0;
+  state.auditLogs.length = 0;
 });
 
 test('the moderation dashboard paginates its sections', async () => {

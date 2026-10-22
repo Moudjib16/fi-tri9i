@@ -12,6 +12,7 @@ let app;
 let Trip;
 let User;
 let Notification;
+let AuditLog;
 let mongo;
 let server;
 let baseUrl;
@@ -93,8 +94,9 @@ test.before(async () => {
   Trip = require('../models/publier');
   User = require('../models/signup');
   Notification = require('../models/notification');
+  AuditLog = require('../models/auditLog');
 
-  await Promise.all([Trip.init(), User.init()]);
+  await Promise.all([Trip.init(), User.init(), AuditLog.init()]);
   await new Promise((resolve) => {
     server = app.listen(0, '127.0.0.1', resolve);
   });
@@ -112,7 +114,12 @@ test.after(async () => {
 });
 
 test.beforeEach(async () => {
-  await Promise.all([Trip.deleteMany({}), User.deleteMany({}), Notification.deleteMany({})]);
+  await Promise.all([
+    Trip.deleteMany({}),
+    User.deleteMany({}),
+    Notification.deleteMany({}),
+    AuditLog.deleteMany({}),
+  ]);
 });
 
 test('the real schema builds the indexes used by the search', async () => {
@@ -122,6 +129,34 @@ test('the real schema builds the indexes used by the search', async () => {
       && index.key.departKey === 1
       && index.key.arriveeKey === 1
       && index.key.departureAt === 1
+  )));
+});
+
+test('moderation actions leave a durable audit trail', async () => {
+  const actor = new mongoose.Types.ObjectId();
+  const target = new mongoose.Types.ObjectId();
+  const entry = await AuditLog.create({
+    actor,
+    actorName: 'Admin',
+    action: 'trip.cancel',
+    targetType: 'trip',
+    targetId: target,
+    targetLabel: 'Alger - Oran',
+    note: 'Signalements répétés',
+    metadata: { passengers: 2 },
+  });
+
+  const saved = await AuditLog.findById(entry._id).lean();
+  assert.equal(saved.actorName, 'Admin');
+  assert.equal(saved.action, 'trip.cancel');
+  assert.equal(saved.targetLabel, 'Alger - Oran');
+  assert.equal(saved.metadata.passengers, 2);
+
+  const indexes = await AuditLog.collection.indexes();
+  assert.ok(indexes.some((index) => (
+    index.key.targetType === 1
+      && index.key.targetId === 1
+      && index.key.createdAt === -1
   )));
 });
 

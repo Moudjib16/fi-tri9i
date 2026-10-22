@@ -583,6 +583,17 @@ test('admin dashboard renders reports, published trips and accounts', async () =
       suspended: 1,
       admins: 2,
     },
+    auditLogs: [{
+      _id: '64f000000000000000000900',
+      actorName: 'Admin',
+      action: 'trip.cancel',
+      actionLabel: 'Trajet annulé',
+      targetType: 'trip',
+      targetId: '64f000000000000000000001',
+      targetLabel: 'Alger - Bejaia',
+      note: 'Trajet signalé plusieurs fois.',
+      createdAt: new Date('2031-03-01T11:00:00Z'),
+    }],
     pagination: {
       baseQuery: 'signaux=1&trajets=1&comptes=1',
       reports: { page: 1, pages: 2 },
@@ -605,4 +616,7 @@ test('admin dashboard renders reports, published trips and accounts', async () =
   assert.match(html, /signaux=2/);
   assert.match(html, /trajets=2/);
   assert.match(html, /comptes=2/);
+  assert.match(html, /Journal de modération/);
+  assert.match(html, /Trajet annulé/);
+  assert.match(html, /Trajet signalé plusieurs fois\./);
 });
