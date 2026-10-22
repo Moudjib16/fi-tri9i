@@ -146,6 +146,9 @@ function matchesTrip(candidate, filter) {
       }
       return candidate.dateData === value;
     }
+    if (key === '_id' && value && Array.isArray(value.$in)) {
+      return value.$in.map(String).includes(String(candidate._id));
+    }
     if (key === 'driver') {
       const driver = candidate.driver && candidate.driver._id ? candidate.driver._id : candidate.driver;
       return String(driver) === String(value);
@@ -386,7 +389,12 @@ Object.assign(fakeUser, {
   },
   find(filter = {}) {
     let items = state.users.filter((candidate) => Object.entries(filter).every(
-      ([key, value]) => String(candidate[key]) === String(value)
+      ([key, value]) => {
+        if (key === '_id' && value && Array.isArray(value.$in)) {
+          return value.$in.map(String).includes(String(candidate._id));
+        }
+        return String(candidate[key]) === String(value);
+      }
     ));
     const query = {
       select() {
