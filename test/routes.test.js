@@ -93,6 +93,45 @@ function tripChain(result) {
   return query;
 }
 
+function localHourOf(candidate) {
+  if (!candidate.departureAt) {
+    return null;
+  }
+  const departure = new Date(candidate.departureAt);
+  if (Number.isNaN(departure.getTime())) {
+    return null;
+  }
+  return (departure.getUTCHours() + 1) % 24;
+}
+
+function matchesExpression(candidate, expression) {
+  if (expression.$and) {
+    return expression.$and.every((clause) => matchesExpression(candidate, clause));
+  }
+  if (expression.$gte) {
+    const [left, right] = expression.$gte;
+    if (left && left.$hour) {
+      const hour = localHourOf(candidate);
+      return hour !== null && hour >= right;
+    }
+    if (left && left.$subtract) {
+      const leftValue = candidate[left.$subtract[0].replace('$', '')] || 0;
+      const rightValue = right.$ifNull
+        ? candidate[right.$ifNull[0].replace('$', '')] || 0
+        : right;
+      return leftValue - rightValue >= expression.$gte[1];
+    }
+  }
+  if (expression.$lte) {
+    const [left, right] = expression.$lte;
+    if (left && left.$hour) {
+      const hour = localHourOf(candidate);
+      return hour !== null && hour <= right;
+    }
+  }
+  return false;
+}
+
 function matchesTrip(candidate, filter) {
   return Object.entries(filter).every(([key, value]) => {
     if (key === '$and') {
@@ -157,12 +196,7 @@ function matchesTrip(candidate, filter) {
       return (candidate.places || 0) >= value.$gte;
     }
     if (key === '$expr') {
-      const [left, right] = value.$gte[0].$subtract;
-      const leftValue = candidate[left.replace('$', '')] || 0;
-      const rightValue = right.$ifNull
-        ? candidate[right.$ifNull[0].replace('$', '')] || 0
-        : right;
-      return leftValue - rightValue >= value.$gte[1];
+      return matchesExpression(candidate, value);
     }
     if (key === 'status' && value && value.$nin) {
       return !value.$nin.includes(candidate.status);
@@ -960,7 +994,7 @@ test('driver can edit a published trip and seats cannot drop below reservations'
   assert.equal(updated.arrivee0, 'El Bouni');
   assert.equal(updated.dateData, '20 mai 2031');
   assert.equal(updated.time, '09 : 30');
-  assert.equal(updated.departureAt.toISOString(), '2031-05-20T09:30:00.000Z');
+  assert.equal(updated.departureAt.toISOString(), '2031-05-20T08:30:00.000Z');
   assert.equal(updated.places, 3);
   assert.equal(updated.price, '1500da');
   assert.equal(updated.priceDZD, 1500);
@@ -1573,7 +1607,7 @@ test('the publishing wizard accepts the French calendar date format', async () =
   const draft = drafts[drafts.length - 1];
   assert.equal(draft.dateData, '5 janvier 2031');
   assert.equal(draft.time, '08 : 30');
-  assert.equal(draft.departureAt.toISOString(), '2031-01-05T08:30:00.000Z');
+  assert.equal(draft.departureAt.toISOString(), '2031-01-05T07:30:00.000Z');
 
   const pastDate = await fetch(`${baseUrl}/date`, {
     method: 'POST',

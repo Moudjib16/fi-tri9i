@@ -10,8 +10,10 @@ const {
   parseTimeInput,
   parsePriceInput,
   combineDepartureAt,
+  algeriaDateStart,
   isPastDate,
   formatDateIso,
+  DAY_MS,
 } = require('../lib/validation');
 const { tripNotFound, serverError } = require('../lib/http');
 const { setFlash } = require('../lib/flash');
@@ -308,8 +310,9 @@ router.get('/trajets', async (req, res) => {
 
     const parsedDate = date ? parseDateInput(date) : null;
     if (parsedDate) {
-      const start = parsedDate.date;
-      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      // A calendar day in Algeria starts one hour before UTC midnight.
+      const start = algeriaDateStart(parsedDate);
+      const end = new Date(start.getTime() + DAY_MS);
       conditions.push({
         $or: [
           { departureAt: { $gte: start, $lt: end } },
@@ -327,17 +330,18 @@ router.get('/trajets', async (req, res) => {
       });
     }
 
-    const hourFilter = {};
+    const timeExpressions = [];
     const startHour = Number.parseInt(req.query.heureDebut, 10);
     const endHour = Number.parseInt(req.query.heureFin, 10);
+    const localHour = { $hour: { date: '$departureAt', timezone: 'Africa/Algiers' } };
     if (Number.isInteger(startHour) && startHour >= 0 && startHour <= 23) {
-      hourFilter.$gte = startHour;
+      timeExpressions.push({ $gte: [localHour, startHour] });
     }
     if (Number.isInteger(endHour) && endHour >= 0 && endHour <= 23) {
-      hourFilter.$lt = endHour + 1;
+      timeExpressions.push({ $lte: [localHour, endHour] });
     }
-    if (Object.keys(hourFilter).length) {
-      conditions.push({ departureAt: { $hour: hourFilter } });
+    if (timeExpressions.length) {
+      conditions.push({ $expr: { $and: timeExpressions } });
     }
 
     if (conditions.length) {
@@ -370,8 +374,12 @@ router.get('/trajets', async (req, res) => {
     if (places) queryParams.set('places', String(places));
     if (minPrice > 0) queryParams.set('prixMin', String(minPrice));
     if (maxPrice > 0) queryParams.set('prixMax', String(maxPrice));
-    if (hourFilter.$gte !== undefined) queryParams.set('heureDebut', formatHour(startHour));
-    if (hourFilter.$lt !== undefined) queryParams.set('heureFin', formatHour(endHour));
+    if (Number.isInteger(startHour) && startHour >= 0 && startHour <= 23) {
+      queryParams.set('heureDebut', formatHour(startHour));
+    }
+    if (Number.isInteger(endHour) && endHour >= 0 && endHour <= 23) {
+      queryParams.set('heureFin', formatHour(endHour));
+    }
     if (sortKey !== 'soonest') queryParams.set('sort', sortKey);
     const baseQuery = queryParams.toString();
 
@@ -386,8 +394,12 @@ router.get('/trajets', async (req, res) => {
         sort: sortKey,
         prixMin: minPrice > 0 ? String(minPrice) : '',
         prixMax: maxPrice > 0 ? String(maxPrice) : '',
-        heureDebut: hourFilter.$gte !== undefined ? formatHour(startHour) : '',
-        heureFin: hourFilter.$lt !== undefined ? formatHour(endHour) : '',
+        heureDebut: Number.isInteger(startHour) && startHour >= 0 && startHour <= 23
+          ? formatHour(startHour)
+          : '',
+        heureFin: Number.isInteger(endHour) && endHour >= 0 && endHour <= 23
+          ? formatHour(endHour)
+          : '',
       },
       pagination: { total, page: currentPage, pages, baseQuery, pageSize },
     });

@@ -95,7 +95,8 @@ npm run seed    # fill the database with demo accounts and trips
 ```
 
 `npm run backfill-trips -- --dry-run` shows what would be updated without
-writing anything. In production, use `npm ci --omit=dev` and make sure
+writing anything. It also recomputes `departureAt` in the `Africa/Algiers`
+timezone, so rerun it once after upgrading an existing database. In production, use `npm ci --omit=dev` and make sure
 `SESSION_SECRET` is set; the app refuses to start without it.
 
 ### Health check

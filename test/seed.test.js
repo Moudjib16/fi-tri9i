@@ -32,7 +32,7 @@ test('the demo data is complete and consistent', () => {
 test('tripSchedule builds a matching date, label and time', () => {
   const schedule = tripSchedule(3, 7);
 
-  assert.equal(schedule.departureAt.getUTCHours(), 7);
+  assert.equal(schedule.departureAt.getUTCHours(), 6);
   assert.equal(schedule.departureAt.getUTCMinutes(), 0);
   assert.equal(schedule.time, '07 : 00');
 

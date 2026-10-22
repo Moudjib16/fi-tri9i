@@ -95,10 +95,12 @@ test('parsePriceInput only accepts whole DA amounts in range', () => {
   assert.equal(parsePriceInput('free'), null);
 });
 
-test('combineDepartureAt merges date and time and detects past dates', () => {
+test('combineDepartureAt merges date and time in the Algiers timezone', () => {
   const future = combineDepartureAt('12 December 2030', '08 : 30');
-  assert.equal(future.toISOString(), '2030-12-12T08:30:00.000Z');
-  assert.equal(combineDepartureAt('12 décembre 2030', '08 : 30').toISOString(), '2030-12-12T08:30:00.000Z');
+  assert.equal(future.toISOString(), '2030-12-12T07:30:00.000Z');
+  assert.equal(combineDepartureAt('12 d\u00e9cembre 2030', '08 : 30').toISOString(), '2030-12-12T07:30:00.000Z');
+  // Midnight in Algeria belongs to the previous UTC day.
+  assert.equal(combineDepartureAt('1 January 2031', '00 : 15').toISOString(), '2030-12-31T23:15:00.000Z');
   assert.equal(combineDepartureAt('12 December 2030', ''), null);
   assert.equal(isPastDate(new Date('2000-01-01T00:00:00Z')), true);
   assert.equal(isPastDate(future), false);
