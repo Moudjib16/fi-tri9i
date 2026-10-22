@@ -59,11 +59,14 @@ log in, and book their seats.
 - Flash confirmations and errors for publishing, deleting, booking and
   cancelling trips
 - About page, session-aware navbar and working footer/shortcut links
-- Dedicated error pages (existing email, user not found, wrong password, 403,
-  404, 500); every failure renders a page, never a raw JSON payload
-- Security: helmet with a strict CSP, rate limiting on authentication, httpOnly
-  cookies, per-session CSRF tokens on every POST, and session regeneration on
-  login/signup
+- Dedicated error pages (existing email, suspended account, 403, 404, 500);
+  invalid credentials share one non-enumerating login error, and every failure
+  renders a page, never a raw JSON payload
+- Security: helmet with a strict CSP, rate limiting on authentication and every
+  write, timing-safe CSRF checks on every POST, httpOnly cookies, session
+  regeneration on login/signup, bcrypt's 72-byte password limit enforced at
+  signup and password change, and suspended drivers' upcoming trips cancelled
+  with a notification to their passengers
 
 ## Tech stack
 
@@ -73,17 +76,18 @@ runner.
 
 ## Prerequisites
 
-- Node.js >= 18
+- Node.js >= 18.11 (see `.nvmrc`, run `nvm use`)
 - A reachable MongoDB (local or Docker container on port 27017)
 
 ## Install and run
 
 ```powershell
+Copy-Item .env.example .env   # then edit SESSION_SECRET
 npm install
 npm start       # http://localhost:3000
-npm run dev     # with auto-reload (nodemon)
-npm test        # validation, views, wilayas and booking-flow tests
-npm run lint    # eslint on the JavaScript sources
+npm run dev     # auto-reload with node --watch
+npm test        # validation, views, models and booking-flow tests
+npm run lint    # eslint on server and browser scripts
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
 npm run backfill-trips   # fill the fields added later on the existing trips
@@ -91,7 +95,30 @@ npm run seed    # fill the database with demo accounts and trips
 ```
 
 `npm run backfill-trips -- --dry-run` shows what would be updated without
-writing anything.
+writing anything. In production, use `npm ci --omit=dev` and make sure
+`SESSION_SECRET` is set; the app refuses to start without it.
+
+### Health check
+
+`GET /health` returns `200 {"status":"ok"}` when MongoDB is connected and
+`503 {"status":"unavailable"}` otherwise. The server handles `SIGTERM`/`SIGINT`
+by stopping HTTP traffic, closing the session store and disconnecting from
+MongoDB.
+
+## Run with Docker
+
+The Compose stack starts the app and a MongoDB 7 container with a persistent
+volume:
+
+```powershell
+$env:SESSION_SECRET = "replace-with-a-long-random-secret"
+docker compose up --build
+```
+
+Open http://localhost:3000. Data is kept in the `mongo-data` volume; remove it
+with `docker compose down -v` when you want a clean database. Only
+`SESSION_SECRET` is required: Compose overrides `MONGO_URI` to reach the
+`mongo` service.
 
 ## Configuration (.env)
 
@@ -103,13 +130,15 @@ NODE_ENV=development
 ```
 
 See `.env.example` for the template. The local `.env` file is ignored by git.
+`SESSION_SECRET` is mandatory when `NODE_ENV=production`.
 
 ## Test walkthrough
 
 1. `/signup` — create an account (password of at least 6 characters,
    Passager=1 / Conducteur=2)
-2. `/login` — unknown email → "User Not Found" page, wrong password →
-   "Wrong Password" page
+2. `/login` — an unknown email and a wrong password both return the same
+   "Email ou mot de passe incorrect" message; a suspended account is refused
+   with an explicit page
 3. Search trips from the home page or `/trajets` (departure, arrival, date,
    seats), then open a result
 4. Log in and click "Réserver une place"; cancel from the trip page or
@@ -130,9 +159,10 @@ See `.env.example` for the template. The local `.env` file is ignored by git.
 ## Project structure
 
 ```text
-app.js            # Express setup, middleware and router mounting
+app.js            # Express setup, middleware, health check and graceful shutdown
 routes/           # pages, account, admin, auth, drivers, favourites, messages, notifications, reports, reviews, trips and publish routers
 db/db.js          # Mongoose connection (via MONGO_URI)
+lib/config.js     # Environment, session and server configuration
 lib/validation.js # Shared input/date helpers
 lib/wilayas.js    # Reference data for the 58 wilayas and their communes
 lib/distance.js   # Distance and driving time between two wilayas
@@ -141,7 +171,8 @@ lib/tripStatus.js # Resolves and persists the completed trips
 lib/tripMigration.js # Computes the fields added later on the existing trips
 lib/seedData.js  # Demo accounts and trips used by the seed script
 lib/reports.js    # Shared report reasons and labels
-lib/reportTargets.js # Resolves the trip or profile targeted by a report
+lib/reportTargets.js # Batch-resolves the trip or profile targeted by reports
+lib/notifications.js # Creates in-app notifications for trip participants
 lib/session.js    # Session regeneration and route guards
 lib/flash.js      # One-shot flash messages stored in the session
 lib/http.js       # Shared HTTP helpers (404 page and server error page)
@@ -150,8 +181,10 @@ models/           # User, Trip, Message, Notification, Review, Favorite and Repo
 views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signalements, publier/*, partials)
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips, backfill-trips, seed)
-test/             # node:test suites (validation, views, wilayas, distance, http, seed, booking flow)
-.github/workflows/ # CI running the lint and the test suite
+test/             # node:test suites (routes, models, validation, views, wilayas, distance, http, seed)
+Dockerfile        # Production image (Node 20, non-root user, health check)
+docker-compose.yml # App + MongoDB 7 with a persistent volume
+.github/workflows/ # CI: lint and tests on Node 18/20/22, production dependency audit
 ```
 
 ## Roadmap
