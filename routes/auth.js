@@ -7,6 +7,9 @@ const { serverError } = require('../lib/http');
 
 const router = express.Router();
 
+// bcrypt silently truncates passwords longer than 72 bytes.
+const MAX_PASSWORD_BYTES = 72;
+
 router.get('/signup', (req, res) => {
   res.render('signup', { exist: '' });
 });
@@ -28,6 +31,9 @@ router.post('/signup', async (req, res) => {
     }
     if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).render('signup', { exist: 'Password must be at least 6 characters.' });
+    }
+    if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
+      return res.status(400).render('signup', { exist: 'Password is too long (72 bytes maximum).' });
     }
     if (confirmPassword !== undefined && confirmPassword !== password) {
       return res.status(400).render('signup', { exist: 'Passwords do not match.' });

@@ -32,6 +32,7 @@ const publishRouter = require('./routes/publish');
 const app = express();
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 const sessionSecret = process.env.SESSION_SECRET || 'fi-tri9i-dev-secret';
 
 if (isProduction && !process.env.SESSION_SECRET) {
@@ -105,6 +106,16 @@ app.use((req, res, next) => {
 });
 
 // Per-session CSRF token, required on every state-changing request.
+function sameToken(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') {
+    return false;
+  }
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length
+    && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 app.use((req, res, next) => {
   if (!req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
@@ -113,7 +124,7 @@ app.use((req, res, next) => {
 
   if (req.method === 'POST') {
     const token = (req.body && req.body._csrf) || req.get('x-csrf-token');
-    if (!token || token !== req.session.csrfToken) {
+    if (!sameToken(token, req.session.csrfToken)) {
       return res.status(403).render('error', {
         stylesheet: '404/',
         title: 'Accès refusé',
@@ -159,13 +170,14 @@ app.use(async (req, res, next) => {
 });
 
 // Basic brute-force protection for auth endpoints
-const isTest = process.env.NODE_ENV === 'test';
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   // The test suite signs in many times, it must not hit the production limit.
   max: isTest ? 1000 : 50,
   standardHeaders: true,
   legacyHeaders: false,
+  // Page views should never consume the login attempt budget.
+  skip: (req) => req.method !== 'POST',
   message: { message: 'Too many attempts, please try again later.' },
 });
 app.use('/login', authLimiter);
@@ -176,9 +188,22 @@ const accountLimiter = rateLimit({
   max: isTest ? 1000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method !== 'POST',
   message: { message: 'Too many attempts, please try again later.' },
 });
 app.use('/compte/mot-de-passe', accountLimiter);
+
+// Every state-changing request is throttled, so a single client cannot spam
+// bookings, messages, reports or favourites.
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isTest ? 5000 : 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method !== 'POST',
+  message: { message: 'Trop de requêtes, réessayez dans quelques minutes.' },
+});
+app.use(writeLimiter);
 
 // Routes
 app.use(pagesRouter);
