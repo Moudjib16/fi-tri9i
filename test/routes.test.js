@@ -2500,6 +2500,46 @@ test('the moderation dashboard paginates its sections', async () => {
   state.reports.length = 0;
 });
 
+test('invalid credentials get a clear, non-enumerating login error', async () => {
+  const page = await openPage('/login');
+
+  const missing = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ _csrf: page.token, email: 'sara@test.dz' }),
+    redirect: 'manual',
+  });
+  assert.equal(missing.status, 400);
+  const missingHtml = await missing.text();
+  assert.match(missingHtml, /Renseignez votre adresse email et votre mot de passe/);
+  assert.match(missingHtml, /value="sara@test.dz"/);
+
+  const unknown = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ _csrf: page.token, email: 'ghost@test.dz', password: 'secret1' }),
+    redirect: 'manual',
+  });
+  assert.equal(unknown.status, 401);
+  const unknownHtml = await unknown.text();
+  assert.match(unknownHtml, /Email ou mot de passe incorrect/);
+  assert.doesNotMatch(unknownHtml, /Utilisateur introuvable/);
+
+  const wrong = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: page.cookie },
+    body: new URLSearchParams({ _csrf: page.token, email: 'sara@test.dz', password: 'badpass' }),
+    redirect: 'manual',
+  });
+  assert.equal(wrong.status, 401);
+  const wrongHtml = await wrong.text();
+  assert.match(wrongHtml, /Email ou mot de passe incorrect/);
+  assert.equal(
+    wrongHtml.includes('Email ou mot de passe incorrect.'),
+    unknownHtml.includes('Email ou mot de passe incorrect.')
+  );
+});
+
 test('a visitor can create an account, sign in and sign out', async () => {
   const page = await openPage('/signup');
   assert.equal(page.response.status, 200);

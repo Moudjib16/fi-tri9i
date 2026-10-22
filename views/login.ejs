@@ -29,13 +29,16 @@
         <p class="eyebrow">Bon retour</p>
         <h2>Connexion</h2>
         <p class="auth-intro">Entrez vos identifiants pour retrouver votre compte.</p>
+        <% if (error) { %>
+          <p class="form-error" role="alert"><%= error %></p>
+        <% } %>
 
         <form class="auth-form" action="/login" method="post">
           <%- include('./partials/csrf-input.ejs') %>
           <input type="hidden" name="next" value="<%= typeof next !== 'undefined' ? next : '' %>">
           <label class="field">
             <span>Email</span>
-            <input type="email" name="email" placeholder="vous@exemple.dz" autocomplete="email" required>
+            <input type="email" name="email" value="<%= email || '' %>" placeholder="vous@exemple.dz" autocomplete="email" required>
           </label>
           <label class="field">
             <span>Mot de passe</span>

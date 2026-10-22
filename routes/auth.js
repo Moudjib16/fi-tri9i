@@ -9,13 +9,28 @@ const router = express.Router();
 
 // bcrypt silently truncates passwords longer than 72 bytes.
 const MAX_PASSWORD_BYTES = 72;
+// Compared when the email is unknown so both failure paths cost the same.
+const DUMMY_HASH = '$2b$10$5vob0WNtnqjBPShZ9yz32ucZ28qeMkNfcUM6B0FD.y6NttODQI1T.';
+const INVALID_LOGIN = 'Email ou mot de passe incorrect.';
+
+function renderLoginError(req, res, status, message) {
+  return res.status(status).render('login', {
+    next: safeRedirect(req.body.next),
+    email: typeof req.body.email === 'string' ? req.body.email.trim() : '',
+    error: message,
+  });
+}
 
 router.get('/signup', (req, res) => {
   res.render('signup', { exist: '' });
 });
 
 router.get('/login', (req, res) => {
-  res.render('login', { next: safeRedirect(req.query.next) });
+  res.render('login', {
+    next: safeRedirect(req.query.next),
+    email: '',
+    error: '',
+  });
 });
 
 router.post('/signup', async (req, res) => {
@@ -73,29 +88,31 @@ router.post('/login', async (req, res) => {
   try {
     const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
     const password = req.body.password;
-    if (!email || !password) {
-      return res.status(400).send('wrong details');
+    if (!email || typeof password !== 'string' || !password) {
+      return renderLoginError(
+        req,
+        res,
+        400,
+        'Renseignez votre adresse email et votre mot de passe.'
+      );
     }
     const check = await user.findOne({ email });
-    if (!check) {
-      return res.status(404).render('login/nouser');
+    const passwordMatch = await bcrypt.compare(password, check ? check.password : DUMMY_HASH);
+    if (!check || !passwordMatch) {
+      return renderLoginError(req, res, 401, INVALID_LOGIN);
     }
-    const passwordMatch = await bcrypt.compare(password, check.password);
-    if (passwordMatch) {
-      if (check.suspended) {
-        return res.status(403).render('login/suspended');
+    if (check.suspended) {
+      return res.status(403).render('login/suspended');
+    }
+    const nextUrl = safeRedirect(req.body.next) || '/';
+    await regenerateSession(req);
+    req.session.userId = check._id;
+    return req.session.save((err) => {
+      if (err) {
+        return serverError(res);
       }
-      const nextUrl = safeRedirect(req.body.next) || '/';
-      await regenerateSession(req);
-      req.session.userId = check._id;
-      return req.session.save((err) => {
-        if (err) {
-          return serverError(res);
-        }
-        return res.redirect(nextUrl);
-      });
-    }
-    return res.status(401).render('login/wrongpass');
+      return res.redirect(nextUrl);
+    });
   } catch (err) {
     console.log(err);
     return serverError(res);
