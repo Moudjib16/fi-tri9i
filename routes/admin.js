@@ -21,7 +21,6 @@ router.use('/admin', requireAdmin);
 
 function adminError(res, message) {
   return res.status(404).render('error', {
-    stylesheet: '404/',
     title: 'Introuvable',
     status: 404,
     heading: 'Introuvable',
@@ -84,7 +83,6 @@ router.get('/admin', async (req, res) => {
     query.set('comptes', String(accountsPage));
 
     return res.render('admin', {
-      stylesheet: 'admin/',
       title: 'Administration',
       reports,
       publishedTrips,

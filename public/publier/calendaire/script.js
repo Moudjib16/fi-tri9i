@@ -1,4 +1,3 @@
-const calendar = document.querySelector('.calendar');
 const monthLabel = document.querySelector('.date');
 const daysContainer = document.querySelector('.days');
 const prevButton = document.querySelector('.prev');

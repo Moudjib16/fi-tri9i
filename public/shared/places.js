@@ -1,11 +1,11 @@
 // Suggests the communes of the selected wilaya in the place inputs.
 (function () {
-  var wilayaInputs = document.querySelectorAll('[data-communes-for]');
+  const wilayaInputs = document.querySelectorAll('[data-communes-for]');
   if (!wilayaInputs.length) {
     return;
   }
 
-  var places = null;
+  let places = null;
 
   function normalize(value) {
     return String(value || '')
@@ -31,14 +31,14 @@
   }
 
   function fill(input) {
-    var list = document.getElementById(input.getAttribute('data-communes-for'));
+    const list = document.getElementById(input.getAttribute('data-communes-for'));
     if (!list) {
       return;
     }
-    var communes = places[normalize(input.value)] || [];
+    const communes = places[normalize(input.value)] || [];
     list.innerHTML = '';
     communes.forEach(function (commune) {
-      var option = document.createElement('option');
+      const option = document.createElement('option');
       option.value = commune;
       list.appendChild(option);
     });

@@ -12,7 +12,7 @@ const { tripNotFound, serverError } = require('../lib/http');
 const router = express.Router();
 
 function notFound(res) {
-  return res.status(404).render('404', { stylesheet: '404/', title: '404' });
+  return res.status(404).render('404', { title: '404' });
 }
 
 function reasonLabel(value) {
@@ -203,7 +203,6 @@ router.get('/mes-signalements', async (req, res) => {
     }));
 
     return res.render('mes-signalements', {
-      stylesheet: 'mes-signalements/',
       title: 'Mes signalements',
       items,
     });

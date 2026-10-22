@@ -8,7 +8,6 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const bodyParser = require('body-parser');
 const config = require('./lib/config');
 const connectDB = require('./db/db');
 const user = require('./models/signup');
@@ -96,7 +95,7 @@ app.use(session({
     maxAge: config.sessionMaxAgeMs,
   },
 }));
-app.use(bodyParser.json({ limit: '32kb' }));
+app.use(express.json({ limit: '32kb' }));
 app.use(flashMiddleware);
 
 // Views can render safely before the session user is loaded.
@@ -131,7 +130,6 @@ app.use((req, res, next) => {
     const token = (req.body && req.body._csrf) || req.get('x-csrf-token');
     if (!sameToken(token, req.session.csrfToken)) {
       return res.status(403).render('error', {
-        stylesheet: '404/',
         title: 'Accès refusé',
         status: 403,
         heading: 'Accès refusé',
@@ -226,7 +224,7 @@ app.use(publishRouter);
 
 // Handle invalid routes
 app.use((req, res) => {
-  res.status(404).render('404', { stylesheet: '404/', title: '404' });
+  res.status(404).render('404', { title: '404' });
 });
 
 // Centralized error handler (must be last)
@@ -237,7 +235,6 @@ app.use((err, req, res, next) => {
   }
   const status = err.status || 500;
   return res.status(status).render('error', {
-    stylesheet: '404/',
     title: status === 403 ? 'Accès refusé' : 'Erreur serveur',
     status,
     heading: status === 403 ? 'Accès refusé' : 'Une erreur est survenue',

@@ -376,7 +376,6 @@ router.get('/trajets', async (req, res) => {
     const baseQuery = queryParams.toString();
 
     return res.render('trajets', {
-      stylesheet: 'trajets/',
       title: 'Trajets',
       trips,
       filters: {
@@ -448,7 +447,6 @@ router.get('/trajets/:id', async (req, res) => {
     }
 
     return res.render('trajet', {
-      stylesheet: 'trajet/',
       title: 'Détail du trajet',
       trip: foundTrip,
       isDriver,
@@ -710,7 +708,6 @@ router.get('/mes-trajets', async (req, res) => {
     const completed = publishedRaw.filter((savedTrip) => effectiveStatus(savedTrip) === 'completed');
 
     return res.render('mes-trajets', {
-      stylesheet: 'mes-trajets/',
       title: 'Mes trajets',
       published,
       completed,

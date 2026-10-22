@@ -94,7 +94,6 @@ router.get('/mes-favoris', async (req, res) => {
       .filter((savedTrip) => savedTrip && savedTrip._id);
 
     return res.render('mes-favoris', {
-      stylesheet: 'mes-favoris/',
       title: 'Mes favoris',
       trips,
     });

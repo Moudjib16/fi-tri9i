@@ -4,7 +4,7 @@ const { WILAYAS, normalizePlace } = require('../lib/wilayas');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  res.render('home', { stylesheet: 'home/', title: 'Home' });
+  res.render('home', { title: 'Home' });
 });
 
 router.get('/home', (req, res) => {
@@ -12,7 +12,7 @@ router.get('/home', (req, res) => {
 });
 
 router.get('/a-propos', (req, res) => {
-  res.render('a-propos', { stylesheet: 'a-propos/', title: 'À propos' });
+  res.render('a-propos', { title: 'À propos' });
 });
 
 // Reference data used by the place inputs to suggest the communes of a wilaya.
