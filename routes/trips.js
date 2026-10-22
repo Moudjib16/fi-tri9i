@@ -263,7 +263,9 @@ router.get('/trajets', async (req, res) => {
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const pageSize = 10;
 
-    const filter = { status: { $nin: ['draft', 'cancelled'] } };
+    // Only published rides are searchable: drafts are private, cancelled and
+    // completed rides belong to their participants' history.
+    const filter = { status: 'published' };
     const conditions = [];
 
     if (depart) {

@@ -1326,6 +1326,42 @@ test('search hides full trips and paginates results', async () => {
   assert.doesNotMatch(fullListing, /Voir le trajet/);
 });
 
+test('search never returns completed or cancelled trips', async () => {
+  const base = {
+    depart: 'Historyville',
+    depart0: 'Centre',
+    arrivee: 'Bejaia',
+    arrivee0: 'Amizour',
+    dateData: '1 janvier 2020',
+    departureAt: new Date('2020-01-01T08:00:00Z'),
+    time: '08 : 00',
+    price: '900da',
+    priceDZD: 900,
+    places: 3,
+    places_taken: 0,
+    passengers: [],
+    description: '',
+    driver: { _id: driverId, name: 'Karim' },
+  };
+
+  state.trips.push(
+    { ...base, _id: '64f000000000000000000301', status: 'completed' },
+    { ...base, _id: '64f000000000000000000302', status: 'cancelled' }
+  );
+
+  const listing = await (await fetch(
+    `${baseUrl}/trajets?depart=Historyville&date=2020-01-01`
+  )).text();
+
+  assert.match(listing, /0 trajets trouvés/);
+  assert.doesNotMatch(listing, /Voir le trajet/);
+
+  state.trips = state.trips.filter(
+    (candidate) => candidate._id !== '64f000000000000000000301'
+      && candidate._id !== '64f000000000000000000302'
+  );
+});
+
 test('drafts stay private and out of listings', async () => {
   const draftId = '64f000000000000000000099';
   state.trips.push({
