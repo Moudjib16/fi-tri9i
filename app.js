@@ -3,13 +3,14 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
-const morgan = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const config = require('./lib/config');
 const connectDB = require('./db/db');
+const { createLogger, requestLogger } = require('./lib/logger');
+const MongoRateLimitStore = require('./lib/mongoRateLimitStore');
 const user = require('./models/signup');
 const Notification = require('./models/notification');
 const { flashMiddleware } = require('./lib/flash');
@@ -33,6 +34,7 @@ const publishRouter = require('./routes/publish');
 const app = express();
 
 const { isProduction, isTest, sessionSecret } = config;
+const logger = createLogger({ level: config.logLevel });
 
 // Register view engine
 app.set('view engine', 'ejs');
@@ -46,6 +48,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   redirect: false,
   maxAge: isProduction ? '1d' : 0,
 }));
+app.use(requestLogger(logger));
 
 // Readiness probe used by deployments and container orchestrators.
 app.get('/health', (req, res) => {
@@ -70,7 +73,6 @@ app.use(helmet({
     },
   },
 }));
-app.use(morgan(isProduction ? 'combined' : 'dev'));
 app.use(express.urlencoded({ extended: true, limit: '32kb' }));
 
 // Sessions are persisted in MongoDB so logins survive restarts
@@ -161,24 +163,32 @@ app.use(async (req, res, next) => {
           readAt: null,
         });
       } catch (err) {
-        console.error('Unable to count notifications:', err.message);
+        logger.warn('notification_count_failed', { requestId: req.id, err });
       }
     } else {
       delete req.session.userId;
     }
   } catch (err) {
-    console.error('Unable to load session user:', err.message);
+    logger.error('session_user_failed', { requestId: req.id, err });
   }
   return next();
 });
 
 // Basic brute-force protection for auth endpoints
+function createStore(prefix) {
+  if (config.rateLimitStore === 'memory') {
+    return undefined;
+  }
+  return new MongoRateLimitStore({ prefix, log: logger });
+}
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   // The test suite signs in many times, it must not hit the production limit.
   max: isTest ? 1000 : 50,
   standardHeaders: true,
   legacyHeaders: false,
+  store: createStore('auth'),
   // Page views should never consume the login attempt budget.
   skip: (req) => req.method !== 'POST',
   message: { message: 'Too many attempts, please try again later.' },
@@ -191,6 +201,7 @@ const accountLimiter = rateLimit({
   max: isTest ? 1000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
+  store: createStore('account'),
   skip: (req) => req.method !== 'POST',
   message: { message: 'Too many attempts, please try again later.' },
 });
@@ -203,6 +214,7 @@ const writeLimiter = rateLimit({
   max: isTest ? 5000 : 150,
   standardHeaders: true,
   legacyHeaders: false,
+  store: createStore('write'),
   skip: (req) => req.method !== 'POST',
   message: { message: 'Trop de requêtes, réessayez dans quelques minutes.' },
 });
@@ -229,11 +241,17 @@ app.use((req, res) => {
 
 // Centralized error handler (must be last)
 app.use((err, req, res, next) => {
-  console.error(err);
+  const status = err.status || 500;
+  logger.error('request_failed', {
+    requestId: req.id,
+    method: req.method,
+    path: req.originalUrl,
+    status,
+    err,
+  });
   if (res.headersSent) {
     return next(err);
   }
-  const status = err.status || 500;
   return res.status(status).render('error', {
     title: status === 403 ? 'Accès refusé' : 'Erreur serveur',
     status,
@@ -249,20 +267,20 @@ if (require.main === module) {
   const start = async () => {
     await connectDB();
     const server = app.listen(config.port, () => {
-      console.log(`App listening at port ${config.port}`);
+      logger.info('server_started', { port: config.port, env: config.env });
     });
 
     // Keep the status of the trips that already left up to date.
     const completeTrips = () => {
       completePastTrips().catch((err) => {
-        console.error('Unable to complete past trips:', err.message);
+        logger.error('trip_completion_failed', { err });
       });
     };
     completeTrips();
     const timer = setInterval(completeTrips, 15 * 60 * 1000);
 
     const shutdown = async (signal) => {
-      console.log(`${signal} received, shutting down.`);
+      logger.info('shutdown_started', { signal });
       clearInterval(timer);
 
       const forcedExit = setTimeout(() => process.exit(1), 10 * 1000);
@@ -281,7 +299,7 @@ if (require.main === module) {
   };
 
   start().catch((err) => {
-    console.error('Unable to start the application:', err.message);
+    logger.error('server_start_failed', { err });
     process.exit(1);
   });
 }

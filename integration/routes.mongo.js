@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { combineDepartureAt } = require('../lib/validation');
+const MongoRateLimitStore = require('../lib/mongoRateLimitStore');
+const { createLogger } = require('../lib/logger');
 
 let app;
 let Trip;
@@ -130,6 +132,38 @@ test('the real schema builds the indexes used by the search', async () => {
       && index.key.arriveeKey === 1
       && index.key.departureAt === 1
   )));
+});
+
+test('request ids are echoed on every request', async () => {
+  const response = await fetch(`${baseUrl}/health`, {
+    headers: { 'x-request-id': 'integration-request-1' },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-request-id'), 'integration-request-1');
+});
+
+test('the Mongo rate limit store is atomic and shared by key', async () => {
+  const store = new MongoRateLimitStore({
+    prefix: 'integration',
+    log: createLogger({ level: 'silent' }),
+  });
+  store.init({ windowMs: 60 * 1000 });
+  await store.resetKey('client');
+
+  const first = await store.increment('client');
+  assert.equal(first.totalHits, 1);
+  await Promise.all(Array.from({ length: 9 }, () => store.increment('client')));
+
+  const tenth = await store.increment('client');
+  assert.equal(tenth.totalHits, 11);
+
+  await store.decrement('client');
+  const afterDecrement = await store.increment('client');
+  assert.equal(afterDecrement.totalHits, 11);
+
+  await store.resetKey('client');
+  const afterReset = await store.increment('client');
+  assert.equal(afterReset.totalHits, 1);
 });
 
 test('moderation actions leave a durable audit trail', async () => {
