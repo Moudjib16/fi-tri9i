@@ -210,9 +210,38 @@ router.post('/admin/utilisateurs/:id/suspension', async (req, res) => {
     account.suspended = !account.suspended;
     await account.save();
 
-    setFlash(req, 'success', account.suspended
-      ? 'Le compte a été suspendu.'
-      : 'Le compte a été réactivé.');
+    let cancelledCount = 0;
+    if (account.suspended) {
+      // Cancel every upcoming ride so passengers are not left waiting for a
+      // driver who can no longer sign in.
+      const upcomingFilter = {
+        driver: account._id,
+        status: 'published',
+        $or: [{ departureAt: { $gt: new Date() } }, { departureAt: null }],
+      };
+      const upcomingTrips = await trip.find(upcomingFilter).lean();
+      cancelledCount = upcomingTrips.length;
+
+      if (cancelledCount) {
+        await trip.updateMany(upcomingFilter, { $set: { status: 'cancelled' } });
+        for (const cancelledTrip of upcomingTrips) {
+          await notifyUsers(cancelledTrip.passengers, {
+            actor: req.session.userId,
+            tripId: cancelledTrip._id,
+            type: 'trip_cancelled',
+            body: `Le trajet ${cancelledTrip.depart} - ${cancelledTrip.arrivee} a été annulé suite à la suspension du conducteur.`,
+          });
+        }
+      }
+    }
+
+    if (account.suspended) {
+      setFlash(req, 'success', cancelledCount
+        ? `Le compte a été suspendu et ${cancelledCount} trajet(s) à venir ont été annulés.`
+        : 'Le compte a été suspendu.');
+    } else {
+      setFlash(req, 'success', 'Le compte a été réactivé.');
+    }
     return res.redirect('/admin');
   } catch (err) {
     console.error(err);

@@ -2375,6 +2375,32 @@ test('administrators can moderate reports, trips and accounts', async () => {
     'cancelled'
   );
 
+  const suspendTripId = '64f000000000000000000709';
+  state.trips.push({
+    _id: suspendTripId,
+    status: 'published',
+    depart: 'Alger',
+    depart0: 'Centre',
+    arrivee: 'Oran',
+    arrivee0: 'Centre',
+    dateData: '8 July 2034',
+    departureAt: new Date('2034-07-08T08:00:00Z'),
+    time: '08 : 00',
+    price: '1500da',
+    priceDZD: 1500,
+    places: 3,
+    places_taken: 1,
+    passengers: [passengerId],
+    description: 'Trajet annulé par la suspension',
+    driver: driverId,
+  });
+  const suspensionCandidates = state.trips
+    .filter((candidate) => candidate.driver === driverId
+      && candidate.status === 'published'
+      && (!candidate.departureAt || new Date(candidate.departureAt) > new Date()))
+    .map((candidate) => ({ candidate, status: candidate.status }));
+  const notificationsBeforeSuspend = state.notifications.length;
+
   const suspend = await fetch(`${baseUrl}/admin/utilisateurs/${driverId}/suspension`, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: admin.cookie },
@@ -2383,6 +2409,15 @@ test('administrators can moderate reports, trips and accounts', async () => {
   });
   assert.equal(suspend.status, 302);
   assert.equal(state.users.find((candidate) => candidate._id === driverId).suspended, true);
+  assert.ok(suspensionCandidates.length > 0);
+  for (const { candidate } of suspensionCandidates) {
+    assert.equal(candidate.status, 'cancelled');
+  }
+  assert.ok(state.notifications.slice(notificationsBeforeSuspend).some(
+    (notification) => notification.recipient === passengerId
+      && notification.type === 'trip_cancelled'
+      && /suspension du conducteur/.test(notification.body)
+  ));
 
   const suspendedLogin = await login('karim@test.dz', 'secret1');
   assert.equal(suspendedLogin.response.status, 403);
@@ -2419,6 +2454,11 @@ test('administrators can moderate reports, trips and accounts', async () => {
 
   state.users.find((candidate) => candidate._id === passengerId).isAdmin = false;
   state.users.find((candidate) => candidate._id === driverId).suspended = false;
+
+  for (const { candidate, status } of suspensionCandidates) {
+    candidate.status = status;
+  }
+  state.trips = state.trips.filter((candidate) => candidate._id !== suspendTripId);
 
   const tripIndex = state.trips.findIndex((candidate) => candidate._id === modTripId);
   state.trips.splice(tripIndex, 1);
