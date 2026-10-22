@@ -87,6 +87,7 @@ npm install
 npm start       # http://localhost:3000
 npm run dev     # auto-reload with node --watch
 npm test        # validation, views, models and booking-flow tests
+npm run test:integration  # HTTP and queries against a throwaway real MongoDB
 npm run lint    # eslint on server and browser scripts
 npm run create-admin -- admin@exemple.com   # grant the moderation role
 npm run complete-trips   # mark the trips that already left as completed
@@ -183,6 +184,7 @@ views/            # EJS templates (home, trajets, trajet, mes-favoris, mes-signa
 public/           # shared design system (ui.css) and page scripts
 scripts/          # maintenance scripts (create-admin, complete-trips, backfill-trips, seed)
 test/             # node:test suites (routes, models, validation, views, wilayas, distance, http, seed)
+integration/       # HTTP integration tests backed by a temporary real MongoDB
 Dockerfile        # Production image (Node 20, non-root user, health check)
 docker-compose.yml # App + MongoDB 7 with a persistent volume
 .github/workflows/ # CI: lint and tests on Node 18/20/22, production dependency audit
