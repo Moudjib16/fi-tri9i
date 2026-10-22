@@ -1362,6 +1362,61 @@ test('search never returns completed or cancelled trips', async () => {
   );
 });
 
+test('starting a new trip keeps an existing draft untouched', async () => {
+  const keepId = '64f000000000000000000098';
+  state.trips.push({
+    _id: keepId,
+    status: 'draft',
+    depart: 'Draftville',
+    depart0: 'Centre',
+    arrivee: 'Bejaia',
+    arrivee0: 'Amizour',
+    dateData: '12 December 2030',
+    departureAt: new Date('2030-12-12T08:00:00Z'),
+    time: '08 : 00',
+    price: '1200da',
+    priceDZD: 1200,
+    places: 2,
+    places_taken: 0,
+    passengers: [],
+    description: 'Brouillon à conserver',
+    driver: passengerId,
+  });
+
+  const existingIds = new Set(state.trips.map((candidate) => candidate._id));
+  const { cookie } = await login('sara@test.dz', 'secret1');
+
+  // Resume the draft so it becomes the draft stored in the session.
+  const resume = await fetch(`${baseUrl}/publier/continuer/${keepId}`, {
+    headers: { cookie },
+    redirect: 'manual',
+  });
+  assert.equal(resume.status, 302);
+
+  const page = await openPage('/publier/page1', cookie);
+  const start = await fetch(`${baseUrl}/depart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ depart: 'Alger', _csrf: page.token }),
+    redirect: 'manual',
+  });
+  assert.equal(start.status, 302);
+
+  const kept = state.trips.find((candidate) => candidate._id === keepId);
+  assert.equal(kept.depart, 'Draftville');
+  assert.equal(kept.depart0, 'Centre');
+  assert.equal(kept.description, 'Brouillon à conserver');
+
+  const added = state.trips.filter((candidate) => !existingIds.has(candidate._id));
+  assert.equal(added.length, 1);
+  assert.equal(added[0].status, 'draft');
+  assert.equal(added[0].depart, 'Alger');
+
+  state.trips = state.trips.filter(
+    (candidate) => candidate._id !== keepId && candidate._id !== added[0]._id
+  );
+});
+
 test('drafts stay private and out of listings', async () => {
   const draftId = '64f000000000000000000099';
   state.trips.push({

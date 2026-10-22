@@ -64,6 +64,22 @@ function getMissingStep(existingTrip) {
   return null;
 }
 
+// Helper: a draft that only holds the departure can safely be reused, any
+// other value means the user already worked on it.
+function isEmptyDraft(existingTrip) {
+  return !existingTrip.depart0
+    && !existingTrip.arrivee
+    && !existingTrip.arrivee0
+    && !existingTrip.dateData
+    && !existingTrip.departureAt
+    && !existingTrip.time
+    && !existingTrip.price
+    && !existingTrip.priceDZD
+    && !existingTrip.description
+    && (!existingTrip.places || existingTrip.places === 1)
+    && !(existingTrip.passengers && existingTrip.passengers.length);
+}
+
 // POST request to save a new trip and store its ID in the session
 router.post('/depart', requirePublishUser, async (req, res) => {
   try {
@@ -81,11 +97,11 @@ router.post('/depart', requirePublishUser, async (req, res) => {
       return res.redirect('/publier/page1');
     }
 
-    // Reuse the current draft when the user restarts the wizard so abandoned
-    // drafts do not pile up in the database.
+    // Reuse only an untouched draft; a draft that already contains data is
+    // kept in "Mes trajets" and a fresh one is started instead.
     const currentDraft = await loadDraft(req);
     let savedTrip;
-    if (currentDraft) {
+    if (currentDraft && isEmptyDraft(currentDraft)) {
       currentDraft.depart = canonicalDepart;
       currentDraft.departKey = normalizePlace(canonicalDepart);
       currentDraft.depart0 = '';
