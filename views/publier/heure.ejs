@@ -13,7 +13,10 @@
       <p class="wizard-help">Choisissez une heure de départ entre 06:00 et minuit.</p>
 
       <% if (typeof error !== 'undefined' && error) { %>
-        <p class="form-error" role="alert">Choisissez une heure valide pour continuer.</p>
+        <p class="form-error" role="alert">
+          <% if (error === 'past') { %>Cette heure est déjà passée. Choisissez une heure à venir.
+          <% } else { %>Choisissez une heure valide pour continuer.<% } %>
+        </p>
       <% } %>
       <p id="wizard-error" class="form-error" role="alert" hidden></p>
 

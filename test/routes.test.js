@@ -1616,6 +1616,25 @@ test('the publishing wizard accepts the French calendar date format', async () =
     redirect: 'manual',
   });
   assert.equal(pastDate.status, 400);
+
+  // Today is still selectable, but a departure time that already passed is not.
+  const todayIso = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
+  const today = await fetch(`${baseUrl}/date`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: todayIso, _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(today.status, 200);
+
+  const pastTime = await fetch(`${baseUrl}/time`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie },
+    body: new URLSearchParams({ content: '00:00', _csrf: calendarPage.token }),
+    redirect: 'manual',
+  });
+  assert.equal(pastTime.status, 400);
+  assert.match((await pastTime.json()).message, /pass/);
 });
 
 test('driver can cancel a trip and passengers see it', async () => {

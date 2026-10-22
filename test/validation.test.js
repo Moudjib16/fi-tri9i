@@ -9,7 +9,9 @@ const {
   parseTimeInput,
   parsePriceInput,
   combineDepartureAt,
+  algeriaDayStart,
   isPastDate,
+  isPastDay,
   formatDateFr,
   formatDateIso,
 } = require('../lib/validation');
@@ -104,4 +106,17 @@ test('combineDepartureAt merges date and time in the Algiers timezone', () => {
   assert.equal(combineDepartureAt('12 December 2030', ''), null);
   assert.equal(isPastDate(new Date('2000-01-01T00:00:00Z')), true);
   assert.equal(isPastDate(future), false);
+});
+
+test('isPastDay keeps the whole Algerian calendar day available', () => {
+  const now = new Date('2030-12-12T10:00:00Z');
+  assert.equal(algeriaDayStart(now).toISOString(), '2030-12-11T23:00:00.000Z');
+  assert.equal(isPastDay(parseDateInput('2030-12-11'), now), true);
+  assert.equal(isPastDay(parseDateInput('2030-12-12'), now), false);
+  assert.equal(isPastDay(parseDateInput('2030-12-13'), now), false);
+
+  // 23:30 UTC is already the next day in Algiers.
+  const lateUtc = new Date('2030-12-11T23:30:00Z');
+  assert.equal(isPastDay(parseDateInput('2030-12-11'), lateUtc), true);
+  assert.equal(isPastDay(parseDateInput('2030-12-12'), lateUtc), false);
 });

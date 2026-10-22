@@ -52,7 +52,16 @@
         if (response.ok) {
           window.location.href = options.next;
         } else {
-          showError(options.invalidMessage);
+          let message = options.invalidMessage;
+          try {
+            const payload = await response.json();
+            if (payload && payload.message) {
+              message = payload.message;
+            }
+          } catch {
+            // Keep the generic message when the server did not return JSON.
+          }
+          showError(message);
         }
       } catch (error) {
         console.error('Error:', error);

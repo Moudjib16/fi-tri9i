@@ -8,6 +8,7 @@ const {
   parsePriceInput,
   combineDepartureAt,
   isPastDate,
+  isPastDay,
 } = require('../lib/validation');
 const { requireUser, requirePublishUser, requireDraftTrip } = require('../lib/session');
 const { setFlash } = require('../lib/flash');
@@ -229,8 +230,8 @@ router.post('/date', requireUser, requireDraftTrip, async (req, res) => {
     if (!parsedDate) {
       return res.status(400).send({ message: 'Date invalide' });
     }
-    if (isPastDate(parsedDate.date)) {
-      return res.status(400).send({ message: 'La date est déjà passée' });
+    if (isPastDay(parsedDate)) {
+      return res.status(400).send({ message: 'La date est d\u00e9j\u00e0 pass\u00e9e' });
     }
 
     const { existingTrip, error } = await getSessionTrip(req);
@@ -239,7 +240,11 @@ router.post('/date', requireUser, requireDraftTrip, async (req, res) => {
     }
 
     existingTrip.dateData = parsedDate.display;
-    syncDepartureAt(existingTrip);
+    const departureAt = syncDepartureAt(existingTrip);
+    if (departureAt && isPastDate(departureAt)) {
+      existingTrip.time = '';
+      existingTrip.departureAt = null;
+    }
 
     await existingTrip.save();
     return res.status(200).send({ ok: true });
@@ -261,7 +266,10 @@ router.post('/time', requireUser, requireDraftTrip, async (req, res) => {
       return res.status(404).send({ message: error });
     }
     existingTrip.time = parsedTime.display;
-    syncDepartureAt(existingTrip);
+    const departureAt = syncDepartureAt(existingTrip);
+    if (departureAt && isPastDate(departureAt)) {
+      return res.status(400).send({ message: 'Cette heure est d\u00e9j\u00e0 pass\u00e9e' });
+    }
     await existingTrip.save();
     return res.status(200).send({ ok: true });
   } catch (err) {
@@ -361,7 +369,8 @@ router.post('/publier/publier', requireUser, requireDraftTrip, async (req, res) 
     }
     if (isPastDate(departureAt)) {
       await existingTrip.save();
-      return res.redirect('/publier/calendaire?error=past');
+      const step = isPastDay(parseDateInput(existingTrip.dateData)) ? 'calendaire' : 'heure';
+      return res.redirect(`/publier/${step}?error=past`);
     }
 
     if (!existingTrip.priceDZD) {
