@@ -2832,18 +2832,27 @@ a.driver-card:hover strong {
 }
 
 .time-option {
+  width: 100%;
   padding: 8px 6px;
+  border: 0;
+  background: transparent;
   border-radius: 9px;
   color: var(--muted);
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 650;
   text-align: center;
   cursor: pointer;
 }
 
-.time-option:hover {
+.time-option:hover,
+.time-option[aria-selected="true"] {
   background: var(--brand-soft);
   color: var(--brand-dark);
+}
+
+.time-option[aria-selected="true"] {
+  box-shadow: inset 0 0 0 1px var(--brand);
 }
 
 .time-backdrop {
@@ -2960,10 +2969,15 @@ a.driver-card:hover strong {
 
 .day {
   display: grid;
+  width: 100%;
   place-items: center;
   aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
   border-radius: 10px;
   color: var(--ink);
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -2973,6 +2987,16 @@ a.driver-card:hover strong {
 .day:hover {
   background: var(--brand-soft);
   color: var(--brand-dark);
+}
+
+.day:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.day:disabled:hover {
+  background: transparent;
+  color: var(--ink);
 }
 
 .day.prev-date,

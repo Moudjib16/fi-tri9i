@@ -24,9 +24,9 @@
       <div class="calendar-grid">
         <div class="calendar-panel calendar">
           <div class="month">
-            <button class="prev" type="button" aria-label="Mois précédent">&larr;</button>
-            <div class="date">January 2026</div>
-            <button class="next" type="button" aria-label="Mois suivant">&rarr;</button>
+            <button class="prev" type="button" aria-label="Mois précédent" aria-controls="calendar-days">&larr;</button>
+            <div class="date" id="calendar-month" aria-live="polite">Janvier 2026</div>
+            <button class="next" type="button" aria-label="Mois suivant" aria-controls="calendar-days">&rarr;</button>
           </div>
           <div class="weekdays" aria-hidden="true">
             <div>D</div>
@@ -37,10 +37,10 @@
             <div>V</div>
             <div>S</div>
           </div>
-          <div class="days"></div>
+          <div class="days" id="calendar-days" role="group" aria-labelledby="calendar-month"></div>
           <div class="goto-today">
             <div class="goto">
-              <input type="text" placeholder="mm/yyyy" class="date-input" aria-label="Aller à un mois">
+              <input type="text" placeholder="mm/yyyy" class="date-input" aria-label="Aller à un mois" inputmode="numeric">
               <button class="goto-btn" type="button">Aller</button>
             </div>
             <button class="today-btn" type="button">Aujourd'hui</button>
@@ -49,7 +49,7 @@
 
         <aside class="calendar-side">
           <div class="event-day">Choisir</div>
-          <div class="event-date" id="dateData" data-initial="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>" data-iso="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>"><%= trip && trip.dateData ? formatDate(trip.dateData) : '' %></div>
+          <div class="event-date" id="dateData" aria-live="polite" data-initial="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>" data-iso="<%= trip && trip.dateData ? formatDateIso(trip.dateData) : '' %>"><%= trip && trip.dateData ? formatDate(trip.dateData) : '' %></div>
           <div class="events">Sélectionnez un jour dans le calendrier pour continuer.</div>
         </aside>
       </div>

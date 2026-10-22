@@ -21,17 +21,18 @@
       <p id="wizard-error" class="form-error" role="alert" hidden></p>
 
       <div class="time-picker">
+        <% const currentTime = trip && trip.time ? trip.time : '08 : 00'; %>
         <div class="time-input-row">
-          <input class="time-value" maxlength="6" type="text" value="<%= trip && trip.time ? trip.time : '08 : 00' %>" id="clock" name="timeData" aria-label="Heure de départ">
-          <button class="time-toggle" id="arr" type="button" aria-label="Choisir une heure" aria-expanded="false">&rsaquo;</button>
+          <input class="time-value" maxlength="6" type="text" value="<%= currentTime %>" id="clock" name="timeData" aria-label="Heure de départ" role="combobox" aria-haspopup="listbox" aria-controls="time-menu" aria-expanded="false" aria-autocomplete="none" inputmode="numeric">
+          <button class="time-toggle" id="arr" type="button" aria-label="Choisir une heure" aria-haspopup="listbox" aria-controls="time-menu" aria-expanded="false">&rsaquo;</button>
         </div>
 
-        <div class="time-menu" id="prix">
+        <div class="time-menu" id="time-menu" role="listbox" aria-label="Heures de départ disponibles" tabindex="-1">
           <% for (let minutes = 370; minutes <= 1430; minutes += 10) { %>
-            <% const hours = Math.floor(minutes / 60); const mins = minutes % 60; %>
-            <div class="time-option"><%= String(hours).padStart(2, '0') %> : <%= String(mins).padStart(2, '0') %></div>
+            <% const hours = Math.floor(minutes / 60); const mins = minutes % 60; const value = `${String(hours).padStart(2, '0')} : ${String(mins).padStart(2, '0')}`; %>
+            <button class="time-option" type="button" role="option" aria-selected="<%= currentTime === value ? 'true' : 'false' %>" tabindex="-1"><%= value %></button>
           <% } %>
-          <div class="time-option">00 : 00</div>
+          <button class="time-option" type="button" role="option" aria-selected="<%= currentTime === '00 : 00' ? 'true' : 'false' %>" tabindex="-1">00 : 00</button>
         </div>
         <div class="time-backdrop" id="white"></div>
       </div>

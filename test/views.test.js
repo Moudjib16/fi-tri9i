@@ -304,7 +304,7 @@ test('about page renders the guest navbar and calls to action', async () => {
   assert.match(html, /Publier un trajet/);
 });
 
-test('time step exposes every selectable departure time', async () => {
+test('time step exposes an accessible listbox of departure times', async () => {
   const html = await render('publier/heure.ejs', {
     currentUser: null,
     trip: null,
@@ -313,7 +313,24 @@ test('time step exposes every selectable departure time', async () => {
   const options = html.match(/class="time-option"/g) || [];
   assert.equal(options.length, 108);
   assert.match(html, /À quelle heure partez-vous/);
+  assert.match(html, /role="combobox"/);
+  assert.match(html, /role="listbox"/);
+  assert.match(html, /role="option"/);
+  assert.match(html, /aria-controls="time-menu"/);
+  assert.match(html, /aria-selected="true"[^>]*>08 : 00<\/button>/);
   assert.doesNotMatch(html, /id="time-option"/);
+});
+
+test('the calendar exposes a labelled month and day group', async () => {
+  const html = await render('publier/calendaire.ejs', {
+    currentUser: null,
+    trip: null,
+  });
+
+  assert.match(html, /id="calendar-month" aria-live="polite"/);
+  assert.match(html, /id="calendar-days" role="group" aria-labelledby="calendar-month"/);
+  assert.match(html, /aria-controls="calendar-days"/);
+  assert.match(html, /id="dateData" aria-live="polite"/);
 });
 
 test('the wizard suggests the wilayas and the communes of the draft', async () => {
