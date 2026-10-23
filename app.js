@@ -108,6 +108,8 @@ app.use((req, res, next) => {
   res.locals.formatDateIso = formatDateIso;
   res.locals.wilayas = wilayaOptions();
   res.locals.tripDistance = tripDistanceOf;
+  res.locals.appUrl = config.appUrl.replace(/\/+$/, '');
+  res.locals.currentPath = req.originalUrl.split('?')[0];
   next();
 });
 
@@ -239,7 +241,7 @@ app.use(publishRouter);
 
 // Handle invalid routes
 app.use((req, res) => {
-  res.status(404).render('404', { title: '404' });
+  res.status(404).render('404', { title: 'Page introuvable' });
 });
 
 // Centralized error handler (must be last)

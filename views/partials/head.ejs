@@ -1,7 +1,38 @@
+<%
+  const pageTitle = typeof title !== 'undefined' && title ? title : 'Covoiturage en Algérie';
+  const siteName = 'Fi Tri9i';
+  const baseUrl = (typeof appUrl !== 'undefined' ? appUrl : 'http://localhost:3000').replace(/\/+$/, '');
+  const pagePath = typeof currentPath !== 'undefined' ? currentPath : '/';
+  const pageUrl = baseUrl + pagePath;
+  const pageDescription = typeof description !== 'undefined' && description
+    ? description
+    : "Fi Tri9i — covoiturage entre les wilayas algériennes. Trouvez une place libre, publiez votre trajet et partagez les frais, simplement.";
+  const socialImage = baseUrl + '/shared/social-card.png';
+%>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> | <%= siteName %></title>
+  <meta name="description" content="<%= pageDescription %>">
+  <link rel="canonical" href="<%= pageUrl %>">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <meta property="og:locale" content="fr_DZ">
+  <meta property="og:title" content="<%= pageTitle %> | <%= siteName %>">
+  <meta property="og:description" content="<%= pageDescription %>">
+  <meta property="og:url" content="<%= pageUrl %>">
+  <meta property="og:image" content="<%= socialImage %>">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Fi Tri9i — covoiturage entre les wilayas algériennes">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= pageTitle %> | <%= siteName %>">
+  <meta name="twitter:description" content="<%= pageDescription %>">
+  <meta name="twitter:image" content="<%= socialImage %>">
   <link rel="stylesheet" href="/shared/ui.css">
   <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-  <title>Fi Tri9i | <%= typeof title !== 'undefined' ? title : 'Covoiturage en Algérie' %></title>
 </head>

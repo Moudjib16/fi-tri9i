@@ -1,8 +1,25 @@
 # Fi Tri9i — Algerian Carpooling
 
+<p align="center">
+  <a href="https://github.com/Moudjib16/projet2cp/actions/workflows/ci.yml"><img src="https://github.com/Moudjib16/projet2cp/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
+  <img src="https://img.shields.io/badge/Node.js-20%2B-43853D?logo=node.js&logoColor=white" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker ready" />
+</p>
+
 Fi Tri9i ("on my way", in Algerian dialect) is a carpooling web app organized by
 wilaya: drivers publish their trips through a 9-step wizard, passengers sign up,
 log in, and book their seats.
+
+## Screenshots
+
+| Home | Trip search |
+|---|---|
+| ![Home page](docs/screenshots/home.png) | ![Trip search results](docs/screenshots/search.png) |
+
+<p align="center">
+  <img src="docs/screenshots/home-mobile.png" alt="Home page on a phone" width="320">
+</p>
 
 ## Features
 
@@ -151,6 +168,31 @@ with `docker compose down -v` when you want a clean database. Only
 `mongo` service. Set `APP_URL` to the public address and `SMTP_URL` to enable
 account and notification emails.
 
+## Deploy
+
+The repository ships a `render.yaml` blueprint: a Docker web service that
+exposes the `/health` readiness probe. MongoDB is not part of the blueprint, so
+the service needs an external database.
+
+1. Create a free MongoDB Atlas cluster and database user, allow access from
+   anywhere (`0.0.0.0/0`) so the host can reach it, and copy the connection
+   string with a database name, for example
+   `mongodb+srv://user:pass@cluster.mongodb.net/fi_tri9i`.
+2. On Render, choose **New → Blueprint**, select this repository and let it read
+   `render.yaml`. Render generates `SESSION_SECRET` and builds the `Dockerfile`.
+3. Fill in the `sync: false` variables: `MONGO_URI`, `APP_URL`
+   (`https://<service-name>.onrender.com`) and, only if you want account and
+   notification emails, `SMTP_URL`.
+4. Seed the demo data once from a machine that can reach Atlas:
+   `MONGO_URI="mongodb+srv://..." npm run seed`.
+5. Open the service, log in with a demo account (`karim@demo.dz` / `demo1234`)
+   and check that search, publishing and booking work. The free plan sleeps when
+   idle, so the first request after a pause takes a few seconds.
+
+Any Docker host works the same way: build the image, set `NODE_ENV=production`,
+`SESSION_SECRET`, `APP_URL` and `MONGO_URI`, and point the health check at
+`/health`.
+
 ## Configuration (.env)
 
 ```ini
@@ -226,6 +268,8 @@ test/             # node:test suites (routes, models, validation, views, wilayas
 integration/       # HTTP integration tests backed by a temporary real MongoDB
 Dockerfile        # Production image (Node 20, non-root user, health check)
 docker-compose.yml # App + MongoDB 7 with a persistent volume
+render.yaml       # Render blueprint (Docker service + /health readiness probe)
+docs/screenshots/ # Screenshots used in this README
 .github/workflows/ # CI: lint and tests on Node 20/22, MongoDB integration tests,
                   # production dependency audit and Docker image build
 ```
@@ -233,3 +277,7 @@ docker-compose.yml # App + MongoDB 7 with a persistent volume
 ## Roadmap
 
 - Online payments and richer notification preferences (per category, digest)
+
+## License
+
+MIT - see [LICENSE](LICENSE).

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: fi-tri9i
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: SMTP_URL
+        sync: false
+      - key: EMAIL_FROM
+        value: Fi Tri9i <no-reply@fi-tri9i.dz>
+      - key: LOG_LEVEL
+        value: info
+      - key: RATE_LIMIT_STORE
+        value: mongo

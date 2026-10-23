@@ -3289,7 +3289,7 @@ a.driver-card:hover strong {
   .page,
   .about-page,
   .nav-shell {
-    width: min(100% - 28px, 1180px);
+    width: min(calc(100% - 28px), 1180px);
   }
 
   .nav-shell {
@@ -3411,7 +3411,7 @@ a.driver-card:hover strong {
   }
 
   .wizard-shell {
-    width: min(100% - 28px, 860px);
+    width: min(calc(100% - 28px), 860px);
     padding-top: 30px;
   }
 

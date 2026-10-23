@@ -8,13 +8,13 @@ const router = express.Router();
 
 router.get('/conducteurs/:id', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(404).render('404', { title: '404' });
+    return res.status(404).render('404', { title: 'Page introuvable' });
   }
 
   try {
     const driver = await user.findById(req.params.id).select('name bio userType createdAt').lean();
     if (!driver) {
-      return res.status(404).render('404', { title: '404' });
+      return res.status(404).render('404', { title: 'Page introuvable' });
     }
 
     const upcomingTrips = await trip

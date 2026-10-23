@@ -12,7 +12,7 @@ const { tripNotFound, serverError } = require('../lib/http');
 const router = express.Router();
 
 function notFound(res) {
-  return res.status(404).render('404', { title: '404' });
+  return res.status(404).render('404', { title: 'Page introuvable' });
 }
 
 function reasonLabel(value) {

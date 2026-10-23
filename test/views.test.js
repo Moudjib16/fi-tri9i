@@ -16,6 +16,8 @@ const render = (name, data) => renderFile(view(name), {
   formatDateIso,
   wilayas: wilayaOptions(),
   tripDistance: tripDistanceOf,
+  appUrl: 'https://fi-tri9i.test',
+  currentPath: '/',
   ...data,
 });
 
@@ -37,7 +39,7 @@ const sampleTrip = {
 test('home renders the guest navbar and search form', async () => {
   const html = await render('home.ejs', {
     stylesheet: 'home/',
-    title: 'Home',
+    title: 'Covoiturage en Algérie',
     currentUser: null,
   });
 
@@ -48,6 +50,32 @@ test('home renders the guest navbar and search form', async () => {
   assert.match(html, /<datalist id="wilayas">/);
   assert.match(html, /<option value="Béjaïa">/);
   assert.match(html, /<option value="Alger">/);
+});
+
+test('head renders the SEO and social metadata', async () => {
+  const html = await render('partials/head.ejs', {
+    title: 'Trajets',
+    description: 'Trajets rapides & "économiques"',
+    currentPath: '/trajets',
+  });
+
+  assert.match(html, /<title>Trajets \| Fi Tri9i<\/title>/);
+  assert.match(html, /content="Trajets rapides &amp; &#34;économiques&#34;"/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/fi-tri9i\.test\/trajets">/);
+  assert.match(html, /<meta property="og:url" content="https:\/\/fi-tri9i\.test\/trajets">/);
+  assert.match(html, /<meta property="og:image" content="https:\/\/fi-tri9i\.test\/shared\/social-card\.png">/);
+  assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
+});
+
+test('head falls back to the default title and trims the app url', async () => {
+  const html = await render('partials/head.ejs', {
+    appUrl: 'https://fi-tri9i.test//',
+    currentPath: '/a-propos',
+  });
+
+  assert.match(html, /<title>Covoiturage en Algérie \| Fi Tri9i<\/title>/);
+  assert.match(html, /href="https:\/\/fi-tri9i\.test\/a-propos"/);
+  assert.doesNotMatch(html, /fi-tri9i\.test\/\/a-propos/);
 });
 
 test('trip listing renders trip cards', async () => {

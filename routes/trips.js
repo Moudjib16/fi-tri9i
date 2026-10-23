@@ -383,8 +383,23 @@ router.get('/trajets', async (req, res) => {
     if (sortKey !== 'soonest') queryParams.set('sort', sortKey);
     const baseQuery = queryParams.toString();
 
+    const routeLabel = depart && arrivee
+      ? `${depart} – ${arrivee}`
+      : depart
+        ? `au départ de ${depart}`
+        : arrivee
+          ? `vers ${arrivee}`
+          : '';
+    const title = routeLabel
+      ? `Covoiturage ${routeLabel}`
+      : 'Trajets de covoiturage en Algérie';
+    const description = routeLabel
+      ? `Trajets de covoiturage ${routeLabel} : comparez les horaires et les prix, puis réservez votre place.`
+      : "Trouvez un trajet de covoiturage entre les wilayas algériennes, comparez les horaires et les prix, puis réservez votre place.";
+
     return res.render('trajets', {
-      title: 'Trajets',
+      title,
+      description,
       trips,
       filters: {
         depart,
@@ -458,8 +473,21 @@ router.get('/trajets/:id', async (req, res) => {
       isFavorite = Boolean(existingFavorite);
     }
 
+    const driverName = foundTrip.driver && foundTrip.driver.name
+      ? foundTrip.driver.name
+      : 'Un conducteur';
+    const tripDate = [foundTrip.dateData, foundTrip.time].filter(Boolean).join(' à ');
+    let description = `${driverName} propose un covoiturage de ${foundTrip.depart} à ${foundTrip.arrivee}`;
+    if (tripDate) {
+      description += `, départ le ${tripDate}`;
+    }
+    description += remaining > 0
+      ? `. ${remaining} place(s) disponible(s).`
+      : '. Trajet complet.';
+
     return res.render('trajet', {
-      title: 'Détail du trajet',
+      title: `Covoiturage ${foundTrip.depart} – ${foundTrip.arrivee}`,
+      description,
       trip: foundTrip,
       isDriver,
       isBooked,
