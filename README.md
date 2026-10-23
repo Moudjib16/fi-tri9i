@@ -1,7 +1,7 @@
 # Fi Tri9i — Algerian Carpooling
 
 <p align="center">
-  <a href="https://github.com/Moudjib16/projet2cp/actions/workflows/ci.yml"><img src="https://github.com/Moudjib16/projet2cp/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Moudjib16/fi-tri9i/actions/workflows/ci.yml"><img src="https://github.com/Moudjib16/fi-tri9i/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
   <img src="https://img.shields.io/badge/Node.js-20%2B-43853D?logo=node.js&logoColor=white" alt="Node.js 20+" />
   <img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker ready" />
